@@ -21,12 +21,13 @@ ON DUPLICATE KEY UPDATE
 
 INSERT INTO movies (id, title, synopsis, genre, release_year, classification, poster_path, is_active)
 VALUES
-    (1, 'Orbitas de Medianoche', 'Una tripulacion estudiantil descubre una senal perdida durante una funcion especial de astronomia.', 'Ciencia ficcion', 2026, 'TE+7', 'assets/img/posters/orbitas-de-medianoche.jpg', 1),
-    (2, 'La Ultima Funcion', 'Un antiguo cine de barrio prepara su noche final mientras sus trabajadores intentan salvar la cartelera.', 'Drama', 2025, 'TE', 'assets/img/posters/la-ultima-funcion.jpg', 1),
-    (3, 'Ritmo en la Ciudad', 'Un grupo de amigos organiza un festival musical que transforma las calles del centro.', 'Musical', 2026, 'TE', 'assets/img/posters/ritmo-en-la-ciudad.jpg', 1),
-    (4, 'Bosque Neon', 'Dos hermanas cruzan una reserva iluminada por extranos fenomenos para encontrar a su padre.', 'Aventura', 2024, 'TE+7', 'assets/img/posters/bosque-neon.jpg', 1),
-    (5, 'Codigo Fantasma', 'Un equipo de programadores investiga una falla que parece responder desde el pasado.', 'Suspenso', 2025, 'TE+13', 'assets/img/posters/codigo-fantasma.jpg', 1)
+    (1, 'Howl''s Moving Castle', 'Una joven ayuda a un misterioso mago mientras busca romper una inesperada maldicion.', 'Animación', 2004, 'TE', 'assets/img/posters/howls-moving-castle.jpg', 1),
+    (2, 'Chiikawa: Mermaid Island no Himitsu', 'Chiikawa y sus amigos viajan a una isla donde descubren una aventura marina llena de sorpresas.', 'Animación', 2026, 'TE', 'assets/img/posters/chiikawa-mermaid-island.jpg', 1),
+    (3, 'Deadpool', 'Un mercenario con humor afilado enfrenta a quienes cambiaron su vida para siempre.', 'Acción', 2016, 'TE+14', 'assets/img/posters/deadpool.jpg', 1),
+    (4, 'Chainsaw Man: Reze Arc', 'Denji conoce a Reze y se ve envuelto en una nueva batalla entre cazadores y demonios.', 'Anime', 2025, 'TE+14', 'assets/img/posters/chainsaw-man-reze-arc.jpg', 1),
+    (5, 'Five Nights at Freddy''s', 'Un guardia nocturno acepta un turno en una pizzeria abandonada con animatronicos inquietantes.', 'Terror', 2023, 'TE+13', 'assets/img/posters/five-nights-at-freddys.jpg', 1)
 ON DUPLICATE KEY UPDATE
+    title = VALUES(title),
     synopsis = VALUES(synopsis),
     genre = VALUES(genre),
     release_year = VALUES(release_year),
