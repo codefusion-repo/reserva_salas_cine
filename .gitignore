@@ -1,0 +1,77 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Environment / local config
+.env
+.env.*
+!.env.example
+config/local.php
+config/database.local.php
+
+# PHP dependencies, if Composer is added later
+vendor/
+composer.lock
+
+# Logs
+*.log
+logs/
+storage/logs/
+error_log
+
+# Runtime/cache/temp files
+.cache/
+tmp/
+temp/
+*.tmp
+*.cache
+
+# Local server artifacts
+xampp/
+htdocs/
+httpd.conf
+php.ini
+my.ini
+
+# User uploads generated at runtime
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Database dumps/backups
+database/dumps/
+*.dump
+*.bak.sql
+*.backup.sql
+*.sql.gz
+*.zip
+*.tar
+*.tar.gz
+
+# Personal notes
+notes.local.md
+TODO.local.md
+
+# Test/coverage artifacts, if added later
+coverage/
+.phpunit.result.cache
+
+# Node artifacts, if frontend tooling is accidentally added later
+node_modules/
+package-lock.json
+dist/
+build/
+
+# Secrets / credentials
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+secrets/
