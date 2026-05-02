@@ -40,6 +40,131 @@ function render_dashboard(): void
     require __DIR__ . '/../views/dashboard.php';
 }
 
+function render_movie_detail(): void
+{
+    auth_require_login();
+
+    $user = current_user();
+    $messages = flash_get();
+    $movie = null;
+    $showtimeDays = [];
+    $movieLoadError = false;
+    $movieNotFound = false;
+    $movieId = movie_id_from_request($_GET['id'] ?? null);
+
+    if ($movieId === null) {
+        http_response_code(404);
+        $movieNotFound = true;
+
+        require __DIR__ . '/../views/movie_detail.php';
+        return;
+    }
+
+    try {
+        $movie = movie_find_active_by_id($movieId);
+
+        if ($movie === null) {
+            http_response_code(404);
+            $movieNotFound = true;
+        } else {
+            $showtimeDays = movie_showtimes_by_day(movie_active_showtimes($movieId));
+        }
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        http_response_code(500);
+        $movieLoadError = true;
+    }
+
+    require __DIR__ . '/../views/movie_detail.php';
+}
+
+function movie_id_from_request(mixed $value): ?int
+{
+    if (!is_scalar($value)) {
+        return null;
+    }
+
+    $value = trim((string) $value);
+
+    if ($value === '' || ctype_digit($value) === false) {
+        return null;
+    }
+
+    $movieId = (int) $value;
+
+    return $movieId > 0 ? $movieId : null;
+}
+
+function movie_showtimes_by_day(array $showtimes): array
+{
+    $days = [];
+    $today = (new DateTimeImmutable('today'))->format('Y-m-d');
+
+    foreach ($showtimes as $showtime) {
+        try {
+            $startsAt = new DateTimeImmutable((string) ($showtime['starts_at'] ?? ''));
+        } catch (Throwable $exception) {
+            continue;
+        }
+
+        $dateKey = $startsAt->format('Y-m-d');
+
+        if (!isset($days[$dateKey])) {
+            $days[$dateKey] = [
+                'date_key' => $dateKey,
+                'day_label' => $dateKey === $today ? 'Hoy' : movie_spanish_weekday($startsAt),
+                'date_label' => $startsAt->format('j') . '/' . movie_spanish_month($startsAt),
+                'showtimes' => [],
+            ];
+        }
+
+        $days[$dateKey]['showtimes'][] = [
+            'id' => (int) ($showtime['id'] ?? 0),
+            'time_label' => $startsAt->format('H:i') . ' HRS',
+            'format_label' => (string) ($showtime['format_label'] ?? ''),
+            'language_label' => (string) ($showtime['language_label'] ?? ''),
+            'room_name' => (string) ($showtime['room_name'] ?? ''),
+        ];
+    }
+
+    return array_values($days);
+}
+
+function movie_spanish_weekday(DateTimeImmutable $date): string
+{
+    $days = [
+        1 => 'Lunes',
+        2 => 'Martes',
+        3 => 'Miercoles',
+        4 => 'Jueves',
+        5 => 'Viernes',
+        6 => 'Sabado',
+        7 => 'Domingo',
+    ];
+
+    return $days[(int) $date->format('N')] ?? '';
+}
+
+function movie_spanish_month(DateTimeImmutable $date): string
+{
+    $months = [
+        1 => 'Ene',
+        2 => 'Feb',
+        3 => 'Mar',
+        4 => 'Abr',
+        5 => 'May',
+        6 => 'Jun',
+        7 => 'Jul',
+        8 => 'Ago',
+        9 => 'Sep',
+        10 => 'Oct',
+        11 => 'Nov',
+        12 => 'Dic',
+    ];
+
+    return $months[(int) $date->format('n')] ?? '';
+}
+
 function render_admin_panel(): void
 {
     if (!auth_require_admin()) {

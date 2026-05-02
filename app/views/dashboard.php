@@ -119,7 +119,7 @@ foreach ($movies as $movie) {
                                 (string) ($movie['classification'] ?? '')
                             );
                             ?>
-                            <article class="movie-card">
+                            <a class="movie-card" href="index.php?page=movie&amp;id=<?= e($movie['id'] ?? '') ?>">
                                 <div class="movie-poster-frame">
                                     <?php if ($posterUrl !== null): ?>
                                         <img class="movie-poster" src="<?= e($posterUrl) ?>" alt="Poster de <?= e($title) ?>">
@@ -134,7 +134,7 @@ foreach ($movies as $movie) {
                                     <h2><?= e($title) ?></h2>
                                     <p><?= e($meta) ?></p>
                                 </div>
-                            </article>
+                            </a>
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
