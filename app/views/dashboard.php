@@ -1,60 +1,145 @@
 <?php
 declare(strict_types=1);
+
+$userName = (string) ($user['name'] ?? 'Usuario');
+$firstName = trim(explode(' ', $userName)[0] ?? $userName);
+$genres = [];
+
+foreach ($movies as $movie) {
+    $genre = trim((string) ($movie['genre'] ?? ''));
+
+    if ($genre !== '') {
+        $genres[mb_strtoupper($genre)] = $genre;
+    }
+}
 ?>
 <!doctype html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Panel - Reserva Salas Cine</title>
+    <title>Cartelera - Reserva Salas Cine</title>
     <link rel="stylesheet" href="assets/css/app.css">
 </head>
-<body class="app-screen">
-    <header class="topbar">
-        <a class="brand" href="index.php?page=dashboard">ES Cine</a>
-        <nav class="topnav" aria-label="Navegacion principal">
+<body class="app-screen cartelera-screen">
+    <header class="topbar cinema-topbar">
+        <a class="brand cinema-brand" href="index.php?page=cartelera" aria-label="ES Cine cartelera">
+            <span class="brand-person" aria-hidden="true"></span>
+            <span class="brand-film"><span>ES</span> <em>Cine</em></span>
+        </a>
+
+        <nav class="topnav cinema-nav" aria-label="Navegacion principal">
+            <a class="is-active" href="index.php?page=cartelera">Cartelera</a>
+            <a href="index.php?page=cartelera" aria-disabled="true">Confiteria</a>
+            <a href="index.php?page=cartelera" aria-disabled="true">¡Hazte socio!</a>
             <?php if (($user['role'] ?? '') === 'admin'): ?>
                 <a href="index.php?page=admin">Admin</a>
             <?php endif; ?>
-            <a href="index.php?action=logout">Cerrar sesion</a>
         </nav>
+
+        <div class="user-menu">
+            <button class="user-pill" type="button" aria-haspopup="true">
+                <span class="user-avatar" aria-hidden="true"></span>
+                <span>Hola, <?= e($firstName !== '' ? $firstName : 'Usuario') ?>!</span>
+                <span class="user-caret" aria-hidden="true"></span>
+            </button>
+            <div class="user-dropdown">
+                <span><?= e($user['email'] ?? '') ?></span>
+                <a href="index.php?action=logout">Cerrar sesion</a>
+            </div>
+        </div>
     </header>
 
-    <main class="app-shell">
+    <main class="cartelera-shell">
         <?php if ($messages !== []): ?>
-            <div class="page-messages" aria-live="polite">
+            <div class="page-messages cartelera-messages" aria-live="polite">
                 <?php foreach ($messages as $message): ?>
                     <p class="notice notice-<?= e($message['type'] ?? 'info') ?>"><?= e($message['message'] ?? '') ?></p>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
 
-        <section class="panel-hero">
-            <p class="eyebrow">Sesion activa</p>
-            <h1><?= e($user['name'] ?? 'Usuario') ?></h1>
-            <p><?= e($user['email'] ?? '') ?></p>
-        </section>
+        <h1 class="cartelera-title">Cartelera</h1>
 
-        <section class="status-grid" aria-label="Estado del usuario">
-            <article class="status-card">
-                <h2>Rol</h2>
-                <p class="role-badge"><?= e($user['role'] ?? 'user') ?></p>
-            </article>
+        <div class="cartelera-layout">
+            <aside class="filter-panel" aria-label="Filtros de cartelera">
+                <div class="filter-heading">
+                    <span class="filter-icon" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                    <span>Filtrar por:</span>
+                </div>
 
-            <article class="status-card">
-                <h2>Cuenta</h2>
-                <p class="status-ok">Autenticada</p>
-            </article>
+                <div class="filter-group">
+                    <div class="filter-toggle">
+                        <span>Genero</span>
+                        <span aria-hidden="true">-</span>
+                    </div>
 
-            <article class="status-card">
-                <h2>Acceso admin</h2>
-                <?php if (($user['role'] ?? '') === 'admin'): ?>
-                    <a class="inline-action" href="index.php?page=admin">Abrir vista protegida</a>
+                    <?php if ($genres !== []): ?>
+                        <ul class="genre-list">
+                            <?php foreach ($genres as $genre): ?>
+                                <li><?= e(mb_strtoupper($genre)) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php else: ?>
+                        <p class="filter-empty">Sin generos</p>
+                    <?php endif; ?>
+                </div>
+
+                <div class="filter-toggle filter-toggle-secondary">
+                    <span>Estreno</span>
+                    <span aria-hidden="true">+</span>
+                </div>
+            </aside>
+
+            <section class="movie-board" aria-label="Peliculas activas">
+                <?php if ($movieLoadError): ?>
+                    <div class="cartelera-state">
+                        <h2>No se pudo cargar la cartelera</h2>
+                        <p>Intenta nuevamente mas tarde.</p>
+                    </div>
+                <?php elseif ($movies === []): ?>
+                    <div class="cartelera-state">
+                        <h2>No hay peliculas activas</h2>
+                        <p>La cartelera se mostrara cuando existan peliculas disponibles.</p>
+                    </div>
                 <?php else: ?>
-                    <p class="muted">Restringido</p>
+                    <div class="movie-grid">
+                        <?php foreach ($movies as $movie): ?>
+                            <?php
+                            $title = (string) ($movie['title'] ?? 'Pelicula');
+                            $posterUrl = public_asset_url_if_exists($movie['poster_path'] ?? null);
+                            $meta = sprintf(
+                                '%s - %s - %s',
+                                (string) ($movie['genre'] ?? ''),
+                                (string) ($movie['release_year'] ?? ''),
+                                (string) ($movie['classification'] ?? '')
+                            );
+                            ?>
+                            <article class="movie-card">
+                                <div class="movie-poster-frame">
+                                    <?php if ($posterUrl !== null): ?>
+                                        <img class="movie-poster" src="<?= e($posterUrl) ?>" alt="Poster de <?= e($title) ?>">
+                                    <?php else: ?>
+                                        <div class="movie-poster-placeholder" role="img" aria-label="Poster no disponible para <?= e($title) ?>">
+                                            <span>ES Cine</span>
+                                            <strong><?= e($title) ?></strong>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="movie-info">
+                                    <h2><?= e($title) ?></h2>
+                                    <p><?= e($meta) ?></p>
+                                </div>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
                 <?php endif; ?>
-            </article>
-        </section>
+            </section>
+        </div>
     </main>
 
     <script src="assets/js/app.js" defer></script>
