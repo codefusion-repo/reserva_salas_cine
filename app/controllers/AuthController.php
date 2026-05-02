@@ -5,6 +5,7 @@ require_once __DIR__ . '/../helpers/auth.php';
 require_once __DIR__ . '/../helpers/assets.php';
 require_once __DIR__ . '/../helpers/security.php';
 require_once __DIR__ . '/../models/Movie.php';
+require_once __DIR__ . '/../models/Reservation.php';
 require_once __DIR__ . '/../models/User.php';
 
 const AUTH_MIN_PASSWORD_LENGTH = 8;
@@ -78,7 +79,172 @@ function render_movie_detail(): void
     require __DIR__ . '/../views/movie_detail.php';
 }
 
+function render_seat_selection(): void
+{
+    auth_require_login();
+
+    $showtimeId = positive_int_from_request($_GET['showtime_id'] ?? null);
+    $ticketCount = reservation_ticket_count_from_request($_GET['tickets'] ?? null);
+    $reservationId = positive_int_from_request($_GET['reservation_id'] ?? null);
+    $errors = [];
+
+    if ($ticketCount === null) {
+        $ticketCount = 1;
+        $errors[] = 'Selecciona al menos una entrada valida.';
+    }
+
+    render_seat_selection_view($showtimeId, $ticketCount, [], $errors, $reservationId);
+}
+
+function handle_reservation_create(): void
+{
+    auth_require_login();
+
+    $user = current_user();
+    $showtimeId = positive_int_from_request($_POST['showtime_id'] ?? null);
+    $ticketCount = reservation_ticket_count_from_request($_POST['ticket_count'] ?? null);
+    $selectedSeats = reservation_parse_selected_seats($_POST['seats'] ?? []);
+    $errors = [];
+    $showtime = null;
+
+    if ($showtimeId === null) {
+        $errors[] = 'Selecciona una funcion valida.';
+    }
+
+    if ($ticketCount === null) {
+        $ticketCount = 1;
+        $errors[] = 'Selecciona al menos una entrada valida.';
+    }
+
+    if ($selectedSeats === []) {
+        $errors[] = 'Selecciona las butacas para tu reserva.';
+    }
+
+    try {
+        if ($showtimeId !== null) {
+            $showtime = reservation_showtime_find_active($showtimeId);
+        }
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        $errors[] = 'No se pudo validar la funcion en este momento.';
+    }
+
+    if ($showtimeId !== null && $showtime === null) {
+        $errors[] = 'La funcion seleccionada no existe o no esta activa.';
+    }
+
+    if ($showtime !== null) {
+        $seatMap = reservation_generate_seat_map((int) $showtime['room_capacity']);
+
+        if ($ticketCount > count($seatMap['lookup'])) {
+            $errors[] = 'La cantidad de entradas supera la capacidad de la sala.';
+        }
+
+        if ($selectedSeats !== [] && count($selectedSeats) !== $ticketCount) {
+            $errors[] = 'Debes seleccionar exactamente ' . $ticketCount . ' butaca(s).';
+        }
+
+        foreach ($selectedSeats as $seat) {
+            $seatKey = reservation_seat_key((string) $seat['row'], (int) $seat['number']);
+
+            if (!isset($seatMap['lookup'][$seatKey])) {
+                $errors[] = 'Una o mas butacas seleccionadas no existen en esta sala.';
+                break;
+            }
+        }
+
+        try {
+            $occupiedSeats = reservation_occupied_seats_for_showtime((int) $showtime['id']);
+            $conflicts = reservation_selected_occupied_seats($selectedSeats, $occupiedSeats);
+
+            if ($conflicts !== []) {
+                $errors[] = 'Una o mas butacas seleccionadas ya estan ocupadas.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar la disponibilidad de butacas.';
+        }
+    }
+
+    if ($errors !== []) {
+        render_seat_selection_view($showtimeId, $ticketCount, $selectedSeats, $errors);
+        return;
+    }
+
+    $result = reservation_create_with_seats((int) ($user['id'] ?? 0), $showtime, $selectedSeats, $ticketCount);
+
+    if (($result['ok'] ?? false) !== true) {
+        render_seat_selection_view($showtimeId, $ticketCount, $selectedSeats, $result['errors'] ?? ['No se pudo crear la reserva.']);
+        return;
+    }
+
+    flash_set('success', 'Reserva creada correctamente.');
+    redirect_to(
+        'index.php?page=seats&showtime_id=' . (int) $showtimeId
+        . '&tickets=' . (int) $ticketCount
+        . '&reservation_id=' . (int) $result['reservation_id']
+    );
+}
+
+function render_seat_selection_view(?int $showtimeId, int $ticketCount, array $selectedSeats = [], array $errors = [], ?int $reservationId = null): void
+{
+    $user = current_user();
+    $messages = flash_get();
+    $showtime = null;
+    $seatMap = ['rows' => [], 'lookup' => [], 'columns' => RESERVATION_SEATS_PER_ROW];
+    $occupiedSeats = [];
+    $selectedSeatKeys = array_fill_keys(reservation_selected_keys($selectedSeats), true);
+    $reservationConfirmation = null;
+    $showtimeLoadError = false;
+    $showtimeNotFound = false;
+    $showtimeLabels = [
+        'date' => '',
+        'time' => '',
+        'datetime' => '',
+    ];
+
+    if ($showtimeId === null) {
+        http_response_code(404);
+        $showtimeNotFound = true;
+    } else {
+        try {
+            $showtime = reservation_showtime_find_active($showtimeId);
+
+            if ($showtime === null) {
+                http_response_code(404);
+                $showtimeNotFound = true;
+            } else {
+                $seatMap = reservation_generate_seat_map((int) $showtime['room_capacity']);
+                $occupiedSeats = reservation_occupied_seats_for_showtime((int) $showtime['id']);
+                $showtimeLabels = reservation_showtime_labels($showtime);
+
+                if ($reservationId !== null) {
+                    $reservationConfirmation = reservation_find_confirmation($reservationId, (int) ($user['id'] ?? 0));
+
+                    if (
+                        $reservationConfirmation !== null
+                        && (int) ($reservationConfirmation['showtime_id'] ?? 0) !== (int) $showtime['id']
+                    ) {
+                        $reservationConfirmation = null;
+                    }
+                }
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            http_response_code(500);
+            $showtimeLoadError = true;
+        }
+    }
+
+    require __DIR__ . '/../views/seat_selection.php';
+}
+
 function movie_id_from_request(mixed $value): ?int
+{
+    return positive_int_from_request($value);
+}
+
+function positive_int_from_request(mixed $value): ?int
 {
     if (!is_scalar($value)) {
         return null;
@@ -90,9 +256,39 @@ function movie_id_from_request(mixed $value): ?int
         return null;
     }
 
-    $movieId = (int) $value;
+    $number = (int) $value;
 
-    return $movieId > 0 ? $movieId : null;
+    return $number > 0 ? $number : null;
+}
+
+function reservation_ticket_count_from_request(mixed $value): ?int
+{
+    $ticketCount = positive_int_from_request($value);
+
+    if ($ticketCount === null || $ticketCount > RESERVATION_MAX_TICKETS) {
+        return null;
+    }
+
+    return $ticketCount;
+}
+
+function reservation_showtime_labels(array $showtime): array
+{
+    try {
+        $startsAt = new DateTimeImmutable((string) ($showtime['starts_at'] ?? ''));
+    } catch (Throwable $exception) {
+        return [
+            'date' => '',
+            'time' => '',
+            'datetime' => '',
+        ];
+    }
+
+    return [
+        'date' => $startsAt->format('d/m/Y'),
+        'time' => $startsAt->format('H:i') . ' HRS',
+        'datetime' => movie_spanish_weekday($startsAt) . ' ' . $startsAt->format('j') . ' de ' . movie_spanish_month($startsAt) . ', ' . $startsAt->format('H:i') . ' HRS',
+    ];
 }
 
 function movie_showtimes_by_day(array $showtimes): array
