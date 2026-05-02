@@ -86,4 +86,4 @@ requires validation in Windows + XAMPP:
 - DB: `reserva_salas_cine`
 - DB defaults: host `localhost`, user `root`, empty password
 
-Issue #2 does not declare final delivery readiness.
+Documentation changes alone do not declare final delivery readiness.

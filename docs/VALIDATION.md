@@ -82,8 +82,7 @@ Every issue or PR should provide reviewable evidence:
 - Known risks or skipped checks.
 
 No issue, PR, merge, release, readiness claim, or closure is valid without
-evidence. Issue #2 is documentation bootstrap only and does not declare final
-delivery readiness.
+evidence. Documentation changes alone do not declare final delivery readiness.
 
 ## Documentation Validation
 

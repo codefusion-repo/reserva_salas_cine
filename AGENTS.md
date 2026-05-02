@@ -63,25 +63,28 @@ unrelated changes, stop and report before editing.
 
 ## Write Boundaries
 
-Current default for issue #2 is local implementation only:
+Browser chats are read-only for GitHub writes by default.
 
-- Edit only scoped local documentation files.
-- Do not commit.
-- Do not push.
-- Do not open PRs.
-- Do not comment on GitHub.
-- Do not apply labels.
-- Do not merge or close issues.
-- Do not create releases or tags.
-- Do not perform GitHub writes unless explicitly authorized by the PM.
+Execution modes are task-specific and must be declared in the routing packet,
+issue, or PM prompt:
+
+- `local implementation only` allows scoped local edits and validation, but no
+  commit, push, PR, GitHub comment, labels, merge, issue closure, release, or
+  tag.
+- `full delegated execution including commit and PR` allows commit, push, and
+  PR only when explicitly authorized by the PM in the current task.
+- A task may explicitly authorize commit and push without authorizing PR
+  creation.
+
+No GitHub write is allowed without explicit scoped PM authorization in the
+current task.
 
 Do not modify PHP functional files, `database/schema.sql`,
 `database/seed.sql`, mockup images, or `docs/functional/Trabajo 3 web.pdf`
 unless a future PM decision explicitly scopes that work.
 
 No issue, PR, merge, release, readiness claim, or closure is allowed without
-reviewable evidence. Documentation bootstrap work does not declare final
-delivery readiness.
+reviewable evidence.
 
 ## Technical Rules
 
