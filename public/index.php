@@ -42,6 +42,10 @@ switch ($page) {
         render_dashboard();
         break;
 
+    case 'movie':
+        render_movie_detail();
+        break;
+
     case 'admin':
         render_admin_panel();
         break;
