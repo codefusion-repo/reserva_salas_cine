@@ -2,7 +2,9 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../helpers/auth.php';
+require_once __DIR__ . '/../helpers/assets.php';
 require_once __DIR__ . '/../helpers/security.php';
+require_once __DIR__ . '/../models/Movie.php';
 require_once __DIR__ . '/../models/User.php';
 
 const AUTH_MIN_PASSWORD_LENGTH = 8;
@@ -25,6 +27,15 @@ function render_dashboard(): void
     auth_require_login();
     $user = current_user();
     $messages = flash_get();
+    $movies = [];
+    $movieLoadError = false;
+
+    try {
+        $movies = movie_active_all();
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        $movieLoadError = true;
+    }
 
     require __DIR__ . '/../views/dashboard.php';
 }

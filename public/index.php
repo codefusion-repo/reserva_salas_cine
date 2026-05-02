@@ -38,6 +38,7 @@ switch ($page) {
         break;
 
     case 'dashboard':
+    case 'cartelera':
         render_dashboard();
         break;
 
