@@ -18,6 +18,14 @@ Target oficial de entrega:
 
 WSL Ubuntu puede usarse como entorno equivalente de desarrollo, pero la entrega final debe funcionar en XAMPP.
 
+## Documentación operativa
+
+- [Reglas para agentes](AGENTS.md)
+- [Alcance del proyecto](docs/SCOPE.md)
+- [Reglas funcionales](docs/BUSINESS_RULES.md)
+- [Validación](docs/VALIDATION.md)
+- [Fuentes de verdad](docs/SOURCE_OF_TRUTH.md)
+
 ## Stack
 
 - PHP vanilla
@@ -115,7 +123,13 @@ Este MVP no incluye:
     │   ├── schema.sql
     │   └── seed.sql
     ├── docs/
-    │   └── PROJECT_BRIEF.md
+    │   ├── BUSINESS_RULES.md
+    │   ├── PROJECT_BRIEF.md
+    │   ├── SCOPE.md
+    │   ├── SOURCE_OF_TRUTH.md
+    │   ├── VALIDATION.md
+    │   ├── functional/
+    │   └── mockups/
     ├── public/
     │   ├── assets/
     │   │   ├── css/
