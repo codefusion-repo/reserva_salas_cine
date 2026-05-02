@@ -54,3 +54,19 @@ function db_fetch_all(string $sql, array $params = []): array
 
     return $statement->fetchAll();
 }
+
+function db_fetch_one(string $sql, array $params = []): ?array
+{
+    $statement = db()->prepare($sql);
+    $statement->execute($params);
+    $row = $statement->fetch();
+
+    return $row === false ? null : $row;
+}
+
+function db_execute(string $sql, array $params = []): bool
+{
+    $statement = db()->prepare($sql);
+
+    return $statement->execute($params);
+}

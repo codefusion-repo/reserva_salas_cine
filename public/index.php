@@ -1,106 +1,52 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../app/helpers/security.php';
-require_once __DIR__ . '/../app/helpers/database.php';
+require_once __DIR__ . '/../app/controllers/AuthController.php';
 
-$config = db_config();
-$dbStatus = 'Configuracion cargada';
-$dbDetail = 'La conexion PDO se probara automaticamente cuando la base de datos exista.';
-$movies = [];
+app_session_start();
 
-try {
-    $movies = db_fetch_all(
-        'SELECT title, genre, classification
-         FROM movies
-         WHERE is_active = :is_active
-         ORDER BY title
-         LIMIT 5',
-        ['is_active' => 1]
-    );
-    $dbStatus = 'Conexion PDO OK';
-    $dbDetail = 'La aplicacion puede leer datos desde MySQL/MariaDB.';
-} catch (Throwable $exception) {
-    $dbStatus = 'Config OK, base de datos pendiente';
-    $dbDetail = 'Importa database/schema.sql y database/seed.sql para completar la prueba local.';
+$action = $_GET['action'] ?? null;
+$page = $_GET['page'] ?? null;
+
+if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_login();
+    exit;
 }
-?>
-<!doctype html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Reserva Salas Cine</title>
-    <link rel="stylesheet" href="assets/css/app.css">
-</head>
-<body>
-    <main class="page-shell">
-        <section class="hero">
-            <p class="eyebrow">Bootstrap PHP/MySQL</p>
-            <h1>Reserva Salas Cine</h1>
-            <p class="lead">
-                Proyecto academico vanilla PHP para gestionar cartelera, funciones, butacas y reservas.
-            </p>
-        </section>
 
-        <section class="status-grid" aria-label="Estado del bootstrap">
-            <article class="status-card">
-                <h2>Aplicacion</h2>
-                <p class="status-ok">PHP cargado correctamente</p>
-                <p>Entrada publica: <strong>public/index.php</strong></p>
-            </article>
+if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_register();
+    exit;
+}
 
-            <article class="status-card">
-                <h2>Base de datos</h2>
-                <p class="status-ok"><?= e($dbStatus) ?></p>
-                <p><?= e($dbDetail) ?></p>
-            </article>
+if ($action === 'logout') {
+    handle_logout();
+    exit;
+}
 
-            <article class="status-card">
-                <h2>Configuracion</h2>
-                <dl>
-                    <div>
-                        <dt>Host</dt>
-                        <dd><?= e($config['host']) ?></dd>
-                    </div>
-                    <div>
-                        <dt>Database</dt>
-                        <dd><?= e($config['database']) ?></dd>
-                    </div>
-                    <div>
-                        <dt>User</dt>
-                        <dd><?= e($config['username']) ?></dd>
-                    </div>
-                    <div>
-                        <dt>Password</dt>
-                        <dd><?= $config['password'] === '' ? 'vacio por defecto' : 'configurado localmente' ?></dd>
-                    </div>
-                </dl>
-            </article>
-        </section>
+if ($page === null) {
+    $page = auth_check() ? 'dashboard' : 'login';
+}
 
-        <section class="movie-preview">
-            <div class="section-heading">
-                <h2>Cartelera demo</h2>
-                <p>Datos visibles cuando el seed local ya fue importado.</p>
-            </div>
+switch ($page) {
+    case 'login':
+    case 'register':
+        if (auth_check()) {
+            redirect_to('index.php?page=dashboard');
+        }
 
-            <?php if ($movies !== []): ?>
-                <div class="movie-grid">
-                    <?php foreach ($movies as $movie): ?>
-                        <article class="movie-card">
-                            <h3><?= e($movie['title']) ?></h3>
-                            <p><?= e($movie['genre']) ?></p>
-                            <span><?= e($movie['classification']) ?></span>
-                        </article>
-                    <?php endforeach; ?>
-                </div>
-            <?php else: ?>
-                <p class="empty-state">Aun no hay peliculas demo disponibles para mostrar.</p>
-            <?php endif; ?>
-        </section>
-    </main>
+        render_auth_page($page);
+        break;
 
-    <script src="assets/js/app.js" defer></script>
-</body>
-</html>
+    case 'dashboard':
+        render_dashboard();
+        break;
+
+    case 'admin':
+        render_admin_panel();
+        break;
+
+    default:
+        http_response_code(404);
+        render_auth_page('login', ['Pagina no encontrada.']);
+        break;
+}
