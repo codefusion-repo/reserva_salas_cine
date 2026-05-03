@@ -20,7 +20,7 @@ declare(strict_types=1);
             <?php foreach ($messages as $message): ?>
                 <p class="notice notice-<?= e($message['type'] ?? 'info') ?>"><?= e($message['message'] ?? '') ?></p>
             <?php endforeach; ?>
-            <a class="inline-action" href="index.php?page=dashboard">Volver al panel</a>
+            <a class="inline-action" href="index.php?page=cartelera">Volver a cartelera</a>
         </section>
     </main>
 

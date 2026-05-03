@@ -92,6 +92,7 @@ if ($hasMovie) {
                             <div class="schedule-empty">
                                 <h3>Sin horarios activos</h3>
                                 <p>Esta pelicula no tiene funciones disponibles por ahora.</p>
+                                <a class="movie-state-link" href="index.php?page=cartelera">Volver a cartelera</a>
                             </div>
                         <?php else: ?>
                             <form class="movie-reservation-form" method="get" action="index.php" data-showtime-form>

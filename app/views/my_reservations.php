@@ -39,11 +39,15 @@ declare(strict_types=1);
             <section class="cartelera-state movie-detail-state">
                 <h2>No se pudieron cargar tus reservas</h2>
                 <p>Intenta nuevamente mas tarde.</p>
+                <div class="state-actions">
+                    <a class="movie-state-link" href="index.php?page=my_reservations">Intentar nuevamente</a>
+                    <a class="movie-state-link movie-state-link-secondary" href="index.php?page=cartelera">Volver a cartelera</a>
+                </div>
             </section>
         <?php elseif ($reservations === []): ?>
             <section class="reservations-empty">
                 <h2>No tienes reservas</h2>
-                <a class="movie-state-link" href="index.php?page=cartelera">Ver cartelera</a>
+                <a class="movie-state-link" href="index.php?page=cartelera">Volver a cartelera</a>
             </section>
         <?php else: ?>
             <section class="reservation-list" aria-label="Reservas del usuario">
