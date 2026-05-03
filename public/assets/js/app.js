@@ -155,3 +155,11 @@ document.querySelectorAll('[data-seat-form]').forEach((form) => {
 
     updateSeatState();
 });
+
+document.querySelectorAll('[data-cancel-reservation]').forEach((form) => {
+    form.addEventListener('submit', (event) => {
+        if (!window.confirm('Cancelar esta reserva?')) {
+            event.preventDefault();
+        }
+    });
+});

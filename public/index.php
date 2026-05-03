@@ -28,6 +28,11 @@ if ($action === 'create_reservation' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+if ($action === 'cancel_reservation' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_reservation_cancel();
+    exit;
+}
+
 if ($page === null) {
     $page = auth_check() ? 'dashboard' : 'login';
 }
@@ -53,6 +58,10 @@ switch ($page) {
 
     case 'seats':
         render_seat_selection();
+        break;
+
+    case 'my_reservations':
+        render_my_reservations();
         break;
 
     case 'admin':
