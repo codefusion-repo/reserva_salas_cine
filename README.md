@@ -24,6 +24,7 @@ WSL Ubuntu puede usarse como entorno equivalente de desarrollo, pero la entrega 
 - [Alcance del proyecto](docs/SCOPE.md)
 - [Reglas funcionales](docs/BUSINESS_RULES.md)
 - [Validación](docs/VALIDATION.md)
+- [Checklist final XAMPP](docs/XAMPP_FINAL_CHECKLIST.md)
 - [Fuentes de verdad](docs/SOURCE_OF_TRUTH.md)
 
 ## Stack
@@ -128,6 +129,7 @@ Este MVP no incluye:
     │   ├── SCOPE.md
     │   ├── SOURCE_OF_TRUTH.md
     │   ├── VALIDATION.md
+    │   ├── XAMPP_FINAL_CHECKLIST.md
     │   ├── functional/
     │   └── mockups/
     ├── public/
@@ -304,6 +306,11 @@ Responsabilidades principales:
 - No permitir funciones traslapadas en la misma sala.
 
 ## Validación manual final
+
+La lista detallada para la validación final en Windows + XAMPP está en
+[docs/XAMPP_FINAL_CHECKLIST.md](docs/XAMPP_FINAL_CHECKLIST.md). Esa lista no
+declara readiness por sí sola; la entrega final requiere ejecución real en
+XAMPP y evidencia.
 
 Antes de entregar, comprobar en XAMPP:
 

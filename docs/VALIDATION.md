@@ -5,11 +5,16 @@
 The official target is Windows + XAMPP. WSL Ubuntu is only a local development
 equivalent and does not replace final delivery evidence.
 
-Final readiness requires XAMPP validation.
+Final readiness requires XAMPP validation. Use
+[`docs/XAMPP_FINAL_CHECKLIST.md`](XAMPP_FINAL_CHECKLIST.md) for the detailed
+manual checklist and evidence structure.
 
 ## XAMPP Final Validation
 
 Before delivery or readiness claims, validate:
+
+- [ ] Detailed checklist exists and is used:
+  `docs/XAMPP_FINAL_CHECKLIST.md`.
 
 - [ ] Project is located at `C:\xampp\htdocs\reserva_salas_cine`.
 - [ ] Apache starts in XAMPP.
@@ -94,6 +99,7 @@ For documentation-only changes, run:
 - `test -f docs/SCOPE.md`
 - `test -f docs/BUSINESS_RULES.md`
 - `test -f docs/VALIDATION.md`
+- `test -f docs/XAMPP_FINAL_CHECKLIST.md`
 - `test -f "docs/functional/Trabajo 3 web.pdf"`
 
 Optional targeted grep:
