@@ -23,6 +23,11 @@ if ($action === 'logout') {
     exit;
 }
 
+if ($action === 'create_reservation' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_reservation_create();
+    exit;
+}
+
 if ($page === null) {
     $page = auth_check() ? 'dashboard' : 'login';
 }
@@ -44,6 +49,10 @@ switch ($page) {
 
     case 'movie':
         render_movie_detail();
+        break;
+
+    case 'seats':
+        render_seat_selection();
         break;
 
     case 'admin':
