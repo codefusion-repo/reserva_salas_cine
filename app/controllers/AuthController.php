@@ -448,7 +448,7 @@ function render_admin_panel(): void
 
 function handle_room_create(): void
 {
-    auth_require_admin();
+    auth_require_admin_action();
 
     [$payload, $errors] = admin_room_payload_from_post();
 
@@ -481,7 +481,7 @@ function handle_room_create(): void
 
 function handle_room_update(): void
 {
-    auth_require_admin();
+    auth_require_admin_action();
 
     $roomId = positive_int_from_request($_POST['room_id'] ?? null);
     [$payload, $errors] = admin_room_payload_from_post();
@@ -530,7 +530,7 @@ function handle_room_update(): void
 
 function handle_room_deactivate(): void
 {
-    auth_require_admin();
+    auth_require_admin_action();
 
     $roomId = positive_int_from_request($_POST['room_id'] ?? null);
 
@@ -556,7 +556,7 @@ function handle_room_deactivate(): void
 
 function handle_showtime_create(): void
 {
-    auth_require_admin();
+    auth_require_admin_action();
 
     [$payload, $errors] = admin_showtime_payload_from_post(null);
 
@@ -585,7 +585,7 @@ function handle_showtime_create(): void
 
 function handle_showtime_update(): void
 {
-    auth_require_admin();
+    auth_require_admin_action();
 
     $showtimeId = positive_int_from_request($_POST['showtime_id'] ?? null);
     $errors = [];
@@ -633,7 +633,7 @@ function handle_showtime_update(): void
 
 function handle_showtime_deactivate(): void
 {
-    auth_require_admin();
+    auth_require_admin_action();
 
     $showtimeId = positive_int_from_request($_POST['showtime_id'] ?? null);
     $targetStatus = admin_bool_from_post($_POST['target_status'] ?? 0);

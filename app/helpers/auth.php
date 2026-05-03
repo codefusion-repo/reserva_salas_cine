@@ -70,3 +70,13 @@ function auth_require_admin(): bool
 
     return true;
 }
+
+function auth_require_admin_action(): void
+{
+    auth_require_login();
+
+    if (!auth_is_admin()) {
+        http_response_code(403);
+        exit('Acceso denegado. Esta accion requiere rol administrador.');
+    }
+}
