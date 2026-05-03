@@ -74,24 +74,37 @@ URL equivalente:
 
 Importante: WSL no reemplaza la validación final en XAMPP. No se deben agregar dependencias, rutas, usuarios de base de datos o configuraciones que rompan la ejecución en XAMPP.
 
-## Alcance MVP
+## Estado funcional implementado
 
-El sistema debe permitir:
+La evidencia actual del repositorio implementa:
 
-- Registro e inicio de sesión de usuarios.
-- Control de sesión activa.
+- Registro, inicio de sesión, cierre de sesión y control de sesión activa.
 - Roles de usuario: administrador y usuario normal.
-- Visualización de cartelera.
-- Detalle de película con horarios disponibles.
+- Cartelera con películas activas desde base de datos.
+- Detalle de película con funciones activas por fecha y sala.
 - Selección de cantidad de entradas.
-- Selección de butacas.
-- Creación de reservas.
-- Visualización de reservas del usuario.
-- Cancelación de reservas.
-- Administración básica de salas, películas y funciones.
-- Validación para evitar reservar dos veces la misma butaca en la misma función.
-- Validación para evitar funciones traslapadas en la misma sala.
-- Pantallas “Próximamente” para confitería, socios y pago.
+- Selección de butacas por función.
+- Creación de reservas con butacas asociadas.
+- Visualización de reservas del usuario autenticado.
+- Cancelación de reservas propias.
+- Panel administrador para crear, editar y desactivar salas.
+- Panel administrador para crear, editar, activar y desactivar funciones.
+- Validación para evitar reservar una butaca ya ocupada en la misma función.
+- Validación para evitar funciones activas traslapadas en la misma sala.
+
+## Pendiente o futuro
+
+No está implementado como funcionalidad completa:
+
+- CRUD administrador de películas. Las películas existen como datos de cartelera.
+- Vista administrador de todas las reservas del sistema (#32).
+- Visual 404 dedicado (#22); existen respuestas y mensajes controlados básicos.
+- CSRF en formularios POST (#35), pendiente después de #55.
+- Autorización POST admin fail-closed (#55), pendiente antes de #35.
+- Checkout, pagos, cupones, confitería y socios funcionales.
+- Pago real, pasarela de pago, compra real de confitería y membresías reales.
+- Pantallas finales de Confitería/Socios/Pago. Hoy son navegación visual
+  placeholder o alcance futuro, no módulos funcionales completos.
 
 ## Fuera de alcance
 
@@ -99,6 +112,8 @@ Este MVP no incluye:
 
 - Pago real.
 - Pasarela de pago.
+- Checkout real.
+- Cupones funcionales.
 - APIs externas.
 - Frameworks como Laravel, React o Next.js.
 - Docker.
@@ -273,10 +288,11 @@ Responsabilidades principales:
 
 1. Administrador inicia sesión.
 2. Gestiona salas.
-3. Gestiona películas.
-4. Gestiona funciones.
-5. Revisa reservas del sistema.
-6. Evita crear funciones traslapadas en la misma sala.
+3. Gestiona funciones asociadas a películas existentes.
+4. Evita crear funciones traslapadas en la misma sala.
+
+Pendiente: el administrador todavía no cuenta con CRUD de películas ni vista de
+todas las reservas del sistema (#32).
 
 ## Validaciones obligatorias
 
@@ -336,6 +352,7 @@ Antes de entregar, comprobar en XAMPP:
 - [ ] Cancelación de reserva probada.
 - [ ] Panel admin probado.
 - [ ] Conflicto de funciones traslapadas probado.
+- [ ] Funcionalidades futuras no implementadas marcadas como N/A cuando aplique.
 - [ ] Errores PHP revisados en navegador o logs de Apache.
 - [ ] No hay contraseñas reales ni datos sensibles en Git.
 

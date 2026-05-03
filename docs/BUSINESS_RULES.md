@@ -6,6 +6,13 @@ Desarrollar una aplicación web que permita gestionar la reserva de salas en una
 institución educativa o empresa, usando autenticación de usuarios, base de
 datos y control de disponibilidad de horarios.
 
+## Adaptación Cine
+
+La adaptación aprobada por PM usa películas, funciones (`showtimes`) y
+`reservation_seats` para representar el flujo de cine, manteniendo la base
+académica de usuarios, salas, reservas, horarios, roles y validación de
+conflictos. Ver `docs/SCOPE.md`.
+
 ## Reglas Funcionales Obligatorias
 
 ### Autenticación

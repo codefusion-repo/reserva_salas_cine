@@ -32,7 +32,10 @@ Before delivery or readiness claims, validate:
 
 ## Manual Functional Validation
 
-When features exist, validate:
+Use this section as a short development-support summary. The full final XAMPP
+matrix is [`docs/XAMPP_FINAL_CHECKLIST.md`](XAMPP_FINAL_CHECKLIST.md).
+
+For the current cinema adaptation, validate:
 
 - [ ] User registration with name, email, and password.
 - [ ] Login.
@@ -40,18 +43,28 @@ When features exist, validate:
 - [ ] Active session control.
 - [ ] Normal user role.
 - [ ] Administrator role.
-- [ ] Admin-only room creation.
-- [ ] Admin-only room editing.
-- [ ] Admin-only room deletion.
-- [ ] Available rooms listing.
-- [ ] Reservation creation with room, date, start time, and end time.
-- [ ] User reservation list.
-- [ ] Reservation cancellation.
-- [ ] Conflict validation for overlapping reservations in the same room.
+- [ ] Cartelera listing from active movies.
+- [ ] Movie detail with active showtimes.
+- [ ] Showtime, ticket quantity, and seat selection.
+- [ ] Reservation creation with selected showtime and seats.
+- [ ] Seat conflict validation for active reservations in the same showtime.
+- [ ] User-only reservation list.
+- [ ] Reservation cancellation by the owning user.
+- [ ] Admin-only room creation, editing, and deactivation.
+- [ ] Admin-only showtime creation, editing, activation, and deactivation.
+- [ ] Overlap validation for active showtimes in the same room.
 - [ ] Required-field validation in PHP.
 - [ ] Invalid-hour validation in PHP.
 - [ ] Basic error handling.
-- [ ] Dynamic output escaped with `htmlspecialchars`.
+- [ ] Dynamic output escaped with `htmlspecialchars` or `e()`.
+
+Mark these as N/A until implemented:
+
+- [ ] Admin all-reservations view (#32).
+- [ ] Dedicated visual 404 (#22).
+- [ ] Checkout, pagos, cupones, confiteria, and socios.
+- [ ] CSRF on POST forms (#35), sequenced after #55.
+- [ ] Admin POST authorization fail-closed (#55), sequenced before #35.
 
 ## WSL Development Equivalent
 
