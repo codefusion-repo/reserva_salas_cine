@@ -6,6 +6,14 @@ $pageMessages = $messages;
 $movieTitle = $hasShowtime ? (string) ($showtime['movie_title'] ?? 'Pelicula') : 'Seleccion de butacas';
 $ticketTotal = reservation_total_amount($ticketCount);
 $confirmedSeatLabels = [];
+$hasReservationConfirmation = $hasShowtime && is_array($reservationConfirmation ?? null);
+$confirmationStatusClass = 'unknown';
+$confirmationStatusLabel = 'Sin estado';
+$confirmationSeatSummary = 'Sin butacas';
+$confirmationMovieLabel = '';
+$confirmationRoomLabel = '';
+$confirmationTotalLabel = reservation_format_money($ticketTotal);
+$pageTitle = $hasReservationConfirmation ? 'Reserva confirmada' : $movieTitle . ' - Seleccion de butacas';
 
 foreach ($errors as $error) {
     $pageMessages[] = [
@@ -14,10 +22,27 @@ foreach ($errors as $error) {
     ];
 }
 
-if (is_array($reservationConfirmation)) {
+if ($hasReservationConfirmation) {
     foreach ($reservationConfirmation['seats'] ?? [] as $seat) {
         $confirmedSeatLabels[] = reservation_seat_key((string) ($seat['seat_row'] ?? ''), (int) ($seat['seat_number'] ?? 0));
     }
+
+    $confirmationStatus = (string) ($reservationConfirmation['status'] ?? '');
+    $confirmationStatusClass = reservation_status_css_class($confirmationStatus);
+    $confirmationStatusLabel = reservation_status_label($confirmationStatus);
+    $confirmationSeatSummary = $confirmedSeatLabels !== [] ? implode(', ', $confirmedSeatLabels) : 'Sin butacas';
+    $confirmationFormatLabel = trim(
+        (string) ($showtime['format_label'] ?? '') . ' - ' . (string) ($showtime['language_label'] ?? ''),
+        ' -'
+    );
+    $confirmationMovieLabel = trim(
+        (string) ($showtime['movie_title'] ?? '') . ($confirmationFormatLabel !== '' ? ' - ' . $confirmationFormatLabel : '')
+    );
+    $confirmationRoomLabel = trim(
+        (string) ($showtime['room_name'] ?? '') . ' - ' . (string) ($showtime['room_location'] ?? ''),
+        ' -'
+    );
+    $confirmationTotalLabel = reservation_format_money((float) ($reservationConfirmation['total_amount'] ?? $ticketTotal));
 }
 ?>
 <!doctype html>
@@ -25,7 +50,7 @@ if (is_array($reservationConfirmation)) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= e($movieTitle) ?> - Seleccion de butacas</title>
+    <title><?= e($pageTitle) ?></title>
     <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body class="app-screen seat-selection-screen">
@@ -54,6 +79,53 @@ if (is_array($reservationConfirmation)) {
                 <h1>Funcion no encontrada</h1>
                 <p>La funcion solicitada no existe o no esta activa.</p>
                 <a class="movie-state-link" href="index.php?page=cartelera">Volver a cartelera</a>
+            </section>
+        <?php elseif ($hasReservationConfirmation): ?>
+            <section class="reservation-confirmation-panel" aria-labelledby="reservation-confirmation-title" aria-live="polite">
+                <div class="reservation-confirmation-head">
+                    <span class="reservation-confirmation-mark" aria-hidden="true"></span>
+                    <div class="reservation-confirmation-copy">
+                        <p class="eyebrow">Reserva creada</p>
+                        <h1 id="reservation-confirmation-title">Reserva confirmada</h1>
+                        <p>Guardamos tu reserva. Puedes revisarla desde tu perfil de reservas.</p>
+                    </div>
+                    <div class="reservation-confirmation-meta">
+                        <span class="reservation-confirmation-id">Reserva #<?= e($reservationConfirmation['id'] ?? '') ?></span>
+                        <span class="reservation-status-badge status-<?= e($confirmationStatusClass) ?>"><?= e($confirmationStatusLabel) ?></span>
+                    </div>
+                </div>
+
+                <dl class="reservation-confirmation-details">
+                    <div>
+                        <dt>Pelicula</dt>
+                        <dd><?= e($confirmationMovieLabel !== '' ? $confirmationMovieLabel : 'Sin pelicula') ?></dd>
+                    </div>
+                    <div>
+                        <dt>Funcion</dt>
+                        <dd><?= e($showtimeLabels['datetime'] !== '' ? $showtimeLabels['datetime'] : 'Sin horario') ?></dd>
+                    </div>
+                    <div>
+                        <dt>Sala</dt>
+                        <dd><?= e($confirmationRoomLabel !== '' ? $confirmationRoomLabel : 'Sin sala') ?></dd>
+                    </div>
+                    <div>
+                        <dt>Butacas</dt>
+                        <dd><?= e($confirmationSeatSummary) ?></dd>
+                    </div>
+                    <div>
+                        <dt>Total</dt>
+                        <dd><?= e($confirmationTotalLabel) ?></dd>
+                    </div>
+                    <div>
+                        <dt>Estado</dt>
+                        <dd><?= e($confirmationStatusLabel) ?></dd>
+                    </div>
+                </dl>
+
+                <div class="reservation-confirmation-actions" aria-label="Acciones de reserva">
+                    <a class="reservation-confirmation-action reservation-confirmation-action-primary" href="index.php?page=my_reservations">Ver mis reservas</a>
+                    <a class="reservation-confirmation-action reservation-confirmation-action-secondary" href="index.php?page=cartelera">Volver a cartelera</a>
+                </div>
             </section>
         <?php else: ?>
             <div class="seat-title-row">
@@ -88,13 +160,6 @@ if (is_array($reservationConfirmation)) {
                         <small>*Cargo por servicio incluido</small>
                     </div>
 
-                    <?php if (is_array($reservationConfirmation)): ?>
-                        <div class="seat-confirmation" aria-live="polite">
-                            <h2>Reserva creada</h2>
-                            <p>ID #<?= e($reservationConfirmation['id'] ?? '') ?></p>
-                            <span><?= e(implode(', ', $confirmedSeatLabels)) ?></span>
-                        </div>
-                    <?php endif; ?>
                 </aside>
 
                 <section class="seat-map-panel" aria-labelledby="seat-map-title">
