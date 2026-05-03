@@ -40,6 +40,8 @@ cinema reservation flow:
 
 The adaptation must not erase the academic functional base: rooms, users,
 reservations, dates, times, roles, and conflict validation remain mandatory.
+In the current cinema adaptation, room/date/time selection is represented
+through showtimes/functions tied to a movie and room.
 
 ## Visual Scope
 
