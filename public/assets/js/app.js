@@ -163,3 +163,13 @@ document.querySelectorAll('[data-cancel-reservation]').forEach((form) => {
         }
     });
 });
+
+document.querySelectorAll('[data-confirm-action]').forEach((button) => {
+    button.addEventListener('click', (event) => {
+        const message = button.dataset.confirmAction || 'Confirmar accion?';
+
+        if (!window.confirm(message)) {
+            event.preventDefault();
+        }
+    });
+});
