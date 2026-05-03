@@ -33,6 +33,36 @@ if ($action === 'cancel_reservation' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+if ($action === 'create_room' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_room_create();
+    exit;
+}
+
+if ($action === 'update_room' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_room_update();
+    exit;
+}
+
+if ($action === 'deactivate_room' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_room_deactivate();
+    exit;
+}
+
+if ($action === 'create_showtime' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_showtime_create();
+    exit;
+}
+
+if ($action === 'update_showtime' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_showtime_update();
+    exit;
+}
+
+if ($action === 'deactivate_showtime' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_showtime_deactivate();
+    exit;
+}
+
 if ($page === null) {
     $page = auth_check() ? 'dashboard' : 'login';
 }

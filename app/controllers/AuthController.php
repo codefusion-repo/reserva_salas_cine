@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../helpers/auth.php';
 require_once __DIR__ . '/../helpers/assets.php';
 require_once __DIR__ . '/../helpers/security.php';
+require_once __DIR__ . '/../models/Admin.php';
 require_once __DIR__ . '/../models/Movie.php';
 require_once __DIR__ . '/../models/Reservation.php';
 require_once __DIR__ . '/../models/User.php';
@@ -425,8 +426,445 @@ function render_admin_panel(): void
 
     $user = current_user();
     $messages = flash_get();
+    $rooms = [];
+    $activeRooms = [];
+    $activeMovies = [];
+    $showtimes = [];
+    $adminLoadError = false;
+
+    try {
+        $rooms = admin_rooms_all();
+        $activeRooms = admin_rooms_active_all();
+        $activeMovies = admin_movies_active_all();
+        $showtimes = admin_showtimes_all();
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        http_response_code(500);
+        $adminLoadError = true;
+    }
 
     require __DIR__ . '/../views/admin.php';
+}
+
+function handle_room_create(): void
+{
+    auth_require_admin();
+
+    [$payload, $errors] = admin_room_payload_from_post();
+
+    if ($errors === []) {
+        try {
+            if (admin_room_name_exists($payload['name'])) {
+                $errors[] = 'Ya existe una sala con ese nombre.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar el nombre de la sala.';
+        }
+    }
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        redirect_to('index.php?page=admin#admin-rooms');
+    }
+
+    try {
+        admin_room_create($payload['name'], $payload['location'], $payload['capacity']);
+        flash_set('success', 'Sala creada correctamente.');
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo crear la sala. Revisa que el nombre no este duplicado.');
+    }
+
+    redirect_to('index.php?page=admin#admin-rooms');
+}
+
+function handle_room_update(): void
+{
+    auth_require_admin();
+
+    $roomId = positive_int_from_request($_POST['room_id'] ?? null);
+    [$payload, $errors] = admin_room_payload_from_post();
+
+    if ($roomId === null) {
+        $errors[] = 'Selecciona una sala valida para editar.';
+    }
+
+    if ($errors === [] && $roomId !== null) {
+        try {
+            if (admin_room_find_by_id((int) $roomId) === null) {
+                $errors[] = 'La sala seleccionada no existe.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar la sala seleccionada.';
+        }
+    }
+
+    if ($errors === []) {
+        try {
+            if (admin_room_name_exists($payload['name'], (int) $roomId)) {
+                $errors[] = 'Ya existe otra sala con ese nombre.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar el nombre de la sala.';
+        }
+    }
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        redirect_to('index.php?page=admin#admin-rooms');
+    }
+
+    try {
+        admin_room_update((int) $roomId, $payload['name'], $payload['location'], $payload['capacity']);
+        flash_set('success', 'Sala actualizada correctamente.');
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo actualizar la sala. Revisa que el nombre no este duplicado.');
+    }
+
+    redirect_to('index.php?page=admin#admin-rooms');
+}
+
+function handle_room_deactivate(): void
+{
+    auth_require_admin();
+
+    $roomId = positive_int_from_request($_POST['room_id'] ?? null);
+
+    if ($roomId === null) {
+        flash_set('error', 'Selecciona una sala valida para desactivar.');
+        redirect_to('index.php?page=admin#admin-rooms');
+    }
+
+    try {
+        if (admin_room_find_by_id((int) $roomId) === null) {
+            flash_set('error', 'La sala seleccionada no existe.');
+        } else {
+            admin_room_deactivate((int) $roomId);
+            flash_set('success', 'Sala desactivada correctamente.');
+        }
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo desactivar la sala en este momento.');
+    }
+
+    redirect_to('index.php?page=admin#admin-rooms');
+}
+
+function handle_showtime_create(): void
+{
+    auth_require_admin();
+
+    [$payload, $errors] = admin_showtime_payload_from_post(null);
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        redirect_to('index.php?page=admin#admin-showtimes');
+    }
+
+    try {
+        admin_showtime_create(
+            $payload['movie_id'],
+            $payload['room_id'],
+            $payload['starts_at'],
+            $payload['ends_at'],
+            $payload['format_label'],
+            $payload['language_label']
+        );
+        flash_set('success', 'Funcion creada correctamente.');
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo crear la funcion en este momento.');
+    }
+
+    redirect_to('index.php?page=admin#admin-showtimes');
+}
+
+function handle_showtime_update(): void
+{
+    auth_require_admin();
+
+    $showtimeId = positive_int_from_request($_POST['showtime_id'] ?? null);
+    $errors = [];
+
+    if ($showtimeId === null) {
+        $errors[] = 'Selecciona una funcion valida para editar.';
+    } else {
+        try {
+            if (admin_showtime_find_by_id((int) $showtimeId) === null) {
+                $errors[] = 'La funcion seleccionada no existe.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar la funcion seleccionada.';
+        }
+    }
+
+    [$payload, $payloadErrors] = admin_showtime_payload_from_post($showtimeId);
+    $errors = array_merge($errors, $payloadErrors);
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        redirect_to('index.php?page=admin#admin-showtimes');
+    }
+
+    try {
+        admin_showtime_update(
+            (int) $showtimeId,
+            $payload['movie_id'],
+            $payload['room_id'],
+            $payload['starts_at'],
+            $payload['ends_at'],
+            $payload['format_label'],
+            $payload['language_label'],
+            $payload['is_active']
+        );
+        flash_set('success', 'Funcion actualizada correctamente.');
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo actualizar la funcion en este momento.');
+    }
+
+    redirect_to('index.php?page=admin#admin-showtimes');
+}
+
+function handle_showtime_deactivate(): void
+{
+    auth_require_admin();
+
+    $showtimeId = positive_int_from_request($_POST['showtime_id'] ?? null);
+    $targetStatus = admin_bool_from_post($_POST['target_status'] ?? 0);
+    $errors = [];
+
+    if ($showtimeId === null) {
+        $errors[] = 'Selecciona una funcion valida para cambiar su estado.';
+    }
+
+    $showtime = null;
+
+    if ($showtimeId !== null) {
+        try {
+            $showtime = admin_showtime_find_by_id((int) $showtimeId);
+
+            if ($showtime === null) {
+                $errors[] = 'La funcion seleccionada no existe.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar la funcion seleccionada.';
+        }
+    }
+
+    if ($targetStatus && $showtime !== null) {
+        if ((int) ($showtime['movie_is_active'] ?? 0) !== 1) {
+            $errors[] = 'No se puede activar una funcion con pelicula inactiva.';
+        }
+
+        if ((int) ($showtime['room_is_active'] ?? 0) !== 1) {
+            $errors[] = 'No se puede activar una funcion con sala inactiva.';
+        }
+
+        try {
+            if (
+                admin_showtime_has_overlap(
+                    (int) $showtime['room_id'],
+                    (string) $showtime['starts_at'],
+                    (string) $showtime['ends_at'],
+                    (int) $showtime['id']
+                )
+            ) {
+                $errors[] = 'La funcion se traslapa con otra funcion activa en la misma sala.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar el traslape de horarios.';
+        }
+    }
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        redirect_to('index.php?page=admin#admin-showtimes');
+    }
+
+    try {
+        if ($targetStatus) {
+            admin_showtime_set_active((int) $showtimeId, true);
+            flash_set('success', 'Funcion activada correctamente.');
+        } else {
+            admin_showtime_deactivate((int) $showtimeId);
+            flash_set('success', 'Funcion desactivada correctamente.');
+        }
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo cambiar el estado de la funcion.');
+    }
+
+    redirect_to('index.php?page=admin#admin-showtimes');
+}
+
+function admin_room_payload_from_post(): array
+{
+    $name = trim((string) ($_POST['name'] ?? ''));
+    $location = trim((string) ($_POST['location'] ?? ''));
+    $capacity = positive_int_from_request($_POST['capacity'] ?? null);
+    $errors = [];
+
+    if ($name === '') {
+        $errors[] = 'El nombre de la sala es obligatorio.';
+    }
+
+    if ($location === '') {
+        $errors[] = 'La ubicacion de la sala es obligatoria.';
+    }
+
+    if ($capacity === null) {
+        $errors[] = 'La capacidad debe ser un numero entero positivo.';
+    }
+
+    return [
+        [
+            'name' => $name,
+            'location' => $location,
+            'capacity' => $capacity ?? 0,
+        ],
+        $errors,
+    ];
+}
+
+function admin_showtime_payload_from_post(?int $excludeShowtimeId): array
+{
+    $movieId = positive_int_from_request($_POST['movie_id'] ?? null);
+    $roomId = positive_int_from_request($_POST['room_id'] ?? null);
+    $startsAt = admin_datetime_from_post($_POST['starts_at'] ?? null);
+    $endsAt = admin_datetime_from_post($_POST['ends_at'] ?? null);
+    $formatLabel = admin_trimmed_label($_POST['format_label'] ?? '', '2D');
+    $languageLabel = admin_trimmed_label($_POST['language_label'] ?? '', 'Subtitulada');
+    $isActive = admin_bool_from_post($_POST['is_active'] ?? 1);
+    $errors = [];
+
+    if ($movieId === null) {
+        $errors[] = 'Selecciona una pelicula activa.';
+    }
+
+    if ($roomId === null) {
+        $errors[] = 'Selecciona una sala activa.';
+    }
+
+    if ($startsAt === null) {
+        $errors[] = 'Ingresa una fecha y hora de inicio valida.';
+    }
+
+    if ($endsAt === null) {
+        $errors[] = 'Ingresa una fecha y hora de termino valida.';
+    }
+
+    if ($movieId !== null) {
+        try {
+            if (admin_movie_active_find_by_id($movieId) === null) {
+                $errors[] = 'La pelicula seleccionada no existe o no esta activa.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar la pelicula seleccionada.';
+        }
+    }
+
+    if ($roomId !== null) {
+        try {
+            if (admin_room_active_find_by_id($roomId) === null) {
+                $errors[] = 'La sala seleccionada no existe o no esta activa.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar la sala seleccionada.';
+        }
+    }
+
+    if ($startsAt !== null && $endsAt !== null) {
+        if (new DateTimeImmutable($endsAt) <= new DateTimeImmutable($startsAt)) {
+            $errors[] = 'La hora de termino debe ser posterior a la hora de inicio.';
+        }
+    }
+
+    if ($errors === [] && $isActive && $roomId !== null && $startsAt !== null && $endsAt !== null) {
+        try {
+            if (admin_showtime_has_overlap($roomId, $startsAt, $endsAt, $excludeShowtimeId)) {
+                $errors[] = 'La funcion se traslapa con otra funcion activa en la misma sala.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar el traslape de horarios.';
+        }
+    }
+
+    return [
+        [
+            'movie_id' => $movieId ?? 0,
+            'room_id' => $roomId ?? 0,
+            'starts_at' => $startsAt ?? '',
+            'ends_at' => $endsAt ?? '',
+            'format_label' => $formatLabel,
+            'language_label' => $languageLabel,
+            'is_active' => $isActive,
+        ],
+        $errors,
+    ];
+}
+
+function admin_datetime_from_post(mixed $value): ?string
+{
+    if (!is_scalar($value)) {
+        return null;
+    }
+
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return null;
+    }
+
+    $formats = ['Y-m-d\TH:i', 'Y-m-d H:i:s', 'Y-m-d H:i'];
+
+    foreach ($formats as $format) {
+        $date = DateTimeImmutable::createFromFormat('!' . $format, $value);
+        $errors = DateTimeImmutable::getLastErrors();
+
+        if ($date instanceof DateTimeImmutable && ($errors === false || ((int) $errors['warning_count'] === 0 && (int) $errors['error_count'] === 0))) {
+            return $date->format('Y-m-d H:i:s');
+        }
+    }
+
+    return null;
+}
+
+function admin_trimmed_label(mixed $value, string $fallback): string
+{
+    if (!is_scalar($value)) {
+        return $fallback;
+    }
+
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return $fallback;
+    }
+
+    return mb_substr($value, 0, 40);
+}
+
+function admin_bool_from_post(mixed $value): bool
+{
+    return is_scalar($value) && (string) $value === '1';
+}
+
+function admin_flash_errors(array $errors): void
+{
+    foreach ($errors as $error) {
+        flash_set('error', (string) $error);
+    }
 }
 
 function handle_login(): void
