@@ -61,13 +61,27 @@ Before local implementation edits, run and report:
 Use a `work/*` branch when authorized and possible. If the working tree has
 unrelated changes, stop and report before editing.
 
+### Git / gh Boundary
+
+Do not assume local git access is available. Do not invent git output, branch
+state, diffs, commits, or clean-tree status.
+
+`gh` may be used for scoped issue/PR inspection. `gh` availability does not
+replace local git evidence and does not authorize GitHub writes by itself.
+GitHub writes through `gh` require explicit current PM authorization naming the
+target action and scope.
+
 ## Write Boundaries
 
 Browser chats are read-only for GitHub writes by default.
 
 Execution modes are task-specific and must be declared in the routing packet,
-issue, or PM prompt:
+issue, or PM prompt. The default mode is `review-only` unless the current PM
+prompt or issue says otherwise.
 
+- `review-only` allows inspection, comparison, drafting, and reporting only.
+  It does not allow file edits, commits, push, PRs, GitHub comments, labels,
+  issue closure, tags, releases, or other writes.
 - `local implementation only` allows scoped local edits and validation, but no
   commit, push, PR, GitHub comment, labels, merge, issue closure, release, or
   tag.
@@ -78,6 +92,23 @@ issue, or PM prompt:
 
 No GitHub write is allowed without explicit scoped PM authorization in the
 current task.
+
+Use:
+
+- `needs_context` when required repo, issue, PR, branch, validation, or source
+  evidence is missing.
+- `bootstrap_required` when target workflow, source-of-truth, validation, or
+  write-boundary baseline is missing.
+- `routing_required` when the task belongs to another repo, role, issue, or
+  execution lane.
+- `needs_pm_decision` when reviewed evidence shows a material decision only the
+  PM can make.
+- `blocked` when a conflict, forbidden action, missing approval, or validation
+  blocker prevents safe execution.
+
+Routing packets, handoff packets, context refresh prompts, `continue`, tool
+availability, and role selection are not source of truth and do not authorize
+writes.
 
 Do not modify PHP functional files, `database/schema.sql`,
 `database/seed.sql`, mockup images, or `docs/functional/Trabajo 3 web.pdf`
@@ -113,6 +144,35 @@ Security rules:
 - Do not commit secrets, local DB credentials, dumps with personal data, XAMPP
   config, or runtime uploads.
 
+### Review Depth
+
+When reviewing implementation, inspect actual changed files and diffs when
+available. Map findings to issue scope, acceptance criteria, intended behavior,
+out-of-scope boundaries, error paths, edge cases, validation evidence,
+documentation impact, and remaining risks.
+
+Security/privacy review must check relevant changed surfaces for secrets,
+credentials, tokens, personal data, auth/authz, roles, permissions, payment or
+data-integrity flows, sensitive logging, local/cloud storage, third-party SDKs,
+dependency risk, and unsafe placeholders.
+
+Do not cite OWASP as one generic fixed checklist. Use the OWASP source that
+matches the reviewed surface and verify current authoritative OWASP material
+before hardcoding exact versions, lists, categories, controls, or mappings. If
+not verified, mark OWASP mapping as `not_verified`.
+
+Clean-code, redundancy, and architecture review should check duplicated logic,
+dead code, confusing naming, mixed responsibilities, unnecessary abstraction,
+hidden side effects, broad unrelated refactors, module boundaries, dependency
+direction, and workflow/source hierarchy impact.
+
+## Code Commenting Guidance
+
+Add or preserve comments only for non-obvious business rules,
+security-sensitive assumptions, tricky integrations, concurrency/state edge
+cases, architecture boundaries, or justified workarounds with reason and exit
+criteria. Avoid comments that restate obvious code.
+
 ## UI Rules
 
 - Approved mockups in `docs/mockups/approved/` are visual source of truth.
@@ -136,7 +196,7 @@ readiness requires Windows + XAMPP validation.
 Completion reports must include:
 
 1. Preflight result.
-2. Project OS reference files consulted.
+2. Project OS or target source files consulted when applicable.
 3. Source files used.
 4. Branch and git status.
 5. Files changed.
