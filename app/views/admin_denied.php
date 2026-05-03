@@ -10,13 +10,10 @@ declare(strict_types=1);
     <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body class="app-screen">
-    <header class="topbar">
-        <a class="brand" href="index.php?page=dashboard">ES Cine</a>
-        <nav class="topnav" aria-label="Navegacion principal">
-            <a href="index.php?page=dashboard">Panel</a>
-            <a href="index.php?action=logout">Cerrar sesion</a>
-        </nav>
-    </header>
+    <?php
+    $activeNav = '';
+    require __DIR__ . '/partials/header.php';
+    ?>
 
     <main class="app-shell">
         <section class="status-card protected-card">

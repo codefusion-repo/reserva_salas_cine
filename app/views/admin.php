@@ -1,8 +1,6 @@
 <?php
 declare(strict_types=1);
 
-$userName = (string) ($user['name'] ?? 'Administrador');
-$firstName = trim(explode(' ', $userName)[0] ?? $userName);
 $activeRoomCount = 0;
 $activeShowtimeCount = 0;
 
@@ -27,31 +25,10 @@ foreach ($showtimes as $showtime) {
     <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body class="app-screen admin-screen">
-    <header class="topbar cinema-topbar">
-        <a class="brand cinema-brand" href="index.php?page=cartelera" aria-label="ES Cine cartelera">
-            <span class="brand-person" aria-hidden="true"></span>
-            <span class="brand-film"><span>ES</span> <em>Cine</em></span>
-        </a>
-
-        <nav class="topnav cinema-nav" aria-label="Navegacion principal">
-            <a href="index.php?page=cartelera">Cartelera</a>
-            <a href="index.php?page=my_reservations">Mis reservas</a>
-            <a class="is-active" href="index.php?page=admin">Admin</a>
-        </nav>
-
-        <div class="user-menu">
-            <button class="user-pill" type="button" aria-haspopup="true">
-                <span class="user-avatar" aria-hidden="true"></span>
-                <span>Hola, <?= e($firstName !== '' ? $firstName : 'Admin') ?>!</span>
-                <span class="user-caret" aria-hidden="true"></span>
-            </button>
-            <div class="user-dropdown">
-                <span><?= e($user['email'] ?? '') ?></span>
-                <a href="index.php?page=cartelera">Cartelera</a>
-                <a href="index.php?action=logout">Cerrar sesion</a>
-            </div>
-        </div>
-    </header>
+    <?php
+    $activeNav = 'admin';
+    require __DIR__ . '/partials/header.php';
+    ?>
 
     <main class="admin-shell">
         <?php if ($messages !== []): ?>

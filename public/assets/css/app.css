@@ -361,6 +361,7 @@ p {
 }
 
 .topnav a,
+.topnav .nav-placeholder,
 .inline-action {
     display: inline-flex;
     min-height: 42px;
@@ -374,18 +375,22 @@ p {
     text-transform: uppercase;
 }
 
-.topnav a {
+.topnav a,
+.topnav .nav-placeholder {
     background: rgba(255, 255, 255, 0.12);
 }
 
 .topnav a:hover,
 .topnav a:focus,
+.topnav a.is-active,
 .inline-action:hover,
 .inline-action:focus {
     background: var(--accent-dark);
 }
 
-.cinema-nav a {
+.cinema-nav a,
+.cinema-nav .nav-placeholder {
+    position: relative;
     padding: 0;
     border-radius: 0;
     background: transparent;
@@ -396,11 +401,44 @@ p {
     line-height: 1;
 }
 
+.cinema-nav a::after {
+    position: absolute;
+    right: 0;
+    bottom: -12px;
+    left: 0;
+    height: 4px;
+    border-radius: 999px;
+    background: #ffffff;
+    content: "";
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 160ms ease;
+}
+
 .cinema-nav a:hover,
 .cinema-nav a:focus,
 .cinema-nav a.is-active {
     background: transparent;
     color: #ffe9ee;
+}
+
+.cinema-nav a:hover::after,
+.cinema-nav a:focus::after,
+.cinema-nav a.is-active::after {
+    transform: scaleX(1);
+}
+
+.cinema-nav a:focus-visible,
+.user-pill:focus-visible,
+.user-dropdown a:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, 0.9);
+    outline-offset: 5px;
+}
+
+.cinema-nav .nav-placeholder {
+    color: rgba(255, 255, 255, 0.62);
+    cursor: default;
+    user-select: none;
 }
 
 .user-menu {
@@ -504,6 +542,11 @@ p {
     color: #ffffff;
     font-weight: 800;
     text-transform: uppercase;
+}
+
+.user-dropdown a:hover,
+.user-dropdown a:focus {
+    background: var(--accent-dark);
 }
 
 .app-shell {
@@ -2305,7 +2348,8 @@ p {
         width: 100%;
     }
 
-    .cinema-nav a {
+    .cinema-nav a,
+    .cinema-nav .nav-placeholder {
         min-height: 32px;
         font-size: 0.92rem;
     }
@@ -2549,7 +2593,8 @@ p {
         flex-wrap: wrap;
     }
 
-    .topnav a {
+    .topnav a,
+    .topnav .nav-placeholder {
         flex: 1 1 auto;
     }
 
