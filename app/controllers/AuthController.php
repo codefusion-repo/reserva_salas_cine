@@ -60,6 +60,8 @@ function render_dashboard(): void
 
 function render_movie_detail(): void
 {
+    auth_require_login();
+
     $movie = null;
     $showtimeDays = [];
     $movieLoadError = false;
@@ -86,7 +88,6 @@ function render_movie_detail(): void
         }
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
-        auth_require_login();
 
         $user = current_user();
         $messages = flash_get();
@@ -96,8 +97,6 @@ function render_movie_detail(): void
         require __DIR__ . '/../views/movie_detail.php';
         return;
     }
-
-    auth_require_login();
 
     $user = current_user();
     $messages = flash_get();
@@ -115,6 +114,8 @@ function render_movie_detail(): void
 
 function render_seat_selection(): void
 {
+    auth_require_login();
+
     $showtimeId = positive_int_from_request($_GET['showtime_id'] ?? null);
     $ticketCount = reservation_ticket_count_from_request($_GET['tickets'] ?? null);
     $reservationId = positive_int_from_request($_GET['reservation_id'] ?? null);
@@ -143,13 +144,10 @@ function render_seat_selection(): void
         }
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
-        auth_require_login();
 
         render_seat_selection_view($showtimeId, $ticketCount, [], $errors, $reservationId);
         return;
     }
-
-    auth_require_login();
 
     render_seat_selection_view($showtimeId, $ticketCount, [], $errors, $reservationId);
 }
