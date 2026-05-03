@@ -25,6 +25,21 @@ function render_auth_page(string $mode, array $errors = [], array $old = []): vo
     require __DIR__ . '/../views/auth.php';
 }
 
+function render_error_page(string $heading, string $copy, int $statusCode = 404, array $messages = []): void
+{
+    http_response_code($statusCode);
+
+    $user = current_user();
+    $statusLabel = (string) $statusCode;
+
+    require __DIR__ . '/../views/error.php';
+}
+
+function render_not_found_page(string $heading, string $copy, array $messages = []): void
+{
+    render_error_page($heading, $copy, 404, $messages);
+}
+
 function render_dashboard(): void
 {
     auth_require_login();
@@ -45,10 +60,6 @@ function render_dashboard(): void
 
 function render_movie_detail(): void
 {
-    auth_require_login();
-
-    $user = current_user();
-    $messages = flash_get();
     $movie = null;
     $showtimeDays = [];
     $movieLoadError = false;
@@ -56,10 +67,10 @@ function render_movie_detail(): void
     $movieId = movie_id_from_request($_GET['id'] ?? null);
 
     if ($movieId === null) {
-        http_response_code(404);
-        $movieNotFound = true;
-
-        require __DIR__ . '/../views/movie_detail.php';
+        render_not_found_page(
+            'Pelicula no encontrada',
+            'La pelicula solicitada no existe o no esta activa.'
+        );
         return;
     }
 
@@ -67,11 +78,32 @@ function render_movie_detail(): void
         $movie = movie_find_active_by_id($movieId);
 
         if ($movie === null) {
-            http_response_code(404);
-            $movieNotFound = true;
-        } else {
-            $showtimeDays = movie_showtimes_by_day(movie_active_showtimes($movieId));
+            render_not_found_page(
+                'Pelicula no encontrada',
+                'La pelicula solicitada no existe o no esta activa.'
+            );
+            return;
         }
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        auth_require_login();
+
+        $user = current_user();
+        $messages = flash_get();
+        http_response_code(500);
+        $movieLoadError = true;
+
+        require __DIR__ . '/../views/movie_detail.php';
+        return;
+    }
+
+    auth_require_login();
+
+    $user = current_user();
+    $messages = flash_get();
+
+    try {
+        $showtimeDays = movie_showtimes_by_day(movie_active_showtimes($movieId));
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
         http_response_code(500);
@@ -83,17 +115,41 @@ function render_movie_detail(): void
 
 function render_seat_selection(): void
 {
-    auth_require_login();
-
     $showtimeId = positive_int_from_request($_GET['showtime_id'] ?? null);
     $ticketCount = reservation_ticket_count_from_request($_GET['tickets'] ?? null);
     $reservationId = positive_int_from_request($_GET['reservation_id'] ?? null);
     $errors = [];
 
+    if ($showtimeId === null) {
+        render_not_found_page(
+            'Funcion no encontrada',
+            'La funcion solicitada no existe o no esta activa.'
+        );
+        return;
+    }
+
     if ($ticketCount === null) {
         $ticketCount = 1;
         $errors[] = 'Selecciona al menos una entrada valida.';
     }
+
+    try {
+        if (reservation_showtime_find_active($showtimeId) === null) {
+            render_not_found_page(
+                'Funcion no encontrada',
+                'La funcion solicitada no existe o no esta activa.'
+            );
+            return;
+        }
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        auth_require_login();
+
+        render_seat_selection_view($showtimeId, $ticketCount, [], $errors, $reservationId);
+        return;
+    }
+
+    auth_require_login();
 
     render_seat_selection_view($showtimeId, $ticketCount, [], $errors, $reservationId);
 }
@@ -256,15 +312,23 @@ function render_seat_selection_view(?int $showtimeId, int $ticketCount, array $s
     ];
 
     if ($showtimeId === null) {
-        http_response_code(404);
-        $showtimeNotFound = true;
+        render_not_found_page(
+            'Funcion no encontrada',
+            'La funcion solicitada no existe o no esta activa.',
+            $messages
+        );
+        return;
     } else {
         try {
             $showtime = reservation_showtime_find_active($showtimeId);
 
             if ($showtime === null) {
-                http_response_code(404);
-                $showtimeNotFound = true;
+                render_not_found_page(
+                    'Funcion no encontrada',
+                    'La funcion solicitada no existe o no esta activa.',
+                    $messages
+                );
+                return;
             } else {
                 $seatMap = reservation_generate_seat_map((int) $showtime['room_capacity']);
                 $occupiedSeats = reservation_occupied_seats_for_showtime((int) $showtime['id']);

@@ -99,7 +99,9 @@ switch ($page) {
         break;
 
     default:
-        http_response_code(404);
-        render_auth_page('login', ['Pagina no encontrada.']);
+        render_not_found_page(
+            'Pagina no encontrada',
+            'La ruta solicitada no existe o ya no esta disponible.'
+        );
         break;
 }
