@@ -1,8 +1,6 @@
 <?php
 declare(strict_types=1);
 
-$userName = (string) ($user['name'] ?? 'Usuario');
-$firstName = trim(explode(' ', $userName)[0] ?? $userName);
 $hasShowtime = is_array($showtime);
 $pageMessages = $messages;
 $movieTitle = $hasShowtime ? (string) ($showtime['movie_title'] ?? 'Pelicula') : 'Seleccion de butacas';
@@ -31,35 +29,10 @@ if (is_array($reservationConfirmation)) {
     <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body class="app-screen seat-selection-screen">
-    <header class="topbar cinema-topbar">
-        <a class="brand cinema-brand" href="index.php?page=cartelera" aria-label="ES Cine cartelera">
-            <span class="brand-person" aria-hidden="true"></span>
-            <span class="brand-film"><span>ES</span> <em>Cine</em></span>
-        </a>
-
-        <nav class="topnav cinema-nav" aria-label="Navegacion principal">
-            <a class="is-active" href="index.php?page=cartelera">Cartelera</a>
-            <a href="index.php?page=my_reservations">Mis reservas</a>
-            <a href="index.php?page=cartelera" aria-disabled="true">Confiteria</a>
-            <a href="index.php?page=cartelera" aria-disabled="true">¡Hazte socio!</a>
-            <?php if (($user['role'] ?? '') === 'admin'): ?>
-                <a href="index.php?page=admin">Admin</a>
-            <?php endif; ?>
-        </nav>
-
-        <div class="user-menu">
-            <button class="user-pill" type="button" aria-haspopup="true">
-                <span class="user-avatar" aria-hidden="true"></span>
-                <span>Hola, <?= e($firstName !== '' ? $firstName : 'Usuario') ?>!</span>
-                <span class="user-caret" aria-hidden="true"></span>
-            </button>
-            <div class="user-dropdown">
-                <span><?= e($user['email'] ?? '') ?></span>
-                <a href="index.php?page=my_reservations">Mis reservas</a>
-                <a href="index.php?action=logout">Cerrar sesion</a>
-            </div>
-        </div>
-    </header>
+    <?php
+    $activeNav = 'cartelera';
+    require __DIR__ . '/partials/header.php';
+    ?>
 
     <main class="seat-selection-shell">
         <?php if ($pageMessages !== []): ?>
