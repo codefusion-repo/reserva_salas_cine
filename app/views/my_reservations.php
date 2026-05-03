@@ -141,6 +141,7 @@ $firstName = trim(explode(' ', $userName)[0] ?? $userName);
 
                         <?php if (reservation_can_cancel($reservation)): ?>
                             <form class="reservation-actions" method="post" action="index.php?action=cancel_reservation" data-cancel-reservation>
+                                <?= csrf_token_field() ?>
                                 <input type="hidden" name="reservation_id" value="<?= e($reservation['id'] ?? '') ?>">
                                 <button class="reservation-cancel" type="submit">Cancelar reserva</button>
                             </form>

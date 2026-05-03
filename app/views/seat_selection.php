@@ -140,6 +140,7 @@ if (is_array($reservationConfirmation)) {
                         data-seat-form
                         data-ticket-count="<?= e($ticketCount) ?>"
                     >
+                        <?= csrf_token_field() ?>
                         <input type="hidden" name="showtime_id" value="<?= e($showtime['id'] ?? '') ?>">
                         <input type="hidden" name="ticket_count" value="<?= e($ticketCount) ?>">
 
