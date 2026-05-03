@@ -14,6 +14,14 @@
     --ok: #0f766e;
     --error: #b42318;
     --shadow: rgba(0, 0, 0, 0.24);
+    --font-xs: 0.72rem;
+    --font-sm: 0.86rem;
+    --font-md: 1rem;
+    --font-lg: 1.22rem;
+    --font-xl: 1.42rem;
+    --font-2xl: 2.25rem;
+    --font-3xl: 3.15rem;
+    --font-display: 3.75rem;
 }
 
 * {
@@ -148,7 +156,7 @@ p {
     border-radius: 12px;
     background: #f0f1f4;
     color: #142435;
-    font-size: clamp(1.25rem, 2.6vw, 1.7rem);
+    font-size: var(--font-xl);
     font-weight: 800;
     text-align: center;
     text-transform: uppercase;
@@ -173,7 +181,7 @@ p {
     background: #eef3f8;
     color: #10202d;
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 0.95rem;
+    font-size: var(--font-sm);
     font-weight: 700;
 }
 
@@ -199,7 +207,7 @@ p {
 
 .form-field label {
     color: #ffffff;
-    font-size: 1.45rem;
+    font-size: var(--font-lg);
     font-weight: 800;
     line-height: 1;
     text-transform: uppercase;
@@ -214,7 +222,7 @@ p {
     outline: 0;
     background: var(--cinema-input);
     color: #ffffff;
-    font: 1.1rem Arial, Helvetica, sans-serif;
+    font: var(--font-md) Arial, Helvetica, sans-serif;
 }
 
 .form-field input:focus {
@@ -231,7 +239,7 @@ p {
     background: #6c7c89;
     color: #f7f9fb;
     cursor: pointer;
-    font-size: 1.55rem;
+    font-size: var(--font-xl);
     font-weight: 800;
     text-transform: uppercase;
 }
@@ -382,7 +390,7 @@ p {
     border-radius: 0;
     background: transparent;
     color: #ffffff;
-    font-size: 1.55rem;
+    font-size: var(--font-xl);
     font-weight: 900;
     letter-spacing: 0;
     line-height: 1;
@@ -412,7 +420,7 @@ p {
     color: #ffffff;
     cursor: pointer;
     font: inherit;
-    font-size: 1.45rem;
+    font-size: var(--font-xl);
     font-weight: 900;
     letter-spacing: 0;
     line-height: 1;
@@ -515,7 +523,7 @@ p {
 
 .panel-hero h1 {
     margin-bottom: 8px;
-    font-size: clamp(2.1rem, 6vw, 4.25rem);
+    font-size: 3rem;
     line-height: 1;
 }
 
@@ -602,7 +610,7 @@ p {
 .cartelera-title {
     margin: 0 0 56px;
     color: #ffffff;
-    font-size: clamp(3rem, 5vw, 4.7rem);
+    font-size: var(--font-display);
     font-weight: 900;
     letter-spacing: 0;
     line-height: 0.95;
@@ -630,7 +638,7 @@ p {
     gap: 16px;
     padding: 0 58px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.72);
-    font-size: 1.35rem;
+    font-size: var(--font-lg);
     font-weight: 800;
 }
 
@@ -681,7 +689,7 @@ p {
     justify-content: space-between;
     gap: 16px;
     color: #ffffff;
-    font-size: 1.45rem;
+    font-size: var(--font-lg);
     font-weight: 800;
 }
 
@@ -701,7 +709,7 @@ p {
 .filter-empty {
     margin: 0;
     color: #ffffff;
-    font-size: 1.28rem;
+    font-size: 1.12rem;
     font-weight: 800;
     line-height: 1.18;
     text-transform: uppercase;
@@ -724,7 +732,7 @@ p {
 
 .movie-card {
     display: grid;
-    grid-template-rows: auto 62px;
+    grid-template-rows: auto 64px;
     min-width: 0;
     border: 1px solid rgba(255, 255, 255, 0.26);
     background: #9fb9bc;
@@ -782,7 +790,7 @@ p {
 .movie-poster-placeholder strong {
     display: block;
     width: 100%;
-    font-size: clamp(1.3rem, 2vw, 2rem);
+    font-size: 1.55rem;
     font-weight: 900;
     line-height: 0.95;
     overflow-wrap: anywhere;
@@ -793,27 +801,36 @@ p {
     display: grid;
     min-width: 0;
     align-content: center;
-    padding: 8px 8px 7px;
+    padding: 6px 7px;
     background: #9fb9bc;
+    overflow: hidden;
     text-align: center;
 }
 
 .movie-info h2 {
     margin: 0 0 3px;
     color: #ffffff;
-    font-size: 0.95rem;
+    display: -webkit-box;
+    font-size: 0.76rem;
     font-weight: 900;
     letter-spacing: 0;
-    line-height: 1.05;
+    line-height: 0.98;
+    overflow: hidden;
     text-transform: uppercase;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
 .movie-info p {
     margin: 0;
     color: #ffffff;
-    font-size: 0.86rem;
+    display: -webkit-box;
+    font-size: 0.74rem;
     font-weight: 700;
-    line-height: 1.1;
+    line-height: 1.03;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
 .cartelera-state {
@@ -825,7 +842,7 @@ p {
 
 .cartelera-state h2 {
     margin-bottom: 8px;
-    font-size: 1.55rem;
+    font-size: var(--font-xl);
     text-transform: uppercase;
 }
 
@@ -863,7 +880,7 @@ p {
 .movie-title-row h1 {
     margin: 0;
     color: #ffffff;
-    font-size: clamp(3rem, 4.6vw, 4.75rem);
+    font-size: var(--font-display);
     font-weight: 900;
     letter-spacing: 0;
     line-height: 0.94;
@@ -940,13 +957,13 @@ p {
 
 .movie-synopsis h2 {
     margin-bottom: 20px;
-    font-size: clamp(2rem, 3vw, 2.75rem);
+    font-size: var(--font-2xl);
 }
 
 .movie-synopsis p {
     margin: 0;
     color: #ffffff;
-    font-size: 1.18rem;
+    font-size: 1.05rem;
     font-weight: 800;
     line-height: 1.7;
     text-transform: uppercase;
@@ -962,7 +979,7 @@ p {
 
 .movie-schedule h2 {
     margin: 0 0 26px;
-    font-size: clamp(3rem, 4.6vw, 4.7rem);
+    font-size: var(--font-display);
 }
 
 .schedule-box {
@@ -1002,11 +1019,11 @@ p {
 }
 
 .movie-date-tab span {
-    font-size: 1.35rem;
+    font-size: 1.18rem;
 }
 
 .movie-date-tab em {
-    font-size: 1.25rem;
+    font-size: 1.06rem;
 }
 
 .movie-date-tab.is-active {
@@ -1046,7 +1063,7 @@ p {
     color: #ffffff;
     cursor: pointer;
     font: inherit;
-    font-size: 1.45rem;
+    font-size: 1.28rem;
     font-weight: 900;
     line-height: 1;
 }
@@ -1062,7 +1079,7 @@ p {
 .showtime-card span {
     margin: 0;
     color: #ffffff;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 900;
     line-height: 1.15;
     text-transform: uppercase;
@@ -1078,12 +1095,12 @@ p {
 
 .ticket-area h3 {
     margin-bottom: 18px;
-    font-size: clamp(2rem, 3vw, 2.75rem);
+    font-size: var(--font-2xl);
 }
 
 .ticket-actions {
     display: grid;
-    grid-template-columns: minmax(230px, 1fr) minmax(230px, 1fr) minmax(190px, 0.82fr);
+    grid-template-columns: minmax(200px, 1fr) minmax(200px, 1fr) minmax(166px, 0.78fr);
     gap: 24px;
     align-items: stretch;
 }
@@ -1117,16 +1134,16 @@ p {
 }
 
 .ticket-card strong {
-    font-size: 1.15rem;
+    font-size: 1.02rem;
 }
 
 .ticket-card span {
-    font-size: 1.25rem;
+    font-size: 1.14rem;
 }
 
 .ticket-card small {
     margin-top: 8px;
-    font-size: 0.48rem;
+    font-size: 0.5rem;
 }
 
 .ticket-stepper {
@@ -1149,7 +1166,7 @@ p {
     color: inherit;
     cursor: pointer;
     font: inherit;
-    font-size: 1.45rem;
+    font-size: 1.28rem;
     font-weight: 900;
     line-height: 1;
 }
@@ -1162,7 +1179,7 @@ p {
 
 .ticket-stepper output {
     color: inherit;
-    font-size: 1.65rem;
+    font-size: 1.48rem;
     font-weight: 900;
     line-height: 1;
 }
@@ -1177,7 +1194,7 @@ p {
     background: var(--accent);
     color: #ffffff;
     font: inherit;
-    font-size: 1.55rem;
+    font-size: var(--font-xl);
     font-weight: 900;
     line-height: 1;
     text-align: center;
@@ -1214,7 +1231,7 @@ p {
 .schedule-empty h3 {
     margin: 0 0 8px;
     color: #ffffff;
-    font-size: 1.55rem;
+    font-size: var(--font-xl);
     font-weight: 900;
     text-transform: uppercase;
 }
@@ -1271,7 +1288,7 @@ p {
 .seat-title-row h1 {
     margin: 0;
     color: #ffffff;
-    font-size: clamp(2.75rem, 4.2vw, 4.2rem);
+    font-size: var(--font-3xl);
     font-weight: 900;
     letter-spacing: 0;
     line-height: 0.94;
@@ -1301,7 +1318,7 @@ p {
 .seat-confirmation h2 {
     margin: 0 0 8px;
     color: #ffffff;
-    font-size: clamp(1.9rem, 2.4vw, 2.65rem);
+    font-size: 2rem;
     font-weight: 900;
     letter-spacing: 0;
     line-height: 0.95;
@@ -1323,20 +1340,20 @@ p {
 }
 
 .seat-summary-group p {
-    font-size: 1.1rem;
+    font-size: var(--font-md);
 }
 
 .seat-summary-group strong {
     margin-top: 4px;
     color: rgba(255, 255, 255, 0.66);
-    font-size: 1.05rem;
+    font-size: 0.95rem;
 }
 
 .seat-summary-group span,
 .seat-summary-group small {
     margin-top: 4px;
     color: rgba(255, 255, 255, 0.7);
-    font-size: 0.92rem;
+    font-size: var(--font-sm);
 }
 
 .seat-confirmation {
@@ -1346,13 +1363,13 @@ p {
 }
 
 .seat-confirmation h2 {
-    font-size: 1.8rem;
+    font-size: 1.55rem;
 }
 
 .seat-confirmation p,
 .seat-confirmation span {
     color: #dbe7ee;
-    font-size: 1.05rem;
+    font-size: 0.95rem;
 }
 
 .seat-map-panel {
@@ -1374,7 +1391,7 @@ p {
     padding-top: 12px;
     background: #ffffff;
     color: var(--cinema-bg);
-    font-size: 0.76rem;
+    font-size: var(--font-xs);
     font-weight: 900;
     line-height: 1;
     text-align: center;
@@ -1420,7 +1437,7 @@ p {
 }
 
 .seat-timer strong {
-    font-size: 2.85rem;
+    font-size: 2.55rem;
     font-weight: 900;
     line-height: 1;
 }
@@ -1462,7 +1479,7 @@ p {
 .seat-number-row span {
     color: #ffffff;
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 0.92rem;
+    font-size: var(--font-sm);
     font-weight: 700;
     line-height: 1;
     text-align: center;
@@ -1550,7 +1567,7 @@ p {
     align-items: center;
     gap: 12px;
     color: #ffffff;
-    font-size: 1.05rem;
+    font-size: var(--font-md);
     font-weight: 900;
     line-height: 1;
     text-transform: uppercase;
@@ -1589,12 +1606,12 @@ p {
 }
 
 .seat-selected-summary strong {
-    font-size: 1.08rem;
+    font-size: var(--font-md);
 }
 
 .seat-selected-summary span {
     color: rgba(255, 255, 255, 0.72);
-    font-size: 0.92rem;
+    font-size: var(--font-sm);
 }
 
 .seat-submit {
@@ -1604,17 +1621,18 @@ p {
     justify-content: center;
     justify-self: end;
     align-self: end;
-    padding: 0 28px;
+    padding: 0 24px;
     border: 0;
     background: var(--accent);
     color: #ffffff;
     cursor: pointer;
     font: inherit;
-    font-size: 1.45rem;
+    font-size: 1.16rem;
     font-weight: 900;
     line-height: 1;
     text-align: center;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .seat-submit:hover,
@@ -1711,6 +1729,7 @@ p {
 
     .cartelera-title {
         margin-bottom: 34px;
+        font-size: 3rem;
     }
 
     .cartelera-layout {
@@ -1743,6 +1762,16 @@ p {
         padding-left: 0;
     }
 
+    .movie-title-row h1,
+    .movie-schedule h2 {
+        font-size: 3rem;
+    }
+
+    .movie-synopsis h2,
+    .ticket-area h3 {
+        font-size: 2rem;
+    }
+
     .schedule-box {
         padding-right: 0;
     }
@@ -1765,6 +1794,15 @@ p {
     .seat-summary-panel {
         padding-right: 0;
         border-right: 0;
+    }
+
+    .seat-title-row h1 {
+        font-size: 2.65rem;
+    }
+
+    .seat-summary-group h2,
+    .seat-confirmation h2 {
+        font-size: 1.75rem;
     }
 
     .seat-timer {
@@ -1812,7 +1850,7 @@ p {
 
     .auth-tab {
         min-height: 48px;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
     }
 
     .auth-form {
@@ -1826,6 +1864,10 @@ p {
     .form-field input,
     .auth-submit {
         height: 50px;
+    }
+
+    .auth-submit {
+        font-size: 1.25rem;
     }
 
     .topbar {
@@ -1862,7 +1904,7 @@ p {
     }
 
     .movie-title-row h1 {
-        font-size: 2.3rem;
+        font-size: 2.15rem;
     }
 
     .movie-back {
@@ -1892,7 +1934,11 @@ p {
     }
 
     .movie-schedule h2 {
-        font-size: 2.7rem;
+        font-size: 2.35rem;
+    }
+
+    .ticket-area h3 {
+        font-size: 1.95rem;
     }
 
     .schedule-box {
@@ -1922,7 +1968,12 @@ p {
     }
 
     .seat-title-row h1 {
-        font-size: 2.3rem;
+        font-size: 2.05rem;
+    }
+
+    .seat-summary-group h2,
+    .seat-confirmation h2 {
+        font-size: 1.55rem;
     }
 
     .seat-row,
@@ -1971,5 +2022,6 @@ p {
 
     .seat-submit {
         width: 100%;
+        font-size: 1.08rem;
     }
 }
