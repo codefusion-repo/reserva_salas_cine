@@ -106,6 +106,189 @@ function reservation_find_confirmation(int $reservationId, int $userId): ?array
     return $reservation;
 }
 
+function reservation_user_all(int $userId): array
+{
+    return db_fetch_all(
+        "SELECT
+            r.id,
+            r.user_id,
+            r.showtime_id,
+            r.status,
+            r.total_amount,
+            r.created_at,
+            r.cancelled_at,
+            m.title AS movie_title,
+            rm.name AS room_name,
+            rm.location AS room_location,
+            s.starts_at,
+            s.ends_at,
+            s.format_label,
+            s.language_label,
+            COUNT(rs.id) AS seat_count,
+            GROUP_CONCAT(CONCAT(rs.seat_row, '-', rs.seat_number) ORDER BY rs.seat_row ASC, rs.seat_number ASC SEPARATOR ', ') AS seat_labels
+         FROM reservations r
+         INNER JOIN showtimes s ON s.id = r.showtime_id
+         INNER JOIN movies m ON m.id = s.movie_id
+         INNER JOIN rooms rm ON rm.id = s.room_id
+         LEFT JOIN reservation_seats rs ON rs.reservation_id = r.id
+         WHERE r.user_id = :user_id
+         GROUP BY
+            r.id,
+            r.user_id,
+            r.showtime_id,
+            r.status,
+            r.total_amount,
+            r.created_at,
+            r.cancelled_at,
+            m.title,
+            rm.name,
+            rm.location,
+            s.starts_at,
+            s.ends_at,
+            s.format_label,
+            s.language_label
+         ORDER BY r.created_at DESC, r.id DESC",
+        ['user_id' => $userId]
+    );
+}
+
+function reservation_find_for_user(int $reservationId, int $userId): ?array
+{
+    $reservation = db_fetch_one(
+        "SELECT
+            r.id,
+            r.user_id,
+            r.showtime_id,
+            r.status,
+            r.total_amount,
+            r.created_at,
+            r.cancelled_at,
+            m.title AS movie_title,
+            rm.name AS room_name,
+            rm.location AS room_location,
+            s.starts_at,
+            s.ends_at,
+            s.format_label,
+            s.language_label
+         FROM reservations r
+         INNER JOIN showtimes s ON s.id = r.showtime_id
+         INNER JOIN movies m ON m.id = s.movie_id
+         INNER JOIN rooms rm ON rm.id = s.room_id
+         WHERE r.id = :id
+           AND r.user_id = :user_id
+         LIMIT 1",
+        [
+            'id' => $reservationId,
+            'user_id' => $userId,
+        ]
+    );
+
+    if ($reservation === null) {
+        return null;
+    }
+
+    $reservation['seats'] = db_fetch_all(
+        'SELECT seat_row, seat_number, seat_type
+         FROM reservation_seats
+         WHERE reservation_id = :reservation_id
+         ORDER BY seat_row ASC, seat_number ASC',
+        ['reservation_id' => $reservationId]
+    );
+
+    return $reservation;
+}
+
+function reservation_cancel_for_user(int $reservationId, int $userId): array
+{
+    if ($reservationId <= 0 || $userId <= 0) {
+        return [
+            'ok' => false,
+            'message' => 'Selecciona una reserva valida para cancelar.',
+        ];
+    }
+
+    $pdo = db();
+
+    try {
+        $pdo->beginTransaction();
+
+        $reservationStatement = $pdo->prepare(
+            'SELECT id, status
+             FROM reservations
+             WHERE id = :id
+               AND user_id = :user_id
+             LIMIT 1
+             FOR UPDATE'
+        );
+        $reservationStatement->execute([
+            'id' => $reservationId,
+            'user_id' => $userId,
+        ]);
+        $reservation = $reservationStatement->fetch();
+
+        if ($reservation === false) {
+            $pdo->rollBack();
+
+            return [
+                'ok' => false,
+                'message' => 'La reserva no existe o no pertenece a tu cuenta.',
+            ];
+        }
+
+        if (!in_array((string) $reservation['status'], RESERVATION_ACTIVE_STATUSES, true)) {
+            $pdo->rollBack();
+
+            return [
+                'ok' => false,
+                'message' => 'La reserva ya fue cancelada o no esta activa.',
+            ];
+        }
+
+        $updateStatement = $pdo->prepare(
+            'UPDATE reservations
+             SET status = :cancelled_status,
+                 cancelled_at = NOW()
+             WHERE id = :id
+               AND user_id = :user_id
+               AND status IN (:status_pending, :status_confirmed)'
+        );
+        $updateStatement->execute([
+            'cancelled_status' => 'cancelled',
+            'id' => $reservationId,
+            'user_id' => $userId,
+            'status_pending' => 'pending',
+            'status_confirmed' => 'confirmed',
+        ]);
+
+        if ($updateStatement->rowCount() !== 1) {
+            $pdo->rollBack();
+
+            return [
+                'ok' => false,
+                'message' => 'No se pudo cancelar la reserva porque ya no esta activa.',
+            ];
+        }
+
+        $pdo->commit();
+
+        return [
+            'ok' => true,
+            'message' => 'Reserva cancelada correctamente.',
+        ];
+    } catch (Throwable $exception) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        error_log($exception->getMessage());
+
+        return [
+            'ok' => false,
+            'message' => 'No se pudo cancelar la reserva en este momento. Intenta nuevamente.',
+        ];
+    }
+}
+
 function reservation_create_with_seats(int $userId, array $showtime, array $selectedSeats, int $ticketCount): array
 {
     $pdo = db();
@@ -311,4 +494,45 @@ function reservation_total_amount(int $ticketCount): float
 function reservation_format_money(float $amount): string
 {
     return '$' . number_format($amount, 0, ',', '.');
+}
+
+function reservation_status_label(string $status): string
+{
+    return match ($status) {
+        'pending' => 'Pendiente',
+        'confirmed' => 'Confirmada',
+        'cancelled' => 'Cancelada',
+        default => 'Sin estado',
+    };
+}
+
+function reservation_status_css_class(string $status): string
+{
+    return in_array($status, ['pending', 'confirmed', 'cancelled'], true) ? $status : 'unknown';
+}
+
+function reservation_can_cancel(array $reservation): bool
+{
+    return in_array((string) ($reservation['status'] ?? ''), RESERVATION_ACTIVE_STATUSES, true);
+}
+
+function reservation_datetime_label(mixed $value): string
+{
+    if (!is_scalar($value)) {
+        return '';
+    }
+
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '';
+    }
+
+    try {
+        $date = new DateTimeImmutable($value);
+    } catch (Throwable $exception) {
+        return '';
+    }
+
+    return $date->format('d/m/Y H:i') . ' HRS';
 }

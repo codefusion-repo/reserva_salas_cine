@@ -186,6 +186,53 @@ function handle_reservation_create(): void
     );
 }
 
+function render_my_reservations(): void
+{
+    auth_require_login();
+
+    $user = current_user();
+    $messages = flash_get();
+    $reservations = [];
+    $reservationLoadError = false;
+
+    try {
+        $reservations = reservation_user_all((int) ($user['id'] ?? 0));
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        http_response_code(500);
+        $reservationLoadError = true;
+    }
+
+    require __DIR__ . '/../views/my_reservations.php';
+}
+
+function handle_reservation_cancel(): void
+{
+    auth_require_login();
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        flash_set('error', 'La cancelacion debe realizarse desde el formulario.');
+        redirect_to('index.php?page=my_reservations');
+    }
+
+    $user = current_user();
+    $reservationId = positive_int_from_request($_POST['reservation_id'] ?? null);
+
+    if ($reservationId === null) {
+        flash_set('error', 'Selecciona una reserva valida para cancelar.');
+        redirect_to('index.php?page=my_reservations');
+    }
+
+    $result = reservation_cancel_for_user($reservationId, (int) ($user['id'] ?? 0));
+    flash_set(
+        ($result['ok'] ?? false) === true ? 'success' : 'error',
+        (string) ($result['message'] ?? 'No se pudo cancelar la reserva.')
+    );
+
+    redirect_to('index.php?page=my_reservations');
+}
+
 function render_seat_selection_view(?int $showtimeId, int $ticketCount, array $selectedSeats = [], array $errors = [], ?int $reservationId = null): void
 {
     $user = current_user();

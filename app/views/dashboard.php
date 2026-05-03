@@ -30,6 +30,7 @@ foreach ($movies as $movie) {
 
         <nav class="topnav cinema-nav" aria-label="Navegacion principal">
             <a class="is-active" href="index.php?page=cartelera">Cartelera</a>
+            <a href="index.php?page=my_reservations">Mis reservas</a>
             <a href="index.php?page=cartelera" aria-disabled="true">Confiteria</a>
             <a href="index.php?page=cartelera" aria-disabled="true">¡Hazte socio!</a>
             <?php if (($user['role'] ?? '') === 'admin'): ?>
@@ -45,6 +46,7 @@ foreach ($movies as $movie) {
             </button>
             <div class="user-dropdown">
                 <span><?= e($user['email'] ?? '') ?></span>
+                <a href="index.php?page=my_reservations">Mis reservas</a>
                 <a href="index.php?action=logout">Cerrar sesion</a>
             </div>
         </div>
