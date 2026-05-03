@@ -38,6 +38,7 @@ $buttonLabel = $isRegister ? 'REGISTRAR' : 'INGRESAR';
             <?php endif; ?>
 
             <form class="auth-form" action="<?= e($formAction) ?>" method="post" novalidate>
+                <?= csrf_token_field() ?>
                 <?php if ($isRegister): ?>
                     <div class="form-field">
                         <label for="name">Nombre</label>

@@ -101,6 +101,7 @@ foreach ($showtimes as $showtime) {
                 </div>
 
                 <form class="admin-form admin-room-create" method="post" action="index.php?action=create_room">
+                    <?= csrf_token_field() ?>
                     <label>
                         <span>Nombre</span>
                         <input type="text" name="name" maxlength="100" required>
@@ -133,6 +134,7 @@ foreach ($showtimes as $showtime) {
                         <?php foreach ($rooms as $room): ?>
                             <?php $roomActive = (int) ($room['is_active'] ?? 0) === 1; ?>
                             <form class="admin-row admin-room-row" method="post" action="index.php?action=update_room" role="listitem">
+                                <?= csrf_token_field() ?>
                                 <input type="hidden" name="room_id" value="<?= e($room['id'] ?? '') ?>">
                                 <label>
                                     <span class="sr-only">Nombre</span>
@@ -181,6 +183,7 @@ foreach ($showtimes as $showtime) {
                     </div>
                 <?php else: ?>
                     <form class="admin-form admin-showtime-create" method="post" action="index.php?action=create_showtime">
+                        <?= csrf_token_field() ?>
                         <label>
                             <span>Pelicula</span>
                             <select name="movie_id" required>
@@ -245,6 +248,7 @@ foreach ($showtimes as $showtime) {
                             $targetLabel = $showtimeActive ? 'Desactivar' : 'Activar';
                             ?>
                             <form class="admin-row admin-showtime-row" method="post" action="index.php?action=update_showtime" role="listitem">
+                                <?= csrf_token_field() ?>
                                 <input type="hidden" name="showtime_id" value="<?= e($showtime['id'] ?? '') ?>">
                                 <input type="hidden" name="is_active" value="<?= $showtimeActive ? '1' : '0' ?>">
                                 <label>

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../helpers/auth.php';
 require_once __DIR__ . '/../helpers/assets.php';
+require_once __DIR__ . '/../helpers/csrf.php';
 require_once __DIR__ . '/../helpers/security.php';
 require_once __DIR__ . '/../models/Admin.php';
 require_once __DIR__ . '/../models/Movie.php';
@@ -100,6 +101,7 @@ function render_seat_selection(): void
 function handle_reservation_create(): void
 {
     auth_require_login();
+    csrf_require_valid_post();
 
     $user = current_user();
     $showtimeId = positive_int_from_request($_POST['showtime_id'] ?? null);
@@ -216,6 +218,8 @@ function handle_reservation_cancel(): void
         flash_set('error', 'La cancelacion debe realizarse desde el formulario.');
         redirect_to('index.php?page=my_reservations');
     }
+
+    csrf_require_valid_post();
 
     $user = current_user();
     $reservationId = positive_int_from_request($_POST['reservation_id'] ?? null);
@@ -449,6 +453,7 @@ function render_admin_panel(): void
 function handle_room_create(): void
 {
     auth_require_admin_action();
+    csrf_require_valid_post();
 
     [$payload, $errors] = admin_room_payload_from_post();
 
@@ -482,6 +487,7 @@ function handle_room_create(): void
 function handle_room_update(): void
 {
     auth_require_admin_action();
+    csrf_require_valid_post();
 
     $roomId = positive_int_from_request($_POST['room_id'] ?? null);
     [$payload, $errors] = admin_room_payload_from_post();
@@ -531,6 +537,7 @@ function handle_room_update(): void
 function handle_room_deactivate(): void
 {
     auth_require_admin_action();
+    csrf_require_valid_post();
 
     $roomId = positive_int_from_request($_POST['room_id'] ?? null);
 
@@ -557,6 +564,7 @@ function handle_room_deactivate(): void
 function handle_showtime_create(): void
 {
     auth_require_admin_action();
+    csrf_require_valid_post();
 
     [$payload, $errors] = admin_showtime_payload_from_post(null);
 
@@ -586,6 +594,7 @@ function handle_showtime_create(): void
 function handle_showtime_update(): void
 {
     auth_require_admin_action();
+    csrf_require_valid_post();
 
     $showtimeId = positive_int_from_request($_POST['showtime_id'] ?? null);
     $errors = [];
@@ -634,6 +643,7 @@ function handle_showtime_update(): void
 function handle_showtime_deactivate(): void
 {
     auth_require_admin_action();
+    csrf_require_valid_post();
 
     $showtimeId = positive_int_from_request($_POST['showtime_id'] ?? null);
     $targetStatus = admin_bool_from_post($_POST['target_status'] ?? 0);
@@ -869,6 +879,8 @@ function admin_flash_errors(array $errors): void
 
 function handle_login(): void
 {
+    csrf_require_valid_post();
+
     $email = mb_strtolower(trim((string) ($_POST['email'] ?? '')));
     $password = (string) ($_POST['password'] ?? '');
     $errors = [];
@@ -908,6 +920,8 @@ function handle_login(): void
 
 function handle_register(): void
 {
+    csrf_require_valid_post();
+
     $name = trim((string) ($_POST['name'] ?? ''));
     $email = mb_strtolower(trim((string) ($_POST['email'] ?? '')));
     $password = (string) ($_POST['password'] ?? '');
