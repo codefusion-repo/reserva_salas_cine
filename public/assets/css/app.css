@@ -1256,6 +1256,22 @@ p {
     font-size: var(--font-sm);
 }
 
+.state-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.state-actions .movie-state-link {
+    margin-top: 0;
+}
+
+.movie-state-link-secondary {
+    border: 1px solid rgba(255, 255, 255, 0.46);
+    background: #343d47;
+}
+
 .movie-detail-state {
     width: min(760px, 100%);
 }

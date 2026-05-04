@@ -41,7 +41,7 @@ $pageCopy = trim($copy) !== '' ? $copy : 'No encontramos lo que estabas buscando
                 <div class="error-actions">
                     <a class="error-action error-action-primary" href="index.php?page=cartelera">Volver a cartelera</a>
                     <?php if ($isAuthenticated): ?>
-                        <a class="error-action error-action-secondary" href="index.php?page=my_reservations">Mis reservas</a>
+                        <a class="error-action error-action-secondary" href="index.php?page=my_reservations">Ver mis reservas</a>
                     <?php else: ?>
                         <a class="error-action error-action-secondary" href="index.php?page=login">Iniciar sesion</a>
                     <?php endif; ?>

@@ -49,6 +49,10 @@ foreach ($showtimes as $showtime) {
             <section class="cartelera-state movie-detail-state">
                 <h2>No se pudo cargar el panel</h2>
                 <p>Intenta nuevamente mas tarde.</p>
+                <div class="state-actions">
+                    <a class="movie-state-link" href="index.php?page=admin">Intentar nuevamente</a>
+                    <a class="movie-state-link movie-state-link-secondary" href="index.php?page=cartelera">Volver a cartelera</a>
+                </div>
             </section>
         <?php else: ?>
             <section class="admin-summary" aria-label="Resumen administrativo">

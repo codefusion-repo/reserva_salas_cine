@@ -75,6 +75,7 @@ foreach ($movies as $movie) {
                     <div class="cartelera-state">
                         <h2>No se pudo cargar la cartelera</h2>
                         <p>Intenta nuevamente mas tarde.</p>
+                        <a class="movie-state-link" href="index.php?page=cartelera">Intentar nuevamente</a>
                     </div>
                 <?php elseif ($movies === []): ?>
                     <div class="cartelera-state">
