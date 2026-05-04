@@ -31,7 +31,7 @@ function movie_find_active_by_id(int $movieId): ?array
 
 function movie_active_showtimes(int $movieId): array
 {
-    return db_fetch_all(
+    $showtimes = db_fetch_all(
         'SELECT
             s.id,
             s.movie_id,
@@ -40,9 +40,20 @@ function movie_active_showtimes(int $movieId): array
             s.ends_at,
             s.format_label,
             s.language_label,
-            r.name AS room_name
+            r.name AS room_name,
+            r.capacity AS room_capacity,
+            COALESCE(occupied.occupied_active_seats, 0) AS occupied_active_seats
          FROM showtimes s
          INNER JOIN rooms r ON r.id = s.room_id
+         LEFT JOIN (
+            SELECT rs.showtime_id, COUNT(rs.id) AS occupied_active_seats
+            FROM reservation_seats rs
+            INNER JOIN reservations rv
+                ON rv.id = rs.reservation_id
+               AND rv.showtime_id = rs.showtime_id
+               AND rv.status IN (:status_pending, :status_confirmed)
+            GROUP BY rs.showtime_id
+         ) occupied ON occupied.showtime_id = s.id
          WHERE s.movie_id = :movie_id
            AND s.is_active = :is_active
            AND r.is_active = :room_is_active
@@ -51,6 +62,19 @@ function movie_active_showtimes(int $movieId): array
             'movie_id' => $movieId,
             'is_active' => 1,
             'room_is_active' => 1,
+            'status_pending' => 'pending',
+            'status_confirmed' => 'confirmed',
         ]
     );
+
+    foreach ($showtimes as $index => $showtime) {
+        $capacity = max(0, (int) ($showtime['room_capacity'] ?? 0));
+        $occupiedSeats = max(0, (int) ($showtime['occupied_active_seats'] ?? 0));
+
+        $showtimes[$index]['room_capacity'] = $capacity;
+        $showtimes[$index]['occupied_active_seats'] = $occupiedSeats;
+        $showtimes[$index]['available_seats'] = max(0, $capacity - $occupiedSeats);
+    }
+
+    return $showtimes;
 }

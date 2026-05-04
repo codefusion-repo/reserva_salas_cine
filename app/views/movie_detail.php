@@ -146,6 +146,9 @@ if ($hasMovie) {
                                                     <?php if (trim((string) $showtime['room_name']) !== ''): ?>
                                                         <span><?= e($showtime['room_name']) ?></span>
                                                     <?php endif; ?>
+                                                    <span class="showtime-availability showtime-availability-<?= e($showtime['availability_state'] ?? 'available') ?>">
+                                                        <?= e($showtime['availability_label'] ?? '') ?>
+                                                    </span>
                                                 </article>
                                             <?php endforeach; ?>
                                         </div>
