@@ -3064,8 +3064,8 @@ p {
 }
 
 .admin-reservation-row {
-    grid-template-columns: 82px 126px minmax(140px, 1fr) minmax(195px, 1.1fr) minmax(190px, 1fr) minmax(170px, 0.9fr) minmax(240px, 1.1fr) minmax(180px, 0.8fr) 118px 122px 128px;
-    min-width: 1700px;
+    grid-template-columns: 82px 126px minmax(140px, 1fr) minmax(195px, 1.1fr) minmax(190px, 1fr) minmax(170px, 0.9fr) minmax(240px, 1.1fr) minmax(180px, 0.8fr) 118px 122px 128px 128px;
+    min-width: 1828px;
 }
 
 .admin-list-head {
