@@ -468,6 +468,89 @@ function admin_showtime_set_active(int $showtimeId, bool $isActive): bool
     );
 }
 
+function admin_reservations_all(array $filters = []): array
+{
+    $params = [];
+    $conditions = [];
+
+    $status = (string) ($filters['status'] ?? '');
+
+    if (in_array($status, ['pending', 'confirmed', 'cancelled'], true)) {
+        $conditions[] = 'r.status = :status';
+        $params['status'] = $status;
+    }
+
+    $search = trim((string) ($filters['q'] ?? ''));
+
+    if ($search !== '') {
+        $conditions[] = '(u.name LIKE :q_user_name
+            OR u.email LIKE :q_user_email
+            OR m.title LIKE :q_movie_title
+            OR rm.name LIKE :q_room_name
+            OR CAST(r.id AS CHAR) LIKE :q_reservation_id
+            OR CONCAT(\'RSC-\', LPAD(r.id, 6, \'0\')) LIKE :q_visual_code)';
+        $likeSearch = '%' . $search . '%';
+        $params['q_user_name'] = $likeSearch;
+        $params['q_user_email'] = $likeSearch;
+        $params['q_movie_title'] = $likeSearch;
+        $params['q_room_name'] = $likeSearch;
+        $params['q_reservation_id'] = $likeSearch;
+        $params['q_visual_code'] = $likeSearch;
+    }
+
+    $sql = "SELECT
+            r.id,
+            r.user_id,
+            u.name AS user_name,
+            u.email AS user_email,
+            r.showtime_id,
+            r.status,
+            r.total_amount,
+            r.created_at,
+            r.cancelled_at,
+            m.title AS movie_title,
+            rm.name AS room_name,
+            rm.location AS room_location,
+            s.starts_at,
+            s.ends_at,
+            s.format_label,
+            s.language_label,
+            COUNT(rs.id) AS seat_count,
+            GROUP_CONCAT(CONCAT(rs.seat_row, '-', rs.seat_number) ORDER BY rs.seat_row ASC, rs.seat_number ASC SEPARATOR ', ') AS seat_labels
+         FROM reservations r
+         INNER JOIN users u ON u.id = r.user_id
+         INNER JOIN showtimes s ON s.id = r.showtime_id
+         INNER JOIN movies m ON m.id = s.movie_id
+         INNER JOIN rooms rm ON rm.id = s.room_id
+         LEFT JOIN reservation_seats rs ON rs.reservation_id = r.id AND rs.showtime_id = r.showtime_id
+         ";
+
+    if ($conditions !== []) {
+        $sql .= ' WHERE ' . implode(' AND ', $conditions);
+    }
+
+    $sql .= " GROUP BY
+            r.id,
+            r.user_id,
+            u.name,
+            u.email,
+            r.showtime_id,
+            r.status,
+            r.total_amount,
+            r.created_at,
+            r.cancelled_at,
+            m.title,
+            rm.name,
+            rm.location,
+            s.starts_at,
+            s.ends_at,
+            s.format_label,
+            s.language_label
+         ORDER BY r.created_at DESC, r.id DESC";
+
+    return db_fetch_all($sql, $params);
+}
+
 function admin_datetime_input_value(mixed $value): string
 {
     if (!is_scalar($value)) {

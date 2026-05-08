@@ -732,8 +732,11 @@ function render_admin_panel(): void
     $movies = [];
     $activeMovies = [];
     $showtimes = [];
+    $adminReservationFilters = admin_reservation_filters_from_request($_GET);
+    $adminReservations = [];
     $adminSummary = [];
     $adminLoadError = false;
+    $adminReservationLoadError = false;
 
     try {
         $adminSummary = admin_summary_stats();
@@ -746,6 +749,15 @@ function render_admin_panel(): void
         error_log($exception->getMessage());
         http_response_code(500);
         $adminLoadError = true;
+    }
+
+    if (!$adminLoadError) {
+        try {
+            $adminReservations = admin_reservations_all($adminReservationFilters);
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $adminReservationLoadError = true;
+        }
     }
 
     require __DIR__ . '/../views/admin.php';
@@ -1209,6 +1221,25 @@ function admin_room_payload_from_post(): array
             'capacity' => $capacity ?? 0,
         ],
         $errors,
+    ];
+}
+
+function admin_reservation_filters_from_request(array $request): array
+{
+    $status = '';
+    $statusValue = '';
+
+    if (is_scalar($request['status'] ?? null)) {
+        $statusValue = strtolower(trim((string) $request['status']));
+    }
+
+    if (in_array($statusValue, ['pending', 'confirmed', 'cancelled'], true)) {
+        $status = $statusValue;
+    }
+
+    return [
+        'status' => $status,
+        'q' => movie_filter_value_from_request($request['q'] ?? '', 80),
     ];
 }
 

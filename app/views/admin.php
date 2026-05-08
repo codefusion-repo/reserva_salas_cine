@@ -483,6 +483,107 @@ if ($nextShowtime !== null) {
                     </div>
                 <?php endif; ?>
             </section>
+
+            <section id="admin-reservations" class="admin-section" aria-labelledby="admin-reservations-title">
+                <div class="admin-section-heading">
+                    <div>
+                        <p class="eyebrow">Reservas</p>
+                        <h2 id="admin-reservations-title">Gestion de reservas</h2>
+                    </div>
+                </div>
+
+                <form class="admin-form admin-reservation-filter" method="get" action="index.php#admin-reservations" data-filter-form>
+                    <input type="hidden" name="page" value="admin">
+                    <label>
+                        <span>Estado</span>
+                        <select name="status">
+                            <option value="" <?= (string) ($adminReservationFilters['status'] ?? '') === '' ? 'selected' : '' ?>>Todos</option>
+                            <option value="pending" <?= (string) ($adminReservationFilters['status'] ?? '') === 'pending' ? 'selected' : '' ?>>Pendientes</option>
+                            <option value="confirmed" <?= (string) ($adminReservationFilters['status'] ?? '') === 'confirmed' ? 'selected' : '' ?>>Confirmadas</option>
+                            <option value="cancelled" <?= (string) ($adminReservationFilters['status'] ?? '') === 'cancelled' ? 'selected' : '' ?>>Canceladas</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Busqueda</span>
+                        <input
+                            type="search"
+                            name="q"
+                            value="<?= e((string) ($adminReservationFilters['q'] ?? '')) ?>"
+                            maxlength="80"
+                            placeholder="Usuario, email, pelicula, sala, ID o codigo"
+                        >
+                    </label>
+                    <div class="admin-filter-actions">
+                        <a class="admin-filter-reset" href="index.php?page=admin#admin-reservations">Limpiar</a>
+                    </div>
+                </form>
+
+                <?php if ($adminReservationLoadError): ?>
+                    <div class="admin-empty">
+                        <h3>No se pudo cargar la lista de reservas</h3>
+                        <p>Intenta nuevamente mas tarde.</p>
+                    </div>
+                <?php elseif ($adminReservations === []): ?>
+                    <div class="admin-empty">
+                        <h3>No hay reservas para mostrar</h3>
+                    </div>
+                <?php else: ?>
+                    <div class="admin-list admin-reservation-list" role="list">
+                        <div class="admin-list-head admin-reservation-row" aria-hidden="true">
+                            <span>ID</span>
+                            <span>Codigo</span>
+                            <span>Usuario</span>
+                            <span>Email</span>
+                            <span>Pelicula</span>
+                            <span>Sala</span>
+                            <span>Horario</span>
+                            <span>Butacas</span>
+                            <span>Estado</span>
+                            <span>Total</span>
+                            <span>Creada</span>
+                            <span>Cancelada</span>
+                        </div>
+
+                        <?php foreach ($adminReservations as $reservation): ?>
+                            <?php
+                            $reservationId = (int) ($reservation['id'] ?? 0);
+                            $reservationCode = reservation_visual_code($reservationId);
+                            $status = (string) ($reservation['status'] ?? '');
+                            $statusClass = reservation_status_css_class($status);
+                            $statusLabel = reservation_status_label($status);
+                            $showtimeRange = trim(
+                                reservation_datetime_label($reservation['starts_at'] ?? '') . ' - ' . reservation_datetime_label($reservation['ends_at'] ?? ''),
+                                ' -'
+                            );
+                            $roomLabel = trim(
+                                (string) ($reservation['room_name'] ?? '') . ' - ' . (string) ($reservation['room_location'] ?? ''),
+                                ' -'
+                            );
+                            $seatLabels = trim((string) ($reservation['seat_labels'] ?? ''));
+                            $seatCount = (int) ($reservation['seat_count'] ?? 0);
+                            $seatText = $seatLabels !== '' ? $seatLabels : 'Sin butacas';
+                            if ($seatLabels === '' && $seatCount > 0) {
+                                $seatText = 'Sin detalle';
+                            }
+                            ?>
+                            <div class="admin-row admin-reservation-row" role="listitem">
+                                <span><?= e($reservationId) ?></span>
+                                <span><?= e($reservationCode) ?></span>
+                                <span><?= e($reservation['user_name'] ?? 'Sin usuario') ?></span>
+                                <span><?= e($reservation['user_email'] ?? 'Sin email') ?></span>
+                                <span><?= e($reservation['movie_title'] ?? 'Sin pelicula') ?></span>
+                                <span><?= e($roomLabel !== '' ? $roomLabel : 'Sin sala') ?></span>
+                                <span><?= e($showtimeRange !== '' ? $showtimeRange : 'Sin horario') ?></span>
+                                <span><?= e($seatText . ($seatCount > 0 ? ' (' . $seatCount . ')' : '')) ?></span>
+                                <span class="admin-status-badge status-<?= e($statusClass) ?>"><?= e($statusLabel) ?></span>
+                                <span><?= e(reservation_format_money((float) ($reservation['total_amount'] ?? 0))) ?></span>
+                                <span><?= e(reservation_datetime_label($reservation['created_at'] ?? '')) ?></span>
+                                <span><?= e(reservation_datetime_label($reservation['cancelled_at'] ?? '')) ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </section>
         <?php endif; ?>
     </main>
 

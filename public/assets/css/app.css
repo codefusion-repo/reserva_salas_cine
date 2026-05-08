@@ -2910,6 +2910,11 @@ p {
     grid-template-columns: minmax(180px, 1fr) minmax(240px, 1.35fr) minmax(130px, 0.72fr) minmax(96px, 0.45fr) minmax(118px, 0.58fr) minmax(210px, 1.05fr) minmax(106px, 0.48fr) 170px;
 }
 
+.admin-reservation-filter {
+    grid-template-columns: minmax(170px, 0.85fr) minmax(280px, 1.4fr) 1fr;
+    align-items: end;
+}
+
 .admin-form label,
 .admin-row label {
     display: grid;
@@ -3058,6 +3063,11 @@ p {
     min-width: 1350px;
 }
 
+.admin-reservation-row {
+    grid-template-columns: 82px 126px minmax(140px, 1fr) minmax(195px, 1.1fr) minmax(190px, 1fr) minmax(170px, 0.9fr) minmax(240px, 1.1fr) minmax(180px, 0.8fr) 118px 122px 128px 128px;
+    min-width: 1828px;
+}
+
 .admin-list-head {
     padding: 0 12px;
     color: rgba(255, 255, 255, 0.62);
@@ -3096,6 +3106,51 @@ p {
 .admin-status-badge.status-inactive {
     background: #e3e8ef;
     color: #4c5b68;
+}
+
+.admin-status-badge.status-pending {
+    background: #fff7cc;
+    color: #8b4f09;
+}
+
+.admin-status-badge.status-confirmed {
+    background: #d4f3e8;
+    color: #04624a;
+}
+
+.admin-status-badge.status-cancelled {
+    background: #ffe9e6;
+    color: #a01921;
+}
+
+.admin-filter-actions {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    min-height: 42px;
+}
+
+.admin-filter-reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 5px;
+    background: #6c7c89;
+    color: #ffffff;
+    font: inherit;
+    font-size: var(--font-xs);
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.admin-filter-reset:hover,
+.admin-filter-reset:focus {
+    background: #556677;
 }
 
 .admin-actions {

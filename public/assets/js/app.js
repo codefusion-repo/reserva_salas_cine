@@ -24,6 +24,12 @@ function initCarteleraFilterForms() {
             });
         });
 
+        form.querySelectorAll('select').forEach((select) => {
+            select.addEventListener('change', () => {
+                scheduleSubmit(0);
+            });
+        });
+
         if (search === null) {
             return;
         }
