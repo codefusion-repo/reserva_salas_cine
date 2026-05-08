@@ -160,6 +160,15 @@ if ($hasReservationConfirmation) {
                     <a class="reservation-confirmation-action reservation-confirmation-action-secondary" href="index.php?page=cartelera">Volver a cartelera</a>
                 </div>
             </section>
+        <?php elseif (($showtimeSoldOut ?? false) === true): ?>
+            <section class="cartelera-state movie-detail-state" aria-labelledby="sold-out-showtime-title">
+                <h1 id="sold-out-showtime-title">Funcion agotada</h1>
+                <p>Esta funcion no tiene butacas disponibles. Elige otro horario para continuar.</p>
+                <div class="state-actions">
+                    <a class="movie-state-link" href="index.php?page=movie&amp;id=<?= e($showtime['movie_id'] ?? '') ?>">Ver horarios</a>
+                    <a class="movie-state-link movie-state-link-secondary" href="index.php?page=cartelera">Volver a cartelera</a>
+                </div>
+            </section>
         <?php else: ?>
             <div class="seat-title-row">
                 <a class="movie-back" href="index.php?page=movie&amp;id=<?= e($showtime['movie_id'] ?? '') ?>" aria-label="Volver al detalle de pelicula">

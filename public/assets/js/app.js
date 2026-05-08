@@ -138,6 +138,10 @@ document.querySelectorAll('[data-showtime-form]').forEach((form) => {
 
     choices.forEach((choice) => {
         choice.addEventListener('click', () => {
+            if (choice.disabled || choice.dataset.showtimeSoldOut === 'true') {
+                return;
+            }
+
             const selectedShowtime = choice.dataset.showtimeChoice || '';
 
             showtimeInput.value = selectedShowtime;

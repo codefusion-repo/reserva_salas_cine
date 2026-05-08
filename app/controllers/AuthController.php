@@ -228,6 +228,14 @@ function handle_reservation_create(): void
     }
 
     if ($showtime !== null) {
+        $availableSeats = reservation_showtime_available_seats($showtime);
+
+        if (reservation_showtime_is_sold_out($showtime)) {
+            $errors[] = 'La funcion seleccionada esta agotada. Elige otro horario.';
+        } elseif ($ticketCount > $availableSeats) {
+            $errors[] = 'No hay suficientes butacas disponibles para esta funcion.';
+        }
+
         $seatMap = reservation_generate_seat_map((int) $showtime['room_capacity']);
 
         if ($ticketCount > count($seatMap['lookup'])) {
@@ -469,6 +477,8 @@ function render_seat_selection_view(?int $showtimeId, int $ticketCount, array $s
         'time' => '',
         'datetime' => '',
     ];
+    $showtimeSoldOut = false;
+    $availableSeats = 0;
 
     if ($showtimeId === null) {
         render_not_found_page(
@@ -492,6 +502,8 @@ function render_seat_selection_view(?int $showtimeId, int $ticketCount, array $s
                 $seatMap = reservation_generate_seat_map((int) $showtime['room_capacity']);
                 $occupiedSeats = reservation_occupied_seats_for_showtime((int) $showtime['id']);
                 $showtimeLabels = reservation_showtime_labels($showtime);
+                $availableSeats = reservation_showtime_available_seats($showtime);
+                $showtimeSoldOut = reservation_showtime_is_sold_out($showtime);
 
                 if ($reservationId !== null) {
                     $reservationConfirmation = reservation_find_confirmation($reservationId, (int) ($user['id'] ?? 0));
@@ -502,6 +514,19 @@ function render_seat_selection_view(?int $showtimeId, int $ticketCount, array $s
                     ) {
                         $reservationConfirmation = null;
                     }
+                }
+
+                $hasSoldOutError = false;
+
+                foreach ($errors as $error) {
+                    if (strpos((string) $error, 'agotada') !== false) {
+                        $hasSoldOutError = true;
+                        break;
+                    }
+                }
+
+                if ($showtimeSoldOut && $reservationConfirmation === null && !$hasSoldOutError) {
+                    $errors[] = 'La funcion esta agotada. Elige otro horario para continuar.';
                 }
             }
         } catch (Throwable $exception) {
@@ -596,6 +621,7 @@ function movie_showtimes_by_day(array $showtimes): array
             'language_label' => (string) ($showtime['language_label'] ?? ''),
             'room_name' => (string) ($showtime['room_name'] ?? ''),
             'available_seats' => max(0, (int) ($showtime['available_seats'] ?? 0)),
+            'is_sold_out' => max(0, (int) ($showtime['available_seats'] ?? 0)) <= 0,
             'availability_label' => movie_showtime_availability_label((int) ($showtime['available_seats'] ?? 0)),
             'availability_state' => movie_showtime_availability_state((int) ($showtime['available_seats'] ?? 0)),
         ];
@@ -609,7 +635,7 @@ function movie_showtime_availability_label(int $availableSeats): string
     $availableSeats = max(0, $availableSeats);
 
     if ($availableSeats === 0) {
-        return 'Sin disponibilidad';
+        return 'Agotada';
     }
 
     if ($availableSeats <= 5) {
