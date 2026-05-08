@@ -496,6 +496,11 @@ function reservation_format_money(float $amount): string
     return '$' . number_format($amount, 0, ',', '.');
 }
 
+function reservation_visual_code(int $reservationId): string
+{
+    return 'RSC-' . str_pad((string) $reservationId, 6, '0', STR_PAD_LEFT);
+}
+
 function reservation_status_label(string $status): string
 {
     return match ($status) {

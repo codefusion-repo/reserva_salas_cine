@@ -38,6 +38,7 @@ $confirmationSeatSummary = 'Sin butacas';
 $confirmationMovieLabel = '';
 $confirmationRoomLabel = '';
 $confirmationTotalLabel = $ticketTotalLabel;
+$confirmationCode = '';
 $pageTitle = $hasReservationConfirmation ? 'Reserva confirmada' : $movieTitle . ' - Seleccion de butacas';
 
 foreach ($errors as $error) {
@@ -48,6 +49,8 @@ foreach ($errors as $error) {
 }
 
 if ($hasReservationConfirmation) {
+    $confirmationCode = reservation_visual_code((int) ($reservationConfirmation['id'] ?? 0));
+
     foreach ($reservationConfirmation['seats'] ?? [] as $seat) {
         $confirmedSeatLabels[] = reservation_seat_key((string) ($seat['seat_row'] ?? ''), (int) ($seat['seat_number'] ?? 0));
     }
@@ -115,12 +118,16 @@ if ($hasReservationConfirmation) {
                         <p>Guardamos tu reserva. Puedes revisarla desde tu perfil de reservas.</p>
                     </div>
                     <div class="reservation-confirmation-meta">
-                        <span class="reservation-confirmation-id">Reserva #<?= e($reservationConfirmation['id'] ?? '') ?></span>
+                        <span class="reservation-confirmation-id"><?= e($confirmationCode) ?></span>
                         <span class="reservation-status-badge status-<?= e($confirmationStatusClass) ?>"><?= e($confirmationStatusLabel) ?></span>
                     </div>
                 </div>
 
                 <dl class="reservation-confirmation-details">
+                    <div>
+                        <dt>Codigo de reserva</dt>
+                        <dd><?= e($confirmationCode) ?></dd>
+                    </div>
                     <div>
                         <dt>Pelicula</dt>
                         <dd><?= e($confirmationMovieLabel !== '' ? $confirmationMovieLabel : 'Sin pelicula') ?></dd>

@@ -22,6 +22,7 @@ $formatLabel = trim(
 $showtimeLabels = reservation_showtime_labels($reservation);
 $createdAtLabel = reservation_datetime_label($reservation['created_at'] ?? '');
 $cancelledAtLabel = reservation_datetime_label($reservation['cancelled_at'] ?? '');
+$reservationCode = reservation_visual_code((int) ($reservation['id'] ?? 0));
 $accountLabel = trim((string) ($user['name'] ?? ''));
 
 if ($accountLabel === '') {
@@ -33,7 +34,7 @@ if ($accountLabel === '') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Ticket Reserva #<?= e($reservation['id'] ?? '') ?> - Reserva Salas Cine</title>
+    <title>Ticket <?= e($reservationCode) ?> - Reserva Salas Cine</title>
     <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body class="app-screen ticket-screen">
@@ -57,7 +58,7 @@ if ($accountLabel === '') {
             </a>
             <div>
                 <h1>Ticket reserva</h1>
-                <p>Reserva #<?= e($reservation['id'] ?? '') ?></p>
+                <p><?= e($reservationCode) ?></p>
             </div>
         </div>
 
@@ -72,7 +73,7 @@ if ($accountLabel === '') {
                 </div>
                 <div class="ticket-code">
                     <span>Reserva</span>
-                    <strong>#<?= e($reservation['id'] ?? '') ?></strong>
+                    <strong><?= e($reservationCode) ?></strong>
                 </div>
             </div>
 
@@ -85,6 +86,10 @@ if ($accountLabel === '') {
             </div>
 
             <dl class="ticket-details">
+                <div>
+                    <dt>Codigo de reserva</dt>
+                    <dd><?= e($reservationCode) ?></dd>
+                </div>
                 <div>
                     <dt>Sala</dt>
                     <dd><?= e($roomLabel !== '' ? $roomLabel : 'Sin sala') ?></dd>
