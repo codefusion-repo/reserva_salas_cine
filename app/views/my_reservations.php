@@ -71,18 +71,23 @@ declare(strict_types=1);
                     $seatLabels = trim((string) ($reservation['seat_labels'] ?? ''));
                     $createdAtLabel = reservation_datetime_label($reservation['created_at'] ?? '');
                     $cancelledAtLabel = reservation_datetime_label($reservation['cancelled_at'] ?? '');
+                    $reservationCode = reservation_visual_code((int) ($reservation['id'] ?? 0));
                     ?>
                     <article class="reservation-card">
                         <div class="reservation-card-main">
                             <header class="reservation-card-header">
                                 <div>
-                                    <span class="reservation-id">Reserva #<?= e($reservation['id'] ?? '') ?></span>
+                                    <span class="reservation-id"><?= e($reservationCode) ?></span>
                                     <h2><?= e($reservation['movie_title'] ?? 'Pelicula') ?></h2>
                                 </div>
                                 <span class="reservation-status-badge status-<?= e($statusClass) ?>"><?= e($statusLabel) ?></span>
                             </header>
 
                             <dl class="reservation-details">
+                                <div>
+                                    <dt>Codigo</dt>
+                                    <dd><?= e($reservationCode) ?></dd>
+                                </div>
                                 <div>
                                     <dt>Funcion</dt>
                                     <dd><?= e($showtimeRange !== '' ? $showtimeRange : 'Sin horario') ?></dd>
