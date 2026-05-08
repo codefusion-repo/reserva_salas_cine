@@ -177,6 +177,7 @@ if ($nextShowtime !== null) {
                                         class="<?= $roomActive ? 'admin-danger' : 'admin-secondary' ?>"
                                         type="submit"
                                         formaction="index.php?action=set_room_active"
+                                        formnovalidate
                                         name="target_status"
                                         value="<?= e($targetStatus) ?>"
                                         data-confirm-action="<?= e($targetLabel) ?> esta sala?"
@@ -294,6 +295,7 @@ if ($nextShowtime !== null) {
                                         class="<?= $movieActive ? 'admin-danger' : 'admin-secondary' ?>"
                                         type="submit"
                                         formaction="index.php?action=set_movie_active"
+                                        formnovalidate
                                         name="target_status"
                                         value="<?= e($targetStatus) ?>"
                                         data-confirm-action="<?= e($targetLabel) ?> esta pelicula?"
@@ -468,6 +470,7 @@ if ($nextShowtime !== null) {
                                         class="<?= $showtimeActive ? 'admin-danger' : 'admin-secondary' ?>"
                                         type="submit"
                                         formaction="index.php?action=set_showtime_active"
+                                        formnovalidate
                                         name="target_status"
                                         value="<?= e($targetStatus) ?>"
                                         data-confirm-action="<?= e($targetLabel) ?> esta funcion?"
