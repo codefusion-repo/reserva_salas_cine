@@ -148,6 +148,7 @@ if ($hasReservationConfirmation) {
                 </dl>
 
                 <div class="reservation-confirmation-actions" aria-label="Acciones de reserva">
+                    <a class="reservation-confirmation-action reservation-confirmation-action-primary" href="index.php?page=ticket&amp;reservation_id=<?= e($reservationConfirmation['id'] ?? '') ?>">Ver ticket</a>
                     <a class="reservation-confirmation-action reservation-confirmation-action-primary" href="index.php?page=my_reservations">Ver mis reservas</a>
                     <a class="reservation-confirmation-action reservation-confirmation-action-secondary" href="index.php?page=cartelera">Volver a cartelera</a>
                 </div>

@@ -94,6 +94,10 @@ switch ($page) {
         render_my_reservations();
         break;
 
+    case 'ticket':
+        render_reservation_ticket();
+        break;
+
     case 'admin':
         render_admin_panel();
         break;

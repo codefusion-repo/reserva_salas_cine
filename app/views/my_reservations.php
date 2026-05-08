@@ -116,13 +116,17 @@ declare(strict_types=1);
                             </dl>
                         </div>
 
-                        <?php if (reservation_can_cancel($reservation)): ?>
-                            <form class="reservation-actions" method="post" action="index.php?action=cancel_reservation" data-cancel-reservation>
-                                <?= csrf_token_field() ?>
-                                <input type="hidden" name="reservation_id" value="<?= e($reservation['id'] ?? '') ?>">
-                                <button class="reservation-cancel" type="submit">Cancelar reserva</button>
-                            </form>
-                        <?php endif; ?>
+                        <div class="reservation-actions">
+                            <a class="reservation-ticket-link" href="index.php?page=ticket&amp;reservation_id=<?= e($reservation['id'] ?? '') ?>">Ver ticket</a>
+
+                            <?php if (reservation_can_cancel($reservation)): ?>
+                                <form method="post" action="index.php?action=cancel_reservation" data-cancel-reservation>
+                                    <?= csrf_token_field() ?>
+                                    <input type="hidden" name="reservation_id" value="<?= e($reservation['id'] ?? '') ?>">
+                                    <button class="reservation-cancel" type="submit">Cancelar reserva</button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
                     </article>
                 <?php endforeach; ?>
             </section>

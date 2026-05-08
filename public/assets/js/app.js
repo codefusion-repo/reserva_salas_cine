@@ -227,6 +227,12 @@ document.querySelectorAll('[data-cancel-reservation]').forEach((form) => {
     });
 });
 
+document.querySelectorAll('[data-print-ticket]').forEach((button) => {
+    button.addEventListener('click', () => {
+        window.print();
+    });
+});
+
 document.querySelectorAll('[data-confirm-action]').forEach((button) => {
     button.addEventListener('click', (event) => {
         const message = button.dataset.confirmAction || 'Confirmar accion?';
