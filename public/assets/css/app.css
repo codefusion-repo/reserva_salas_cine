@@ -1133,6 +1133,26 @@ p {
     color: rgba(255, 255, 255, 0.72);
 }
 
+.showtime-card .showtime-availability {
+    width: fit-content;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    font-size: 0.72rem;
+    line-height: 1.1;
+}
+
+.showtime-card .showtime-availability-low {
+    background: rgba(255, 205, 89, 0.22);
+    color: #ffe7a6;
+}
+
+.showtime-card .showtime-availability-none {
+    background: rgba(255, 113, 113, 0.2);
+    color: #ffb8b8;
+}
+
 .ticket-area {
     padding-top: 4px;
 }

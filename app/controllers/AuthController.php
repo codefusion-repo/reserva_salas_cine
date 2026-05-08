@@ -434,10 +434,43 @@ function movie_showtimes_by_day(array $showtimes): array
             'format_label' => (string) ($showtime['format_label'] ?? ''),
             'language_label' => (string) ($showtime['language_label'] ?? ''),
             'room_name' => (string) ($showtime['room_name'] ?? ''),
+            'available_seats' => max(0, (int) ($showtime['available_seats'] ?? 0)),
+            'availability_label' => movie_showtime_availability_label((int) ($showtime['available_seats'] ?? 0)),
+            'availability_state' => movie_showtime_availability_state((int) ($showtime['available_seats'] ?? 0)),
         ];
     }
 
     return array_values($days);
+}
+
+function movie_showtime_availability_label(int $availableSeats): string
+{
+    $availableSeats = max(0, $availableSeats);
+
+    if ($availableSeats === 0) {
+        return 'Sin disponibilidad';
+    }
+
+    if ($availableSeats <= 5) {
+        return 'Ultimas butacas: ' . $availableSeats . ' disponibles';
+    }
+
+    return $availableSeats . ' disponibles';
+}
+
+function movie_showtime_availability_state(int $availableSeats): string
+{
+    $availableSeats = max(0, $availableSeats);
+
+    if ($availableSeats === 0) {
+        return 'none';
+    }
+
+    if ($availableSeats <= 5) {
+        return 'low';
+    }
+
+    return 'available';
 }
 
 function movie_spanish_weekday(DateTimeImmutable $date): string
