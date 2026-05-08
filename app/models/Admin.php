@@ -97,6 +97,15 @@ function admin_room_deactivate(int $roomId): bool
     );
 }
 
+function admin_movies_all(): array
+{
+    return db_fetch_all(
+        'SELECT id, title, synopsis, genre, release_year, classification, poster_path, is_active
+         FROM movies
+         ORDER BY is_active DESC, title ASC, id ASC'
+    );
+}
+
 function admin_movies_active_all(): array
 {
     return db_fetch_all(
@@ -105,6 +114,17 @@ function admin_movies_active_all(): array
          WHERE is_active = :is_active
          ORDER BY title ASC, id ASC',
         ['is_active' => 1]
+    );
+}
+
+function admin_movie_find_by_id(int $movieId): ?array
+{
+    return db_fetch_one(
+        'SELECT id, title, synopsis, genre, release_year, classification, poster_path, is_active
+         FROM movies
+         WHERE id = :id
+         LIMIT 1',
+        ['id' => $movieId]
     );
 }
 
@@ -119,6 +139,78 @@ function admin_movie_active_find_by_id(int $movieId): ?array
         [
             'id' => $movieId,
             'is_active' => 1,
+        ]
+    );
+}
+
+function admin_movie_create(
+    string $title,
+    string $synopsis,
+    string $genre,
+    int $releaseYear,
+    string $classification,
+    ?string $posterPath,
+    bool $isActive
+): int {
+    db_execute(
+        'INSERT INTO movies (title, synopsis, genre, release_year, classification, poster_path, is_active)
+         VALUES (:title, :synopsis, :genre, :release_year, :classification, :poster_path, :is_active)',
+        [
+            'title' => $title,
+            'synopsis' => $synopsis,
+            'genre' => $genre,
+            'release_year' => $releaseYear,
+            'classification' => $classification,
+            'poster_path' => $posterPath,
+            'is_active' => $isActive ? 1 : 0,
+        ]
+    );
+
+    return (int) db()->lastInsertId();
+}
+
+function admin_movie_update(
+    int $movieId,
+    string $title,
+    string $synopsis,
+    string $genre,
+    int $releaseYear,
+    string $classification,
+    ?string $posterPath,
+    bool $isActive
+): bool {
+    return db_execute(
+        'UPDATE movies
+         SET title = :title,
+             synopsis = :synopsis,
+             genre = :genre,
+             release_year = :release_year,
+             classification = :classification,
+             poster_path = :poster_path,
+             is_active = :is_active
+         WHERE id = :id',
+        [
+            'id' => $movieId,
+            'title' => $title,
+            'synopsis' => $synopsis,
+            'genre' => $genre,
+            'release_year' => $releaseYear,
+            'classification' => $classification,
+            'poster_path' => $posterPath,
+            'is_active' => $isActive ? 1 : 0,
+        ]
+    );
+}
+
+function admin_movie_set_active(int $movieId, bool $isActive): bool
+{
+    return db_execute(
+        'UPDATE movies
+         SET is_active = :is_active
+         WHERE id = :id',
+        [
+            'id' => $movieId,
+            'is_active' => $isActive ? 1 : 0,
         ]
     );
 }

@@ -2,11 +2,19 @@
 declare(strict_types=1);
 
 $activeRoomCount = 0;
+$activeMovieCount = 0;
 $activeShowtimeCount = 0;
+$movieMaxYear = (int) date('Y') + 10;
 
 foreach ($rooms as $room) {
     if ((int) ($room['is_active'] ?? 0) === 1) {
         $activeRoomCount++;
+    }
+}
+
+foreach ($movies as $movie) {
+    if ((int) ($movie['is_active'] ?? 0) === 1) {
+        $activeMovieCount++;
     }
 }
 
@@ -67,9 +75,9 @@ foreach ($showtimes as $showtime) {
                     <strong><?= e($activeShowtimeCount) ?> activas</strong>
                 </article>
                 <article>
-                    <span><?= e(count($activeMovies)) ?></span>
-                    <p>Peliculas activas</p>
-                    <strong>Cartelera disponible</strong>
+                    <span><?= e(count($movies)) ?></span>
+                    <p>Peliculas registradas</p>
+                    <strong><?= e($activeMovieCount) ?> activas</strong>
                 </article>
             </section>
 
@@ -142,6 +150,123 @@ foreach ($showtimes as $showtime) {
                                         <?= $roomActive ? '' : 'disabled' ?>
                                     >
                                         Desactivar
+                                    </button>
+                                </span>
+                            </form>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </section>
+
+            <section id="admin-movies" class="admin-section" aria-labelledby="admin-movies-title">
+                <div class="admin-section-heading">
+                    <div>
+                        <p class="eyebrow">Peliculas</p>
+                        <h2 id="admin-movies-title">Gestion de peliculas</h2>
+                    </div>
+                </div>
+
+                <form class="admin-form admin-movie-create" method="post" action="index.php?action=create_movie">
+                    <?= csrf_token_field() ?>
+                    <label>
+                        <span>Titulo</span>
+                        <input type="text" name="title" maxlength="180" required>
+                    </label>
+                    <label class="admin-field-wide">
+                        <span>Sinopsis</span>
+                        <textarea name="synopsis" rows="3" required></textarea>
+                    </label>
+                    <label>
+                        <span>Genero</span>
+                        <input type="text" name="genre" maxlength="80" required>
+                    </label>
+                    <label>
+                        <span>Ano</span>
+                        <input type="number" name="release_year" min="1888" max="<?= e($movieMaxYear) ?>" step="1" required>
+                    </label>
+                    <label>
+                        <span>Clasificacion</span>
+                        <input type="text" name="classification" maxlength="20" required>
+                    </label>
+                    <label class="admin-field-wide">
+                        <span>Poster path</span>
+                        <input type="text" name="poster_path" maxlength="255" placeholder="assets/img/posters/archivo.jpg">
+                    </label>
+                    <label>
+                        <span>Estado</span>
+                        <select name="is_active" required>
+                            <option value="1">Activa</option>
+                            <option value="0">Inactiva</option>
+                        </select>
+                    </label>
+                    <button type="submit">Crear pelicula</button>
+                </form>
+
+                <?php if ($movies === []): ?>
+                    <div class="admin-empty">
+                        <h3>Sin peliculas</h3>
+                    </div>
+                <?php else: ?>
+                    <div class="admin-list admin-movie-list" role="list">
+                        <div class="admin-list-head admin-movie-row" aria-hidden="true">
+                            <span>Titulo</span>
+                            <span>Sinopsis</span>
+                            <span>Genero</span>
+                            <span>Ano</span>
+                            <span>Clasificacion</span>
+                            <span>Poster path</span>
+                            <span>Estado</span>
+                            <span>Acciones</span>
+                        </div>
+
+                        <?php foreach ($movies as $movie): ?>
+                            <?php
+                            $movieActive = (int) ($movie['is_active'] ?? 0) === 1;
+                            $targetStatus = $movieActive ? '0' : '1';
+                            $targetLabel = $movieActive ? 'Desactivar' : 'Activar';
+                            ?>
+                            <form class="admin-row admin-movie-row" method="post" action="index.php?action=update_movie" role="listitem">
+                                <?= csrf_token_field() ?>
+                                <input type="hidden" name="movie_id" value="<?= e($movie['id'] ?? '') ?>">
+                                <input type="hidden" name="is_active" value="<?= $movieActive ? '1' : '0' ?>">
+                                <label>
+                                    <span class="sr-only">Titulo</span>
+                                    <input type="text" name="title" value="<?= e($movie['title'] ?? '') ?>" maxlength="180" required>
+                                </label>
+                                <label>
+                                    <span class="sr-only">Sinopsis</span>
+                                    <textarea name="synopsis" rows="3" required><?= e($movie['synopsis'] ?? '') ?></textarea>
+                                </label>
+                                <label>
+                                    <span class="sr-only">Genero</span>
+                                    <input type="text" name="genre" value="<?= e($movie['genre'] ?? '') ?>" maxlength="80" required>
+                                </label>
+                                <label>
+                                    <span class="sr-only">Ano</span>
+                                    <input type="number" name="release_year" value="<?= e($movie['release_year'] ?? '') ?>" min="1888" max="<?= e($movieMaxYear) ?>" step="1" required>
+                                </label>
+                                <label>
+                                    <span class="sr-only">Clasificacion</span>
+                                    <input type="text" name="classification" value="<?= e($movie['classification'] ?? '') ?>" maxlength="20" required>
+                                </label>
+                                <label>
+                                    <span class="sr-only">Poster path</span>
+                                    <input type="text" name="poster_path" value="<?= e($movie['poster_path'] ?? '') ?>" maxlength="255">
+                                </label>
+                                <span class="admin-status-badge status-<?= e(admin_status_css_class($movie['is_active'] ?? 0)) ?>">
+                                    <?= e(admin_status_label($movie['is_active'] ?? 0)) ?>
+                                </span>
+                                <span class="admin-actions">
+                                    <button type="submit">Guardar</button>
+                                    <button
+                                        class="<?= $movieActive ? 'admin-danger' : 'admin-secondary' ?>"
+                                        type="submit"
+                                        formaction="index.php?action=set_movie_active"
+                                        name="target_status"
+                                        value="<?= e($targetStatus) ?>"
+                                        data-confirm-action="<?= e($targetLabel) ?> esta pelicula?"
+                                    >
+                                        <?= e($targetLabel) ?>
                                     </button>
                                 </span>
                             </form>
@@ -227,6 +352,15 @@ foreach ($showtimes as $showtime) {
                             $showtimeActive = (int) ($showtime['is_active'] ?? 0) === 1;
                             $targetStatus = $showtimeActive ? '0' : '1';
                             $targetLabel = $showtimeActive ? 'Desactivar' : 'Activar';
+                            $showtimeMovieId = (int) ($showtime['movie_id'] ?? 0);
+                            $showtimeMovieInActiveList = false;
+
+                            foreach ($activeMovies as $activeMovie) {
+                                if ((int) ($activeMovie['id'] ?? 0) === $showtimeMovieId) {
+                                    $showtimeMovieInActiveList = true;
+                                    break;
+                                }
+                            }
                             ?>
                             <form class="admin-row admin-showtime-row" method="post" action="index.php?action=update_showtime" role="listitem">
                                 <?= csrf_token_field() ?>
@@ -235,10 +369,15 @@ foreach ($showtimes as $showtime) {
                                 <label>
                                     <span class="sr-only">Pelicula</span>
                                     <select name="movie_id" required>
+                                        <?php if (!$showtimeMovieInActiveList && $showtimeMovieId > 0): ?>
+                                            <option value="<?= e($showtimeMovieId) ?>" selected>
+                                                <?= e(trim((string) ($showtime['movie_title'] ?? 'Pelicula') . ' (inactiva)')) ?>
+                                            </option>
+                                        <?php endif; ?>
                                         <?php foreach ($activeMovies as $movie): ?>
                                             <option
                                                 value="<?= e($movie['id'] ?? '') ?>"
-                                                <?= (int) ($movie['id'] ?? 0) === (int) ($showtime['movie_id'] ?? 0) ? 'selected' : '' ?>
+                                                <?= (int) ($movie['id'] ?? 0) === $showtimeMovieId ? 'selected' : '' ?>
                                             >
                                                 <?= e($movie['title'] ?? '') ?>
                                             </option>
