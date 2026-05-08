@@ -492,7 +492,7 @@ if ($nextShowtime !== null) {
                     </div>
                 </div>
 
-                <form class="admin-form admin-reservation-filter" method="get" action="index.php">
+                <form class="admin-form admin-reservation-filter" method="get" action="index.php#admin-reservations" data-filter-form>
                     <input type="hidden" name="page" value="admin">
                     <label>
                         <span>Estado</span>
@@ -506,7 +506,7 @@ if ($nextShowtime !== null) {
                     <label>
                         <span>Busqueda</span>
                         <input
-                            type="text"
+                            type="search"
                             name="q"
                             value="<?= e((string) ($adminReservationFilters['q'] ?? '')) ?>"
                             maxlength="80"
@@ -514,7 +514,6 @@ if ($nextShowtime !== null) {
                         >
                     </label>
                     <div class="admin-filter-actions">
-                        <button type="submit">Filtrar</button>
                         <a class="admin-filter-reset" href="index.php?page=admin#admin-reservations">Limpiar</a>
                     </div>
                 </form>
