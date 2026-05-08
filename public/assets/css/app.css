@@ -1346,6 +1346,10 @@ p {
     cursor: not-allowed;
 }
 
+.seat-submit:disabled {
+    pointer-events: none;
+}
+
 .seat-selection-screen {
     background: var(--cinema-bg);
     color: #ffffff;
@@ -1827,18 +1831,88 @@ p {
 
 .seat-selected-summary {
     display: grid;
-    gap: 4px;
+    gap: 12px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.24);
     color: #ffffff;
     font-family: Arial, Helvetica, sans-serif;
 }
 
-.seat-selected-summary strong {
-    font-size: 0.88rem;
+.seat-selected-summary h2 {
+    margin: 0;
+    color: #ffffff;
+    font-size: var(--font-md);
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
 }
 
-.seat-selected-summary span {
+.seat-selection-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+}
+
+.seat-selection-metrics div,
+.seat-selected-list-box {
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.seat-selection-metrics dt,
+.seat-selected-list-box span {
+    margin-bottom: 5px;
     color: rgba(255, 255, 255, 0.72);
+    font-size: var(--font-xs);
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.seat-selection-metrics dd,
+.seat-selected-list-box strong {
+    display: block;
+    margin: 0;
+    color: #ffffff;
     font-size: var(--font-sm);
+    font-weight: 900;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    text-transform: uppercase;
+}
+
+.seat-submit-state,
+.seat-submit-message {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: var(--font-sm);
+    font-weight: 900;
+    line-height: 1.35;
+    text-transform: uppercase;
+}
+
+.seat-submit-message {
+    padding: 10px 12px;
+    border-left: 4px solid var(--accent);
+    background: rgba(223, 36, 68, 0.16);
+    color: #ffffff;
+}
+
+.seat-submit-message[hidden] {
+    display: none;
+}
+
+.seat-submit-wrap {
+    display: inline-flex;
+    justify-self: end;
+    align-self: end;
+}
+
+.seat-submit-wrap.is-disabled {
+    cursor: not-allowed;
 }
 
 .seat-submit {
@@ -2733,6 +2807,10 @@ p {
         min-height: 0;
     }
 
+    .seat-submit-wrap {
+        justify-self: start;
+    }
+
     .seat-submit {
         justify-self: start;
     }
@@ -3054,6 +3132,14 @@ p {
 
     .seat-legend {
         gap: 18px;
+    }
+
+    .seat-selection-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .seat-submit-wrap {
+        width: 100%;
     }
 
     .seat-submit {
