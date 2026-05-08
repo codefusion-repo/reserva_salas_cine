@@ -2109,12 +2109,17 @@ p {
 }
 
 .reservation-actions {
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-end;
+    display: grid;
+    align-content: end;
+    gap: 10px;
     min-width: 0;
 }
 
+.reservation-actions form {
+    margin: 0;
+}
+
+.reservation-ticket-link,
 .reservation-cancel {
     display: inline-flex;
     min-height: 54px;
@@ -2134,9 +2139,208 @@ p {
     text-transform: uppercase;
 }
 
+.reservation-ticket-link {
+    border: 1px solid rgba(255, 255, 255, 0.46);
+    background: #343d47;
+}
+
 .reservation-cancel:hover,
-.reservation-cancel:focus {
+.reservation-cancel:focus,
+.reservation-ticket-link:hover,
+.reservation-ticket-link:focus {
     background: var(--accent-dark);
+}
+
+.ticket-screen {
+    background: var(--cinema-bg);
+    color: #ffffff;
+}
+
+.ticket-shell {
+    width: min(100% - 72px, 1040px);
+    margin: 0 auto;
+    padding: 52px 0 80px;
+}
+
+.ticket-heading {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 22px;
+    align-items: center;
+    margin-bottom: 34px;
+}
+
+.ticket-heading h1 {
+    margin: 0;
+    color: #ffffff;
+    font-size: var(--font-display);
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 0.94;
+    text-transform: uppercase;
+}
+
+.ticket-heading p {
+    margin: 10px 0 0;
+    color: rgba(255, 255, 255, 0.74);
+    font-size: var(--font-md);
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.ticket-panel {
+    display: grid;
+    gap: 28px;
+    padding: 34px 38px 38px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-left: 8px solid var(--accent);
+    background: #ffffff;
+    color: var(--text);
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.2);
+}
+
+.ticket-brand-row,
+.ticket-main {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 22px;
+}
+
+.ticket-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.ticket-brand-mark {
+    position: relative;
+    display: block;
+    width: 52px;
+    height: 40px;
+    flex: 0 0 52px;
+    border: 4px solid var(--accent);
+    background:
+        repeating-linear-gradient(90deg, var(--accent) 0 5px, transparent 5px 11px) top / 100% 6px no-repeat,
+        repeating-linear-gradient(90deg, var(--accent) 0 5px, transparent 5px 11px) bottom / 100% 6px no-repeat;
+}
+
+.ticket-brand span,
+.ticket-code span,
+.ticket-details dt {
+    color: var(--muted);
+    font-size: var(--font-xs);
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.ticket-brand strong,
+.ticket-code strong {
+    display: block;
+    margin-top: 6px;
+    color: var(--text);
+    font-size: var(--font-lg);
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.ticket-code {
+    min-width: 132px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    text-align: right;
+}
+
+.ticket-main {
+    align-items: center;
+    padding: 26px 0;
+    border-top: 2px dashed var(--line);
+    border-bottom: 2px dashed var(--line);
+}
+
+.ticket-main .eyebrow {
+    margin-bottom: 8px;
+    color: var(--accent);
+}
+
+.ticket-main h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: var(--font-3xl);
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 0.98;
+    overflow-wrap: anywhere;
+    text-transform: uppercase;
+}
+
+.ticket-details {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px 24px;
+    margin: 0;
+}
+
+.ticket-details div {
+    min-width: 0;
+}
+
+.ticket-details dt {
+    margin-bottom: 7px;
+}
+
+.ticket-details dd {
+    margin: 0;
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--font-md);
+    font-weight: 900;
+    line-height: 1.28;
+    overflow-wrap: anywhere;
+    text-transform: uppercase;
+}
+
+.ticket-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 22px;
+}
+
+.ticket-action {
+    display: inline-flex;
+    min-height: 56px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 22px;
+    border: 0;
+    color: #ffffff;
+    cursor: pointer;
+    font: inherit;
+    font-size: var(--font-md);
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.ticket-action-primary {
+    background: var(--accent);
+}
+
+.ticket-action-secondary {
+    border: 1px solid rgba(255, 255, 255, 0.46);
+    background: #343d47;
+}
+
+.ticket-action:hover,
+.ticket-action:focus {
+    background: var(--accent-dark);
+    outline: 0;
 }
 
 .admin-screen {
@@ -2710,6 +2914,11 @@ p {
         padding: 42px 0 56px;
     }
 
+    .ticket-shell {
+        width: min(100% - 32px, 920px);
+        padding: 42px 0 56px;
+    }
+
     .admin-shell {
         width: min(100% - 32px, 920px);
         padding: 42px 0 56px;
@@ -2821,6 +3030,14 @@ p {
 
     .reservation-actions {
         justify-content: flex-start;
+    }
+
+    .ticket-panel {
+        padding: 30px 30px 34px;
+    }
+
+    .ticket-details {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .reservation-cancel {
@@ -2980,7 +3197,16 @@ p {
         gap: 12px;
     }
 
+    .ticket-heading {
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 12px;
+    }
+
     .reservations-heading h1 {
+        font-size: 1.9rem;
+    }
+
+    .ticket-heading h1 {
         font-size: 1.9rem;
     }
 
@@ -3168,5 +3394,110 @@ p {
     .reservation-cancel {
         width: 100%;
         min-width: 0;
+    }
+
+    .ticket-panel {
+        gap: 22px;
+        padding: 24px 18px 28px;
+        border-top: 6px solid var(--accent);
+        border-left-width: 1px;
+    }
+
+    .ticket-brand-row,
+    .ticket-main {
+        flex-direction: column;
+    }
+
+    .ticket-code {
+        width: 100%;
+        text-align: left;
+    }
+
+    .ticket-main h2 {
+        font-size: 1.9rem;
+    }
+
+    .ticket-details,
+    .ticket-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .ticket-actions {
+        display: grid;
+    }
+
+    .ticket-action {
+        width: 100%;
+        min-height: 52px;
+        font-size: 0.92rem;
+    }
+}
+
+@media print {
+    :root {
+        color-scheme: light;
+    }
+
+    body,
+    .app-screen,
+    .ticket-screen {
+        background: #ffffff;
+        color: #000000;
+    }
+
+    .topbar,
+    .no-print,
+    .ticket-actions {
+        display: none !important;
+    }
+
+    .ticket-shell {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .ticket-panel {
+        gap: 18px;
+        padding: 24px;
+        border: 2px solid #000000;
+        border-left: 8px solid #000000;
+        box-shadow: none;
+    }
+
+    .ticket-brand-mark {
+        border-color: #000000;
+        background:
+            repeating-linear-gradient(90deg, #000000 0 5px, transparent 5px 11px) top / 100% 6px no-repeat,
+            repeating-linear-gradient(90deg, #000000 0 5px, transparent 5px 11px) bottom / 100% 6px no-repeat;
+    }
+
+    .ticket-main {
+        padding: 18px 0;
+        border-color: #000000;
+    }
+
+    .ticket-brand span,
+    .ticket-code span,
+    .ticket-details dt,
+    .ticket-main .eyebrow {
+        color: #333333;
+    }
+
+    .ticket-brand strong,
+    .ticket-code strong,
+    .ticket-main h2,
+    .ticket-details dd {
+        color: #000000;
+    }
+
+    .ticket-details {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .reservation-status-badge {
+        border: 1px solid #000000;
+        background: #ffffff;
+        color: #000000;
     }
 }

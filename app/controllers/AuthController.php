@@ -263,6 +263,47 @@ function render_my_reservations(): void
     require __DIR__ . '/../views/my_reservations.php';
 }
 
+function render_reservation_ticket(): void
+{
+    auth_require_login();
+
+    $user = current_user();
+    $reservationId = positive_int_from_request($_GET['reservation_id'] ?? null);
+
+    if ($reservationId === null) {
+        render_not_found_page(
+            'Ticket no encontrado',
+            'La reserva solicitada no existe o no pertenece a tu cuenta.'
+        );
+        return;
+    }
+
+    try {
+        $reservation = reservation_find_for_user($reservationId, (int) ($user['id'] ?? 0));
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+
+        render_error_page(
+            'No se pudo cargar el ticket',
+            'Intenta nuevamente mas tarde.',
+            500
+        );
+        return;
+    }
+
+    if ($reservation === null) {
+        render_not_found_page(
+            'Ticket no encontrado',
+            'La reserva solicitada no existe o no pertenece a tu cuenta.'
+        );
+        return;
+    }
+
+    $messages = flash_get();
+
+    require __DIR__ . '/../views/ticket.php';
+}
+
 function handle_reservation_cancel(): void
 {
     auth_require_login();
