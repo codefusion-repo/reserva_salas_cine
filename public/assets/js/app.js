@@ -1,5 +1,37 @@
 document.documentElement.dataset.appReady = 'true';
 
+document.querySelectorAll('[data-filter-form]').forEach((form) => {
+    const search = form.querySelector('input[type="search"][name="q"]');
+    let searchSubmitTimer = null;
+
+    const submitFilters = () => {
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+            return;
+        }
+
+        form.submit();
+    };
+
+    form.querySelectorAll('input[type="radio"]').forEach((input) => {
+        input.addEventListener('change', submitFilters);
+    });
+
+    if (search === null) {
+        return;
+    }
+
+    search.addEventListener('input', () => {
+        window.clearTimeout(searchSubmitTimer);
+        searchSubmitTimer = window.setTimeout(submitFilters, 450);
+    });
+
+    search.addEventListener('change', () => {
+        window.clearTimeout(searchSubmitTimer);
+        submitFilters();
+    });
+});
+
 document.querySelectorAll('[data-movie-detail]').forEach((detail) => {
     const tabs = Array.from(detail.querySelectorAll('[data-movie-date-tab]'));
     const panels = Array.from(detail.querySelectorAll('[data-movie-date-panel]'));

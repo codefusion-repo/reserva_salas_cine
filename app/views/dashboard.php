@@ -39,7 +39,7 @@ $hasActiveMovieFilters = $hasActiveMovieFilters ?? false;
 
         <div class="cartelera-layout">
             <aside class="filter-panel" aria-label="Filtros de cartelera">
-                <form class="filter-form" method="get" action="index.php">
+                <form class="filter-form" method="get" action="index.php" data-filter-form>
                     <input type="hidden" name="page" value="cartelera">
 
                     <div class="filter-heading">
@@ -120,7 +120,6 @@ $hasActiveMovieFilters = $hasActiveMovieFilters ?? false;
                     </div>
 
                     <div class="filter-actions">
-                        <button class="filter-submit" type="submit">Aplicar filtros</button>
                         <a class="filter-clear" href="index.php?page=cartelera">Limpiar filtros</a>
                     </div>
                 </form>

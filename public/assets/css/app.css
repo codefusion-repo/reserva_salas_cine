@@ -829,7 +829,6 @@ p {
     padding: 0 68px 28px;
 }
 
-.filter-submit,
 .filter-clear {
     display: inline-flex;
     min-height: 42px;
@@ -843,17 +842,11 @@ p {
     text-transform: uppercase;
 }
 
-.filter-submit {
-    background: var(--accent);
-}
-
 .filter-clear {
     border: 1px solid rgba(255, 255, 255, 0.58);
     background: transparent;
 }
 
-.filter-submit:hover,
-.filter-submit:focus,
 .filter-clear:hover,
 .filter-clear:focus {
     outline: 2px solid #ffffff;
@@ -866,8 +859,10 @@ p {
 
 .movie-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(150px, 180px));
     gap: 28px;
+    justify-content: start;
+    align-items: start;
 }
 
 .movie-card {
