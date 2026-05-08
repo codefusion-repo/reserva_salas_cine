@@ -2820,13 +2820,14 @@ p {
 
 .admin-summary {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 18px;
     margin-bottom: 38px;
 }
 
 .admin-summary article {
     min-width: 0;
+    min-height: 142px;
     padding: 22px;
     border: 1px solid rgba(255, 255, 255, 0.3);
     background: #243746;
@@ -2839,6 +2840,12 @@ p {
     font-size: var(--font-3xl);
     font-weight: 900;
     line-height: 1;
+    overflow-wrap: anywhere;
+}
+
+.admin-summary span.admin-summary-value-text {
+    font-size: var(--font-xl);
+    line-height: 1.16;
 }
 
 .admin-summary p,

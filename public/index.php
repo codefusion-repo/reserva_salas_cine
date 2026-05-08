@@ -43,6 +43,11 @@ if ($action === 'update_room' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+if ($action === 'set_room_active' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_room_set_active();
+    exit;
+}
+
 if ($action === 'deactivate_room' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     handle_room_deactivate();
     exit;
@@ -70,6 +75,11 @@ if ($action === 'create_showtime' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if ($action === 'update_showtime' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     handle_showtime_update();
+    exit;
+}
+
+if ($action === 'set_showtime_active' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_showtime_set_active();
     exit;
 }
 
