@@ -732,9 +732,11 @@ function render_admin_panel(): void
     $movies = [];
     $activeMovies = [];
     $showtimes = [];
+    $adminSummary = [];
     $adminLoadError = false;
 
     try {
+        $adminSummary = admin_summary_stats();
         $rooms = admin_rooms_all();
         $activeRooms = admin_rooms_active_all();
         $movies = admin_movies_all();

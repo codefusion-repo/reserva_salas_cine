@@ -1,27 +1,29 @@
 <?php
 declare(strict_types=1);
 
-$activeRoomCount = 0;
-$activeMovieCount = 0;
-$activeShowtimeCount = 0;
 $movieMaxYear = (int) date('Y') + 10;
+$summaryReservations = is_array($adminSummary['reservations'] ?? null) ? $adminSummary['reservations'] : [];
+$summaryRooms = is_array($adminSummary['rooms'] ?? null) ? $adminSummary['rooms'] : [];
+$summaryMovies = is_array($adminSummary['movies'] ?? null) ? $adminSummary['movies'] : [];
+$summaryShowtimes = is_array($adminSummary['showtimes'] ?? null) ? $adminSummary['showtimes'] : [];
+$nextShowtime = is_array($adminSummary['next_showtime'] ?? null) ? $adminSummary['next_showtime'] : null;
+$nextShowtimeValue = 'Sin fecha';
+$nextShowtimeDetail = 'No hay funciones activas proximas';
 
-foreach ($rooms as $room) {
-    if ((int) ($room['is_active'] ?? 0) === 1) {
-        $activeRoomCount++;
-    }
-}
+if ($nextShowtime !== null) {
+    $nextShowtimeLabels = reservation_showtime_labels($nextShowtime);
+    $nextShowtimeValue = trim(($nextShowtimeLabels['date'] ?? '') . ' ' . ($nextShowtimeLabels['time'] ?? ''));
 
-foreach ($movies as $movie) {
-    if ((int) ($movie['is_active'] ?? 0) === 1) {
-        $activeMovieCount++;
+    if ($nextShowtimeValue === '') {
+        $nextShowtimeValue = 'Fecha no disponible';
     }
-}
 
-foreach ($showtimes as $showtime) {
-    if ((int) ($showtime['is_active'] ?? 0) === 1) {
-        $activeShowtimeCount++;
-    }
+    $nextShowtimeDetail = trim(
+        (string) ($nextShowtime['movie_title'] ?? 'Pelicula')
+        . ' - '
+        . (string) ($nextShowtime['room_name'] ?? 'Sala'),
+        ' -'
+    );
 }
 ?>
 <!doctype html>
@@ -65,19 +67,44 @@ foreach ($showtimes as $showtime) {
         <?php else: ?>
             <section class="admin-summary" aria-label="Resumen administrativo">
                 <article>
-                    <span><?= e(count($rooms)) ?></span>
-                    <p>Salas registradas</p>
-                    <strong><?= e($activeRoomCount) ?> activas</strong>
+                    <span><?= e($adminSummary['users_registered'] ?? 0) ?></span>
+                    <p>Usuarios registrados</p>
+                    <strong>Cuentas del sistema</strong>
                 </article>
                 <article>
-                    <span><?= e(count($showtimes)) ?></span>
-                    <p>Funciones registradas</p>
-                    <strong><?= e($activeShowtimeCount) ?> activas</strong>
+                    <span><?= e($summaryRooms['active'] ?? 0) ?></span>
+                    <p>Salas activas</p>
+                    <strong>De <?= e($summaryRooms['total'] ?? 0) ?> registradas</strong>
                 </article>
                 <article>
-                    <span><?= e(count($movies)) ?></span>
-                    <p>Peliculas registradas</p>
-                    <strong><?= e($activeMovieCount) ?> activas</strong>
+                    <span><?= e($summaryMovies['active'] ?? 0) ?></span>
+                    <p>Peliculas activas</p>
+                    <strong>De <?= e($summaryMovies['total'] ?? 0) ?> registradas</strong>
+                </article>
+                <article>
+                    <span><?= e($summaryShowtimes['active'] ?? 0) ?></span>
+                    <p>Funciones activas</p>
+                    <strong>De <?= e($summaryShowtimes['total'] ?? 0) ?> registradas</strong>
+                </article>
+                <article>
+                    <span><?= e($summaryReservations['confirmed'] ?? 0) ?></span>
+                    <p>Reservas confirmadas</p>
+                    <strong>Estado confirmado</strong>
+                </article>
+                <article>
+                    <span><?= e($summaryReservations['cancelled'] ?? 0) ?></span>
+                    <p>Reservas canceladas</p>
+                    <strong>Estado cancelado</strong>
+                </article>
+                <article>
+                    <span><?= e($summaryReservations['pending'] ?? 0) ?></span>
+                    <p>Reservas pendientes</p>
+                    <strong>Estado pendiente</strong>
+                </article>
+                <article class="admin-summary-next">
+                    <span class="admin-summary-value-text"><?= e($nextShowtimeValue) ?></span>
+                    <p>Proxima funcion</p>
+                    <strong><?= e($nextShowtimeDetail) ?></strong>
                 </article>
             </section>
 

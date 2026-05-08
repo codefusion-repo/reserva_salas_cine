@@ -3,6 +3,88 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../helpers/database.php';
 
+function admin_summary_stats(): array
+{
+    $summary = [
+        'users_registered' => 0,
+        'rooms' => [
+            'total' => 0,
+            'active' => 0,
+        ],
+        'movies' => [
+            'total' => 0,
+            'active' => 0,
+        ],
+        'showtimes' => [
+            'total' => 0,
+            'active' => 0,
+        ],
+        'reservations' => [
+            'pending' => 0,
+            'confirmed' => 0,
+            'cancelled' => 0,
+        ],
+        'next_showtime' => null,
+    ];
+
+    $counts = db_fetch_one(
+        'SELECT
+            (SELECT COUNT(*) FROM users) AS users_registered,
+            (SELECT COUNT(*) FROM rooms) AS total_rooms,
+            (SELECT COUNT(*) FROM rooms WHERE is_active = 1) AS active_rooms,
+            (SELECT COUNT(*) FROM movies) AS total_movies,
+            (SELECT COUNT(*) FROM movies WHERE is_active = 1) AS active_movies,
+            (SELECT COUNT(*) FROM showtimes) AS total_showtimes,
+            (SELECT COUNT(*) FROM showtimes WHERE is_active = 1) AS active_showtimes'
+    );
+
+    if ($counts !== null) {
+        $summary['users_registered'] = max(0, (int) ($counts['users_registered'] ?? 0));
+        $summary['rooms']['total'] = max(0, (int) ($counts['total_rooms'] ?? 0));
+        $summary['rooms']['active'] = max(0, (int) ($counts['active_rooms'] ?? 0));
+        $summary['movies']['total'] = max(0, (int) ($counts['total_movies'] ?? 0));
+        $summary['movies']['active'] = max(0, (int) ($counts['active_movies'] ?? 0));
+        $summary['showtimes']['total'] = max(0, (int) ($counts['total_showtimes'] ?? 0));
+        $summary['showtimes']['active'] = max(0, (int) ($counts['active_showtimes'] ?? 0));
+    }
+
+    $reservationRows = db_fetch_all(
+        'SELECT status, COUNT(*) AS total
+         FROM reservations
+         GROUP BY status'
+    );
+
+    foreach ($reservationRows as $row) {
+        $status = (string) ($row['status'] ?? '');
+
+        if (array_key_exists($status, $summary['reservations'])) {
+            $summary['reservations'][$status] = max(0, (int) ($row['total'] ?? 0));
+        }
+    }
+
+    $summary['next_showtime'] = db_fetch_one(
+        'SELECT
+            s.id,
+            s.starts_at,
+            s.format_label,
+            s.language_label,
+            m.title AS movie_title,
+            r.name AS room_name,
+            r.location AS room_location
+         FROM showtimes s
+         INNER JOIN movies m ON m.id = s.movie_id
+         INNER JOIN rooms r ON r.id = s.room_id
+         WHERE s.is_active = 1
+           AND m.is_active = 1
+           AND r.is_active = 1
+           AND s.starts_at >= NOW()
+         ORDER BY s.starts_at ASC
+         LIMIT 1'
+    );
+
+    return $summary;
+}
+
 function admin_rooms_all(): array
 {
     return db_fetch_all(
