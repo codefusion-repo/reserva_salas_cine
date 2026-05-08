@@ -65,7 +65,24 @@ if ($nextShowtime !== null) {
                 </div>
             </section>
         <?php else: ?>
-            <section class="admin-summary" aria-label="Resumen administrativo">
+            <nav class="admin-subnav" aria-label="Secciones de administracion">
+                <?php foreach ($adminSections as $section): ?>
+                    <?php
+                    $sectionKey = (string) ($section['key'] ?? '');
+                    $sectionActive = $sectionKey === $adminSection;
+                    ?>
+                    <a
+                        class="admin-subnav-link<?= $sectionActive ? ' is-active' : '' ?>"
+                        href="<?= e($section['url'] ?? 'index.php?page=admin') ?>"
+                        <?= $sectionActive ? 'aria-current="page"' : '' ?>
+                    >
+                        <?= e($section['label'] ?? '') ?>
+                    </a>
+                <?php endforeach; ?>
+            </nav>
+
+            <?php if ($adminSection === 'summary'): ?>
+            <section id="admin-summary" class="admin-summary" aria-label="Resumen administrativo">
                 <article>
                     <span><?= e($adminSummary['users_registered'] ?? 0) ?></span>
                     <p>Usuarios registrados</p>
@@ -107,7 +124,9 @@ if ($nextShowtime !== null) {
                     <strong><?= e($nextShowtimeDetail) ?></strong>
                 </article>
             </section>
+            <?php endif; ?>
 
+            <?php if ($adminSection === 'rooms'): ?>
             <section id="admin-rooms" class="admin-section" aria-labelledby="admin-rooms-title">
                 <div class="admin-section-heading">
                     <div>
@@ -190,7 +209,9 @@ if ($nextShowtime !== null) {
                     </div>
                 <?php endif; ?>
             </section>
+            <?php endif; ?>
 
+            <?php if ($adminSection === 'movies'): ?>
             <section id="admin-movies" class="admin-section" aria-labelledby="admin-movies-title">
                 <div class="admin-section-heading">
                     <div>
@@ -308,7 +329,9 @@ if ($nextShowtime !== null) {
                     </div>
                 <?php endif; ?>
             </section>
+            <?php endif; ?>
 
+            <?php if ($adminSection === 'showtimes'): ?>
             <section id="admin-showtimes" class="admin-section" aria-labelledby="admin-showtimes-title">
                 <div class="admin-section-heading">
                     <div>
@@ -483,7 +506,9 @@ if ($nextShowtime !== null) {
                     </div>
                 <?php endif; ?>
             </section>
+            <?php endif; ?>
 
+            <?php if ($adminSection === 'reservations'): ?>
             <section id="admin-reservations" class="admin-section" aria-labelledby="admin-reservations-title">
                 <div class="admin-section-heading">
                     <div>
@@ -494,6 +519,7 @@ if ($nextShowtime !== null) {
 
                 <form class="admin-form admin-reservation-filter" method="get" action="index.php#admin-reservations" data-filter-form>
                     <input type="hidden" name="page" value="admin">
+                    <input type="hidden" name="admin_section" value="reservations">
                     <label>
                         <span>Estado</span>
                         <select name="status">
@@ -514,7 +540,7 @@ if ($nextShowtime !== null) {
                         >
                     </label>
                     <div class="admin-filter-actions">
-                        <a class="admin-filter-reset" href="index.php?page=admin#admin-reservations">Limpiar</a>
+                        <a class="admin-filter-reset" href="index.php?page=admin&admin_section=reservations#admin-reservations">Limpiar</a>
                     </div>
                 </form>
 
@@ -584,6 +610,7 @@ if ($nextShowtime !== null) {
                     </div>
                 <?php endif; ?>
             </section>
+            <?php endif; ?>
         <?php endif; ?>
     </main>
 

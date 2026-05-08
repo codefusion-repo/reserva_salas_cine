@@ -727,6 +727,34 @@ function render_admin_panel(): void
 
     $user = current_user();
     $messages = flash_get();
+    $adminSection = admin_section_from_request($_GET['admin_section'] ?? null);
+    $adminSections = [
+        [
+            'key' => 'summary',
+            'label' => 'Resumen',
+            'url' => admin_section_url('summary'),
+        ],
+        [
+            'key' => 'rooms',
+            'label' => 'Salas',
+            'url' => admin_section_url('rooms'),
+        ],
+        [
+            'key' => 'movies',
+            'label' => 'Peliculas',
+            'url' => admin_section_url('movies'),
+        ],
+        [
+            'key' => 'showtimes',
+            'label' => 'Funciones',
+            'url' => admin_section_url('showtimes'),
+        ],
+        [
+            'key' => 'reservations',
+            'label' => 'Reservas',
+            'url' => admin_section_url('reservations'),
+        ],
+    ];
     $rooms = [];
     $activeRooms = [];
     $movies = [];
@@ -783,7 +811,7 @@ function handle_room_create(): void
 
     if ($errors !== []) {
         admin_flash_errors($errors);
-        redirect_to('index.php?page=admin#admin-rooms');
+        redirect_to(admin_section_url('rooms'));
     }
 
     try {
@@ -794,7 +822,7 @@ function handle_room_create(): void
         flash_set('error', 'No se pudo crear la sala. Revisa que el nombre no este duplicado.');
     }
 
-    redirect_to('index.php?page=admin#admin-rooms');
+    redirect_to(admin_section_url('rooms'));
 }
 
 function handle_room_update(): void
@@ -833,7 +861,7 @@ function handle_room_update(): void
 
     if ($errors !== []) {
         admin_flash_errors($errors);
-        redirect_to('index.php?page=admin#admin-rooms');
+        redirect_to(admin_section_url('rooms'));
     }
 
     try {
@@ -844,7 +872,7 @@ function handle_room_update(): void
         flash_set('error', 'No se pudo actualizar la sala. Revisa que el nombre no este duplicado.');
     }
 
-    redirect_to('index.php?page=admin#admin-rooms');
+    redirect_to(admin_section_url('rooms'));
 }
 
 function handle_room_deactivate(): void
@@ -856,7 +884,7 @@ function handle_room_deactivate(): void
 
     if ($roomId === null) {
         flash_set('error', 'Selecciona una sala valida para desactivar.');
-        redirect_to('index.php?page=admin#admin-rooms');
+        redirect_to(admin_section_url('rooms'));
     }
 
     try {
@@ -871,7 +899,7 @@ function handle_room_deactivate(): void
         flash_set('error', 'No se pudo desactivar la sala en este momento.');
     }
 
-    redirect_to('index.php?page=admin#admin-rooms');
+    redirect_to(admin_section_url('rooms'));
 }
 
 function handle_room_set_active(): void
@@ -904,7 +932,7 @@ function handle_room_set_active(): void
 
     if ($errors !== []) {
         admin_flash_errors($errors);
-        redirect_to('index.php?page=admin#admin-rooms');
+        redirect_to(admin_section_url('rooms'));
     }
 
     try {
@@ -918,7 +946,7 @@ function handle_room_set_active(): void
         flash_set('error', 'No se pudo actualizar el estado de la sala en este momento.');
     }
 
-    redirect_to('index.php?page=admin#admin-rooms');
+    redirect_to(admin_section_url('rooms'));
 }
 
 function handle_movie_create(): void
@@ -930,7 +958,7 @@ function handle_movie_create(): void
 
     if ($errors !== []) {
         admin_flash_errors($errors);
-        redirect_to('index.php?page=admin#admin-movies');
+        redirect_to(admin_section_url('movies'));
     }
 
     try {
@@ -949,7 +977,7 @@ function handle_movie_create(): void
         flash_set('error', 'No se pudo crear la pelicula en este momento.');
     }
 
-    redirect_to('index.php?page=admin#admin-movies');
+    redirect_to(admin_section_url('movies'));
 }
 
 function handle_movie_update(): void
@@ -977,7 +1005,7 @@ function handle_movie_update(): void
 
     if ($errors !== []) {
         admin_flash_errors($errors);
-        redirect_to('index.php?page=admin#admin-movies');
+        redirect_to(admin_section_url('movies'));
     }
 
     try {
@@ -997,7 +1025,7 @@ function handle_movie_update(): void
         flash_set('error', 'No se pudo actualizar la pelicula en este momento.');
     }
 
-    redirect_to('index.php?page=admin#admin-movies');
+    redirect_to(admin_section_url('movies'));
 }
 
 function handle_movie_set_active(): void
@@ -1010,7 +1038,7 @@ function handle_movie_set_active(): void
 
     if ($movieId === null) {
         flash_set('error', 'Selecciona una pelicula valida para cambiar su estado.');
-        redirect_to('index.php?page=admin#admin-movies');
+        redirect_to(admin_section_url('movies'));
     }
 
     try {
@@ -1028,7 +1056,7 @@ function handle_movie_set_active(): void
         flash_set('error', 'No se pudo cambiar el estado de la pelicula.');
     }
 
-    redirect_to('index.php?page=admin#admin-movies');
+    redirect_to(admin_section_url('movies'));
 }
 
 function handle_showtime_create(): void
@@ -1040,7 +1068,7 @@ function handle_showtime_create(): void
 
     if ($errors !== []) {
         admin_flash_errors($errors);
-        redirect_to('index.php?page=admin#admin-showtimes');
+        redirect_to(admin_section_url('showtimes'));
     }
 
     try {
@@ -1058,7 +1086,7 @@ function handle_showtime_create(): void
         flash_set('error', 'No se pudo crear la funcion en este momento.');
     }
 
-    redirect_to('index.php?page=admin#admin-showtimes');
+    redirect_to(admin_section_url('showtimes'));
 }
 
 function handle_showtime_update(): void
@@ -1087,7 +1115,7 @@ function handle_showtime_update(): void
 
     if ($errors !== []) {
         admin_flash_errors($errors);
-        redirect_to('index.php?page=admin#admin-showtimes');
+        redirect_to(admin_section_url('showtimes'));
     }
 
     try {
@@ -1107,7 +1135,7 @@ function handle_showtime_update(): void
         flash_set('error', 'No se pudo actualizar la funcion en este momento.');
     }
 
-    redirect_to('index.php?page=admin#admin-showtimes');
+    redirect_to(admin_section_url('showtimes'));
 }
 
 function handle_showtime_set_active(): void
@@ -1170,7 +1198,7 @@ function handle_showtime_set_active(): void
 
     if ($errors !== []) {
         admin_flash_errors($errors);
-        redirect_to('index.php?page=admin#admin-showtimes');
+        redirect_to(admin_section_url('showtimes'));
     }
 
     try {
@@ -1186,7 +1214,7 @@ function handle_showtime_set_active(): void
         flash_set('error', 'No se pudo actualizar el estado de la funcion en este momento.');
     }
 
-    redirect_to('index.php?page=admin#admin-showtimes');
+    redirect_to(admin_section_url('showtimes'));
 }
 
 function handle_showtime_deactivate(): void
@@ -1241,6 +1269,25 @@ function admin_reservation_filters_from_request(array $request): array
         'status' => $status,
         'q' => movie_filter_value_from_request($request['q'] ?? '', 80),
     ];
+}
+
+function admin_section_from_request(mixed $value): string
+{
+    if (!is_scalar($value)) {
+        return 'summary';
+    }
+
+    $section = strtolower(trim((string) $value));
+    $allowedSections = ['summary', 'rooms', 'movies', 'showtimes', 'reservations'];
+
+    return in_array($section, $allowedSections, true) ? $section : 'summary';
+}
+
+function admin_section_url(string $section): string
+{
+    $section = admin_section_from_request($section);
+
+    return 'index.php?page=admin&admin_section=' . $section . '#admin-' . $section;
 }
 
 function admin_movie_payload_from_post(): array
