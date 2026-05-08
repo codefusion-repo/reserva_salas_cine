@@ -148,7 +148,11 @@ if ($nextShowtime !== null) {
                         </div>
 
                         <?php foreach ($rooms as $room): ?>
-                            <?php $roomActive = (int) ($room['is_active'] ?? 0) === 1; ?>
+                            <?php
+                            $roomActive = (int) ($room['is_active'] ?? 0) === 1;
+                            $targetStatus = $roomActive ? '0' : '1';
+                            $targetLabel = $roomActive ? 'Desactivar' : 'Activar';
+                            ?>
                             <form class="admin-row admin-room-row" method="post" action="index.php?action=update_room" role="listitem">
                                 <?= csrf_token_field() ?>
                                 <input type="hidden" name="room_id" value="<?= e($room['id'] ?? '') ?>">
@@ -170,13 +174,14 @@ if ($nextShowtime !== null) {
                                 <span class="admin-actions">
                                     <button type="submit">Guardar</button>
                                     <button
-                                        class="admin-danger"
+                                        class="<?= $roomActive ? 'admin-danger' : 'admin-secondary' ?>"
                                         type="submit"
-                                        formaction="index.php?action=deactivate_room"
-                                        data-confirm-action="Desactivar esta sala?"
-                                        <?= $roomActive ? '' : 'disabled' ?>
+                                        formaction="index.php?action=set_room_active"
+                                        name="target_status"
+                                        value="<?= e($targetStatus) ?>"
+                                        data-confirm-action="<?= e($targetLabel) ?> esta sala?"
                                     >
-                                        Desactivar
+                                        <?= e($targetLabel) ?>
                                     </button>
                                 </span>
                             </form>
@@ -380,11 +385,20 @@ if ($nextShowtime !== null) {
                             $targetStatus = $showtimeActive ? '0' : '1';
                             $targetLabel = $showtimeActive ? 'Desactivar' : 'Activar';
                             $showtimeMovieId = (int) ($showtime['movie_id'] ?? 0);
+                            $showtimeRoomId = (int) ($showtime['room_id'] ?? 0);
                             $showtimeMovieInActiveList = false;
+                            $showtimeRoomInActiveList = false;
 
                             foreach ($activeMovies as $activeMovie) {
                                 if ((int) ($activeMovie['id'] ?? 0) === $showtimeMovieId) {
                                     $showtimeMovieInActiveList = true;
+                                    break;
+                                }
+                            }
+
+                            foreach ($activeRooms as $activeRoom) {
+                                if ((int) ($activeRoom['id'] ?? 0) === $showtimeRoomId) {
+                                    $showtimeRoomInActiveList = true;
                                     break;
                                 }
                             }
@@ -414,10 +428,15 @@ if ($nextShowtime !== null) {
                                 <label>
                                     <span class="sr-only">Sala</span>
                                     <select name="room_id" required>
+                                        <?php if (!$showtimeRoomInActiveList && $showtimeRoomId > 0): ?>
+                                            <option value="<?= e($showtimeRoomId) ?>" selected>
+                                                <?= e(trim((string) ($showtime['room_name'] ?? 'Sala') . ' (inactiva)')) ?>
+                                            </option>
+                                        <?php endif; ?>
                                         <?php foreach ($activeRooms as $room): ?>
                                             <option
                                                 value="<?= e($room['id'] ?? '') ?>"
-                                                <?= (int) ($room['id'] ?? 0) === (int) ($showtime['room_id'] ?? 0) ? 'selected' : '' ?>
+                                                <?= (int) ($room['id'] ?? 0) === $showtimeRoomId ? 'selected' : '' ?>
                                             >
                                                 <?= e(trim(($room['name'] ?? '') . ' - ' . ($room['location'] ?? ''), ' -')) ?>
                                             </option>
@@ -448,7 +467,7 @@ if ($nextShowtime !== null) {
                                     <button
                                         class="<?= $showtimeActive ? 'admin-danger' : 'admin-secondary' ?>"
                                         type="submit"
-                                        formaction="index.php?action=deactivate_showtime"
+                                        formaction="index.php?action=set_showtime_active"
                                         name="target_status"
                                         value="<?= e($targetStatus) ?>"
                                         data-confirm-action="<?= e($targetLabel) ?> esta funcion?"

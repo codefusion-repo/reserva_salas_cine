@@ -862,6 +862,53 @@ function handle_room_deactivate(): void
     redirect_to('index.php?page=admin#admin-rooms');
 }
 
+function handle_room_set_active(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    $roomId = positive_int_from_request($_POST['room_id'] ?? null);
+    $targetStatus = admin_target_status_from_post($_POST['target_status'] ?? null);
+    $errors = [];
+
+    if ($roomId === null) {
+        $errors[] = 'Selecciona una sala valida para cambiar su estado.';
+    }
+
+    if ($targetStatus === null) {
+        $errors[] = 'Selecciona un estado valido para la sala.';
+    }
+
+    if ($roomId !== null) {
+        try {
+            if (admin_room_find_by_id((int) $roomId) === null) {
+                $errors[] = 'La sala seleccionada no existe.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar la sala seleccionada.';
+        }
+    }
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        redirect_to('index.php?page=admin#admin-rooms');
+    }
+
+    try {
+        admin_room_set_active((int) $roomId, $targetStatus);
+        flash_set(
+            'success',
+            $targetStatus ? 'Sala activada correctamente.' : 'Sala desactivada correctamente.'
+        );
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo actualizar el estado de la sala en este momento.');
+    }
+
+    redirect_to('index.php?page=admin#admin-rooms');
+}
+
 function handle_movie_create(): void
 {
     auth_require_admin_action();
@@ -1051,17 +1098,21 @@ function handle_showtime_update(): void
     redirect_to('index.php?page=admin#admin-showtimes');
 }
 
-function handle_showtime_deactivate(): void
+function handle_showtime_set_active(): void
 {
     auth_require_admin_action();
     csrf_require_valid_post();
 
     $showtimeId = positive_int_from_request($_POST['showtime_id'] ?? null);
-    $targetStatus = admin_bool_from_post($_POST['target_status'] ?? 0);
+    $targetStatus = admin_target_status_from_post($_POST['target_status'] ?? null);
     $errors = [];
 
     if ($showtimeId === null) {
         $errors[] = 'Selecciona una funcion valida para cambiar su estado.';
+    }
+
+    if ($targetStatus === null) {
+        $errors[] = 'Selecciona un estado valido para la funcion.';
     }
 
     $showtime = null;
@@ -1079,7 +1130,7 @@ function handle_showtime_deactivate(): void
         }
     }
 
-    if ($targetStatus && $showtime !== null) {
+    if ($targetStatus === true && $showtime !== null) {
         if ((int) ($showtime['movie_is_active'] ?? 0) !== 1) {
             $errors[] = 'No se puede activar una funcion con pelicula inactiva.';
         }
@@ -1120,10 +1171,16 @@ function handle_showtime_deactivate(): void
         }
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
-        flash_set('error', 'No se pudo cambiar el estado de la funcion.');
+        flash_set('error', 'No se pudo actualizar el estado de la funcion en este momento.');
     }
 
     redirect_to('index.php?page=admin#admin-showtimes');
+}
+
+function handle_showtime_deactivate(): void
+{
+    $_POST['target_status'] = '0';
+    handle_showtime_set_active();
 }
 
 function admin_room_payload_from_post(): array
@@ -1427,6 +1484,25 @@ function admin_trimmed_label(mixed $value, string $fallback): string
 function admin_bool_from_post(mixed $value): bool
 {
     return is_scalar($value) && (string) $value === '1';
+}
+
+function admin_target_status_from_post(mixed $value): ?bool
+{
+    if (!is_scalar($value)) {
+        return null;
+    }
+
+    $value = (string) $value;
+
+    if ($value === '1') {
+        return true;
+    }
+
+    if ($value === '0') {
+        return false;
+    }
+
+    return null;
 }
 
 function admin_flash_errors(array $errors): void

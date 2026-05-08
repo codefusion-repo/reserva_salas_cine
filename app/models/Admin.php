@@ -166,7 +166,7 @@ function admin_room_update(int $roomId, string $name, string $location, int $cap
     );
 }
 
-function admin_room_deactivate(int $roomId): bool
+function admin_room_set_active(int $roomId, bool $isActive): bool
 {
     return db_execute(
         'UPDATE rooms
@@ -174,9 +174,14 @@ function admin_room_deactivate(int $roomId): bool
          WHERE id = :id',
         [
             'id' => $roomId,
-            'is_active' => 0,
+            'is_active' => $isActive ? 1 : 0,
         ]
     );
+}
+
+function admin_room_deactivate(int $roomId): bool
+{
+    return admin_room_set_active($roomId, false);
 }
 
 function admin_movies_all(): array
