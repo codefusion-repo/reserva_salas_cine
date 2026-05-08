@@ -1,15 +1,16 @@
 <?php
 declare(strict_types=1);
 
-$genres = [];
-
-foreach ($movies as $movie) {
-    $genre = trim((string) ($movie['genre'] ?? ''));
-
-    if ($genre !== '') {
-        $genres[mb_strtoupper($genre)] = $genre;
-    }
-}
+$movieFilters = $movieFilters ?? [
+    'q' => '',
+    'genre' => '',
+    'classification' => '',
+];
+$movieFilterOptions = $movieFilterOptions ?? [
+    'genres' => [],
+    'classifications' => [],
+];
+$hasActiveMovieFilters = $hasActiveMovieFilters ?? false;
 ?>
 <!doctype html>
 <html lang="es">
@@ -38,36 +39,91 @@ foreach ($movies as $movie) {
 
         <div class="cartelera-layout">
             <aside class="filter-panel" aria-label="Filtros de cartelera">
-                <div class="filter-heading">
-                    <span class="filter-icon" aria-hidden="true">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </span>
-                    <span>Filtrar por:</span>
-                </div>
+                <form class="filter-form" method="get" action="index.php">
+                    <input type="hidden" name="page" value="cartelera">
 
-                <div class="filter-group">
-                    <div class="filter-toggle">
-                        <span>Genero</span>
-                        <span aria-hidden="true">-</span>
+                    <div class="filter-heading">
+                        <span class="filter-icon" aria-hidden="true">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </span>
+                        <span>Filtrar por:</span>
                     </div>
 
-                    <?php if ($genres !== []): ?>
-                        <ul class="genre-list">
-                            <?php foreach ($genres as $genre): ?>
-                                <li><?= e(mb_strtoupper($genre)) ?></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php else: ?>
-                        <p class="filter-empty">Sin generos</p>
-                    <?php endif; ?>
-                </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="movie-filter-q">Titulo</label>
+                        <input
+                            class="filter-search"
+                            id="movie-filter-q"
+                            type="search"
+                            name="q"
+                            value="<?= e($movieFilters['q'] ?? '') ?>"
+                            placeholder="Buscar pelicula"
+                        >
+                    </div>
 
-                <div class="filter-toggle filter-toggle-secondary">
-                    <span>Estreno</span>
-                    <span aria-hidden="true">+</span>
-                </div>
+                    <div class="filter-group">
+                        <div class="filter-toggle">
+                            <span>Genero</span>
+                            <span aria-hidden="true">-</span>
+                        </div>
+
+                        <?php if (($movieFilterOptions['genres'] ?? []) !== []): ?>
+                            <ul class="filter-option-list">
+                                <li>
+                                    <label>
+                                        <input type="radio" name="genre" value=""<?= ($movieFilters['genre'] ?? '') === '' ? ' checked' : '' ?>>
+                                        <span>Todos</span>
+                                    </label>
+                                </li>
+                                <?php foreach ($movieFilterOptions['genres'] as $genre): ?>
+                                    <li>
+                                        <label>
+                                            <input type="radio" name="genre" value="<?= e($genre) ?>"<?= ($movieFilters['genre'] ?? '') === $genre ? ' checked' : '' ?>>
+                                            <span><?= e(mb_strtoupper($genre)) ?></span>
+                                        </label>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php else: ?>
+                            <p class="filter-empty">Sin generos</p>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="filter-group filter-group-last">
+                        <div class="filter-toggle">
+                            <span>Clasificacion</span>
+                            <span aria-hidden="true">-</span>
+                        </div>
+
+                        <?php if (($movieFilterOptions['classifications'] ?? []) !== []): ?>
+                            <ul class="filter-option-list">
+                                <li>
+                                    <label>
+                                        <input type="radio" name="classification" value=""<?= ($movieFilters['classification'] ?? '') === '' ? ' checked' : '' ?>>
+                                        <span>Todas</span>
+                                    </label>
+                                </li>
+                                <?php foreach ($movieFilterOptions['classifications'] as $classification): ?>
+                                    <li>
+                                        <label>
+                                            <input type="radio" name="classification" value="<?= e($classification) ?>"<?= ($movieFilters['classification'] ?? '') === $classification ? ' checked' : '' ?>>
+                                            <span><?= e($classification) ?></span>
+                                        </label>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php else: ?>
+                            <p class="filter-empty">Sin clasificaciones</p>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="filter-actions">
+                        <button class="filter-submit" type="submit">Aplicar filtros</button>
+                        <a class="filter-clear" href="index.php?page=cartelera">Limpiar filtros</a>
+                    </div>
+                </form>
             </aside>
 
             <section class="movie-board" aria-label="Peliculas activas">
@@ -76,6 +132,12 @@ foreach ($movies as $movie) {
                         <h2>No se pudo cargar la cartelera</h2>
                         <p>Intenta nuevamente mas tarde.</p>
                         <a class="movie-state-link" href="index.php?page=cartelera">Intentar nuevamente</a>
+                    </div>
+                <?php elseif ($movies === [] && $hasActiveMovieFilters): ?>
+                    <div class="cartelera-state">
+                        <h2>No hay resultados</h2>
+                        <p>No encontramos peliculas activas que coincidan con los filtros seleccionados.</p>
+                        <a class="movie-state-link" href="index.php?page=cartelera">Limpiar filtros</a>
                     </div>
                 <?php elseif ($movies === []): ?>
                     <div class="cartelera-state">

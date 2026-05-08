@@ -675,6 +675,10 @@ p {
     color: #ffffff;
 }
 
+.filter-form {
+    display: block;
+}
+
 .filter-heading {
     display: flex;
     min-height: 90px;
@@ -725,6 +729,40 @@ p {
 
 .filter-group {
     padding: 18px 68px 28px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.filter-group-last {
+    border-bottom: 0;
+}
+
+.filter-label {
+    display: block;
+    margin-bottom: 10px;
+    color: #ffffff;
+    font-size: var(--font-lg);
+    font-weight: 800;
+}
+
+.filter-search {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 0;
+    outline: 0;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    font: 700 var(--font-md) Arial, Helvetica, sans-serif;
+}
+
+.filter-search::placeholder {
+    color: rgba(255, 255, 255, 0.68);
+}
+
+.filter-search:focus {
+    border-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.16);
 }
 
 .filter-toggle {
@@ -741,15 +779,29 @@ p {
     padding: 0 90px 0 68px;
 }
 
-.genre-list {
+.filter-option-list {
     display: grid;
-    gap: 0;
-    margin: 14px 0 36px;
+    gap: 8px;
+    margin: 14px 0 0;
     padding: 0;
     list-style: none;
 }
 
-.genre-list li,
+.filter-option-list label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.filter-option-list input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--accent);
+}
+
+.filter-option-list span,
 .filter-empty {
     margin: 0;
     color: #ffffff;
@@ -759,9 +811,53 @@ p {
     text-transform: uppercase;
 }
 
+.filter-option-list input:checked + span {
+    color: #ffffff;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+}
+
 .filter-empty {
     margin-top: 12px;
     color: rgba(255, 255, 255, 0.74);
+}
+
+.filter-actions {
+    display: grid;
+    gap: 10px;
+    padding: 0 68px 28px;
+}
+
+.filter-submit,
+.filter-clear {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    color: #ffffff;
+    cursor: pointer;
+    font: 900 var(--font-sm) Arial, Helvetica, sans-serif;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.filter-submit {
+    background: var(--accent);
+}
+
+.filter-clear {
+    border: 1px solid rgba(255, 255, 255, 0.58);
+    background: transparent;
+}
+
+.filter-submit:hover,
+.filter-submit:focus,
+.filter-clear:hover,
+.filter-clear:focus {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
 }
 
 .movie-board {
@@ -3060,6 +3156,7 @@ p {
 
     .filter-heading,
     .filter-group,
+    .filter-actions,
     .filter-toggle-secondary {
         padding-right: 24px;
         padding-left: 24px;
