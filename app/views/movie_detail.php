@@ -5,6 +5,7 @@ $hasMovie = is_array($movie);
 $title = $hasMovie ? (string) ($movie['title'] ?? 'Pelicula') : 'Pelicula no encontrada';
 $posterUrl = $hasMovie ? public_asset_url_if_exists($movie['poster_path'] ?? null) : null;
 $metaParts = [];
+$hasSelectableShowtimes = false;
 
 if ($hasMovie) {
     $metaParts = array_filter(
@@ -15,6 +16,15 @@ if ($hasMovie) {
         ],
         static fn (string $value): bool => trim($value) !== ''
     );
+}
+
+foreach ($showtimeDays ?? [] as $day) {
+    foreach ($day['showtimes'] ?? [] as $showtime) {
+        if (($showtime['is_sold_out'] ?? false) !== true) {
+            $hasSelectableShowtimes = true;
+            break 2;
+        }
+    }
 }
 ?>
 <!doctype html>
@@ -138,8 +148,15 @@ if ($hasMovie) {
                                     >
                                         <div class="showtime-grid">
                                             <?php foreach ($day['showtimes'] as $showtime): ?>
-                                                <article class="showtime-card">
-                                                    <button class="showtime-chip" type="button" data-showtime-choice="<?= e($showtime['id']) ?>">
+                                                <?php $isSoldOut = ($showtime['is_sold_out'] ?? false) === true; ?>
+                                                <article class="showtime-card <?= $isSoldOut ? 'is-sold-out' : '' ?>">
+                                                    <button
+                                                        class="showtime-chip"
+                                                        type="button"
+                                                        data-showtime-choice="<?= e($showtime['id']) ?>"
+                                                        data-showtime-sold-out="<?= $isSoldOut ? 'true' : 'false' ?>"
+                                                        <?= $isSoldOut ? 'disabled aria-disabled="true"' : '' ?>
+                                                    >
                                                         <?= e($showtime['time_label']) ?>
                                                     </button>
                                                     <p><?= e(trim($showtime['format_label'] . ' - ' . $showtime['language_label'], ' -')) ?></p>
@@ -155,41 +172,48 @@ if ($hasMovie) {
                                     </div>
                                 <?php endforeach; ?>
 
-                                <div class="ticket-area" aria-label="Seleccion visual de entradas">
-                                    <h3>SELECCIONA TUS ENTRADAS</h3>
-
-                                    <div class="ticket-actions">
-                                        <div class="ticket-card is-selected" data-ticket-selector data-min="0" data-max="10">
-                                            <div>
-                                                <strong>BUTACA TRADICIONAL</strong>
-                                                <span>$7.900</span>
-                                                <small>*INCLUYE $500 DE CARGO POR SERVICIO</small>
-                                            </div>
-                                            <div class="ticket-stepper" aria-label="Cantidad butaca tradicional">
-                                                <button type="button" data-ticket-action="decrease" aria-label="Restar butaca tradicional">-</button>
-                                                <output data-ticket-count>2</output>
-                                                <button type="button" data-ticket-action="increase" aria-label="Sumar butaca tradicional">+</button>
-                                            </div>
-                                        </div>
-
-                                        <div class="ticket-card" data-ticket-selector data-min="0" data-max="10">
-                                            <div>
-                                                <strong>NINO O TERCERA EDAD</strong>
-                                                <span>$6.700</span>
-                                                <small>*INCLUYE $500 DE CARGO POR SERVICIO</small>
-                                            </div>
-                                            <div class="ticket-stepper" aria-label="Cantidad nino o tercera edad">
-                                                <button type="button" data-ticket-action="decrease" aria-label="Restar nino o tercera edad">-</button>
-                                                <output data-ticket-count>0</output>
-                                                <button type="button" data-ticket-action="increase" aria-label="Sumar nino o tercera edad">+</button>
-                                            </div>
-                                        </div>
-
-                                        <button class="movie-continue" type="submit" disabled aria-disabled="true" data-visual-continue>
-                                            CONTINUAR
-                                        </button>
+                                <?php if (!$hasSelectableShowtimes): ?>
+                                    <div class="schedule-empty schedule-sold-out" role="status">
+                                        <h3>Funciones agotadas</h3>
+                                        <p>Todas las funciones de esta pelicula estan agotadas por ahora.</p>
                                     </div>
-                                </div>
+                                <?php else: ?>
+                                    <div class="ticket-area" aria-label="Seleccion visual de entradas">
+                                        <h3>SELECCIONA TUS ENTRADAS</h3>
+
+                                        <div class="ticket-actions">
+                                            <div class="ticket-card is-selected" data-ticket-selector data-min="0" data-max="10">
+                                                <div>
+                                                    <strong>BUTACA TRADICIONAL</strong>
+                                                    <span>$7.900</span>
+                                                    <small>*INCLUYE $500 DE CARGO POR SERVICIO</small>
+                                                </div>
+                                                <div class="ticket-stepper" aria-label="Cantidad butaca tradicional">
+                                                    <button type="button" data-ticket-action="decrease" aria-label="Restar butaca tradicional">-</button>
+                                                    <output data-ticket-count>2</output>
+                                                    <button type="button" data-ticket-action="increase" aria-label="Sumar butaca tradicional">+</button>
+                                                </div>
+                                            </div>
+
+                                            <div class="ticket-card" data-ticket-selector data-min="0" data-max="10">
+                                                <div>
+                                                    <strong>NINO O TERCERA EDAD</strong>
+                                                    <span>$6.700</span>
+                                                    <small>*INCLUYE $500 DE CARGO POR SERVICIO</small>
+                                                </div>
+                                                <div class="ticket-stepper" aria-label="Cantidad nino o tercera edad">
+                                                    <button type="button" data-ticket-action="decrease" aria-label="Restar nino o tercera edad">-</button>
+                                                    <output data-ticket-count>0</output>
+                                                    <button type="button" data-ticket-action="increase" aria-label="Sumar nino o tercera edad">+</button>
+                                                </div>
+                                            </div>
+
+                                            <button class="movie-continue" type="submit" disabled aria-disabled="true" data-visual-continue>
+                                                CONTINUAR
+                                            </button>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
                             </form>
                         <?php endif; ?>
                     </div>

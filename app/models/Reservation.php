@@ -10,7 +10,7 @@ const RESERVATION_MAX_TICKETS = 10;
 
 function reservation_showtime_find_active(int $showtimeId): ?array
 {
-    return db_fetch_one(
+    $showtime = db_fetch_one(
         'SELECT
             s.id,
             s.movie_id,
@@ -23,10 +23,20 @@ function reservation_showtime_find_active(int $showtimeId): ?array
             m.classification,
             r.name AS room_name,
             r.location AS room_location,
-            r.capacity AS room_capacity
+            r.capacity AS room_capacity,
+            COALESCE(occupied.occupied_active_seats, 0) AS occupied_active_seats
          FROM showtimes s
          INNER JOIN movies m ON m.id = s.movie_id
          INNER JOIN rooms r ON r.id = s.room_id
+         LEFT JOIN (
+            SELECT rs.showtime_id, COUNT(rs.id) AS occupied_active_seats
+            FROM reservation_seats rs
+            INNER JOIN reservations rv
+                ON rv.id = rs.reservation_id
+               AND rv.showtime_id = rs.showtime_id
+               AND rv.status IN (:status_pending, :status_confirmed)
+            GROUP BY rs.showtime_id
+         ) occupied ON occupied.showtime_id = s.id
          WHERE s.id = :id
            AND s.is_active = :showtime_active
            AND m.is_active = :movie_active
@@ -37,8 +47,34 @@ function reservation_showtime_find_active(int $showtimeId): ?array
             'showtime_active' => 1,
             'movie_active' => 1,
             'room_active' => 1,
+            'status_pending' => 'pending',
+            'status_confirmed' => 'confirmed',
         ]
     );
+
+    if ($showtime === null) {
+        return null;
+    }
+
+    $capacity = max(0, (int) ($showtime['room_capacity'] ?? 0));
+    $occupiedSeats = max(0, (int) ($showtime['occupied_active_seats'] ?? 0));
+
+    $showtime['room_capacity'] = $capacity;
+    $showtime['occupied_active_seats'] = $occupiedSeats;
+    $showtime['available_seats'] = max(0, $capacity - $occupiedSeats);
+    $showtime['is_sold_out'] = $showtime['available_seats'] <= 0;
+
+    return $showtime;
+}
+
+function reservation_showtime_available_seats(array $showtime): int
+{
+    return max(0, (int) ($showtime['available_seats'] ?? 0));
+}
+
+function reservation_showtime_is_sold_out(array $showtime): bool
+{
+    return reservation_showtime_available_seats($showtime) <= 0;
 }
 
 function reservation_occupied_seats_for_showtime(int $showtimeId): array
@@ -48,6 +84,7 @@ function reservation_occupied_seats_for_showtime(int $showtimeId): array
          FROM reservation_seats rs
          INNER JOIN reservations r ON r.id = rs.reservation_id
          WHERE rs.showtime_id = :showtime_id
+           AND r.showtime_id = rs.showtime_id
            AND r.status IN (:status_pending, :status_confirmed)
          ORDER BY rs.seat_row ASC, rs.seat_number ASC',
         [
