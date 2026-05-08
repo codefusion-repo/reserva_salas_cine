@@ -1,36 +1,62 @@
 document.documentElement.dataset.appReady = 'true';
 
-document.querySelectorAll('[data-filter-form]').forEach((form) => {
-    const search = form.querySelector('input[type="search"][name="q"]');
-    let searchSubmitTimer = null;
-
-    const submitFilters = () => {
-        if (typeof form.requestSubmit === 'function') {
-            form.requestSubmit();
+function initCarteleraFilterForms() {
+    document.querySelectorAll('[data-filter-form]').forEach((form) => {
+        if (form.dataset.filterBound === 'true') {
             return;
         }
 
-        form.submit();
-    };
+        form.dataset.filterBound = 'true';
 
-    form.querySelectorAll('input[type="radio"]').forEach((input) => {
-        input.addEventListener('change', submitFilters);
+        const search = form.querySelector('input[type="search"][name="q"]');
+        let searchSubmitTimer = null;
+
+        const scheduleSubmit = (delay = 0) => {
+            window.clearTimeout(searchSubmitTimer);
+            searchSubmitTimer = window.setTimeout(() => {
+                form.submit();
+            }, delay);
+        };
+
+        form.querySelectorAll('input[type="radio"]').forEach((input) => {
+            input.addEventListener('change', () => {
+                scheduleSubmit(0);
+            });
+        });
+
+        if (search === null) {
+            return;
+        }
+
+        search.addEventListener('input', () => {
+            scheduleSubmit(350);
+        });
+
+        search.addEventListener('keyup', () => {
+            scheduleSubmit(350);
+        });
+
+        search.addEventListener('change', () => {
+            scheduleSubmit(0);
+        });
+
+        search.addEventListener('search', () => {
+            scheduleSubmit(0);
+        });
+
+        search.addEventListener('paste', () => {
+            window.setTimeout(() => {
+                scheduleSubmit(350);
+            }, 0);
+        });
     });
+}
 
-    if (search === null) {
-        return;
-    }
-
-    search.addEventListener('input', () => {
-        window.clearTimeout(searchSubmitTimer);
-        searchSubmitTimer = window.setTimeout(submitFilters, 450);
-    });
-
-    search.addEventListener('change', () => {
-        window.clearTimeout(searchSubmitTimer);
-        submitFilters();
-    });
-});
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCarteleraFilterForms);
+} else {
+    initCarteleraFilterForms();
+}
 
 document.querySelectorAll('[data-movie-detail]').forEach((detail) => {
     const tabs = Array.from(detail.querySelectorAll('[data-movie-date-tab]'));
