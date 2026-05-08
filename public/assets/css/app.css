@@ -1020,11 +1020,20 @@ p {
 
 .upcoming-poster-frame {
     position: relative;
+}
+
+.upcoming-poster-frame .movie-poster,
+.upcoming-poster-frame .movie-poster-placeholder {
     opacity: 0.82;
+}
+
+.upcoming-poster-frame .movie-poster-placeholder span {
+    visibility: hidden;
 }
 
 .upcoming-badge {
     position: absolute;
+    z-index: 2;
     top: 12px;
     left: 12px;
     display: inline-flex;
@@ -1038,6 +1047,7 @@ p {
     font-size: var(--font-xs);
     font-weight: 900;
     line-height: 1;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
     text-transform: uppercase;
 }
 
