@@ -728,6 +728,12 @@ function render_admin_panel(): void
     $user = current_user();
     $messages = flash_get();
     $adminSection = admin_section_from_request($_GET['admin_section'] ?? null);
+    $adminMode = admin_mode_from_request($_GET['admin_mode'] ?? null);
+
+    if (!in_array($adminSection, ['rooms', 'movies', 'showtimes'], true)) {
+        $adminMode = 'list';
+    }
+
     $adminSections = [
         [
             'key' => 'summary',
@@ -763,6 +769,8 @@ function render_admin_panel(): void
     $adminReservationFilters = admin_reservation_filters_from_request($_GET);
     $adminReservations = [];
     $adminSummary = [];
+    $adminEditItem = null;
+    $adminModeError = '';
     $adminLoadError = false;
     $adminReservationLoadError = false;
 
@@ -785,6 +793,43 @@ function render_admin_panel(): void
         } catch (Throwable $exception) {
             error_log($exception->getMessage());
             $adminReservationLoadError = true;
+        }
+    }
+
+    if (!$adminLoadError && $adminMode === 'edit') {
+        try {
+            if ($adminSection === 'rooms') {
+                $roomId = positive_int_from_request($_GET['room_id'] ?? null);
+
+                if ($roomId === null) {
+                    $adminModeError = 'Selecciona una sala valida para editar.';
+                } else {
+                    $adminEditItem = admin_room_find_by_id($roomId);
+                    $adminModeError = $adminEditItem === null ? 'La sala seleccionada no existe.' : '';
+                }
+            } elseif ($adminSection === 'movies') {
+                $movieId = positive_int_from_request($_GET['movie_id'] ?? null);
+
+                if ($movieId === null) {
+                    $adminModeError = 'Selecciona una pelicula valida para editar.';
+                } else {
+                    $adminEditItem = admin_movie_find_by_id($movieId);
+                    $adminModeError = $adminEditItem === null ? 'La pelicula seleccionada no existe.' : '';
+                }
+            } elseif ($adminSection === 'showtimes') {
+                $showtimeId = positive_int_from_request($_GET['showtime_id'] ?? null);
+
+                if ($showtimeId === null) {
+                    $adminModeError = 'Selecciona una funcion valida para editar.';
+                } else {
+                    $adminEditItem = admin_showtime_find_by_id($showtimeId);
+                    $adminModeError = $adminEditItem === null ? 'La funcion seleccionada no existe.' : '';
+                }
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $adminModeError = 'No se pudo cargar el registro seleccionado.';
+            $adminEditItem = null;
         }
     }
 
@@ -1283,11 +1328,38 @@ function admin_section_from_request(mixed $value): string
     return in_array($section, $allowedSections, true) ? $section : 'summary';
 }
 
-function admin_section_url(string $section): string
+function admin_mode_from_request(mixed $value): string
+{
+    if (!is_scalar($value)) {
+        return 'list';
+    }
+
+    $mode = strtolower(trim((string) $value));
+    $allowedModes = ['list', 'create', 'edit'];
+
+    return in_array($mode, $allowedModes, true) ? $mode : 'list';
+}
+
+function admin_section_url(string $section, string $mode = 'list', array $params = []): string
 {
     $section = admin_section_from_request($section);
+    $mode = admin_mode_from_request($mode);
+    $query = [
+        'page' => 'admin',
+        'admin_section' => $section,
+    ];
 
-    return 'index.php?page=admin&admin_section=' . $section . '#admin-' . $section;
+    if (in_array($section, ['rooms', 'movies', 'showtimes'], true) && $mode !== 'list') {
+        $query['admin_mode'] = $mode;
+    }
+
+    foreach ($params as $key => $value) {
+        if (is_string($key) && is_scalar($value)) {
+            $query[$key] = (string) $value;
+        }
+    }
+
+    return 'index.php?' . http_build_query($query) . '#admin-' . $section;
 }
 
 function admin_movie_payload_from_post(): array
