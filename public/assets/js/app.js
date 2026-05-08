@@ -106,20 +106,44 @@ document.querySelectorAll('[data-showtime-form]').forEach((form) => {
 
 document.querySelectorAll('[data-seat-form]').forEach((form) => {
     const ticketCount = Number.parseInt(form.dataset.ticketCount || '0', 10);
+    const ticketTotal = form.dataset.ticketTotal || '';
     const checkboxes = Array.from(form.querySelectorAll('[data-seat-checkbox]'));
     const selectedCount = form.querySelector('[data-seat-selected-count]');
     const selectedList = form.querySelector('[data-seat-selected-list]');
+    const remainingText = form.querySelector('[data-seat-remaining]');
+    const currentTotal = form.querySelector('[data-seat-current-total]');
+    const submitGuard = form.querySelector('[data-seat-submit-guard]');
     const submitButton = form.querySelector('[data-seat-submit]');
+    const submitState = form.querySelector('[data-seat-submit-state]');
+    const submitMessage = form.querySelector('[data-seat-submit-message]');
 
     if (ticketCount <= 0 || selectedCount === null || selectedList === null || submitButton === null) {
         return;
     }
 
+    let hasSubmitAttempt = false;
+
     const seatLabelFor = (checkbox) => checkbox.value.replace('-', '');
+    const seatWord = (amount) => amount === 1 ? 'butaca' : 'butacas';
+    const selectionBalanceLabel = (selectedAmount) => {
+        const remaining = ticketCount - selectedAmount;
+
+        if (remaining === 0) {
+            return 'No faltan butacas';
+        }
+
+        if (remaining < 0) {
+            const extra = Math.abs(remaining);
+            return `Quita ${extra} ${seatWord(extra)}`;
+        }
+
+        return `${remaining === 1 ? 'Falta' : 'Faltan'} ${remaining} ${seatWord(remaining)}`;
+    };
 
     const updateSeatState = () => {
         const selected = checkboxes.filter((checkbox) => checkbox.checked);
         const selectedLabels = selected.map(seatLabelFor);
+        const remainingSeatLabel = selectionBalanceLabel(selected.length);
         const hasExactSelection = selected.length === ticketCount;
 
         checkboxes.forEach((checkbox) => {
@@ -136,9 +160,35 @@ document.querySelectorAll('[data-seat-form]').forEach((form) => {
         });
 
         selectedCount.textContent = String(selected.length);
-        selectedList.textContent = selectedLabels.length > 0 ? selectedLabels.join(', ') : 'Sin butacas';
+        selectedList.textContent = selectedLabels.length > 0 ? selectedLabels.join(', ') : 'Sin butacas seleccionadas';
+
+        if (remainingText !== null) {
+            remainingText.textContent = remainingSeatLabel;
+        }
+
+        if (currentTotal !== null && ticketTotal !== '') {
+            currentTotal.textContent = ticketTotal;
+        }
+
         submitButton.disabled = !hasExactSelection;
         submitButton.setAttribute('aria-disabled', hasExactSelection ? 'false' : 'true');
+
+        if (submitGuard !== null) {
+            submitGuard.classList.toggle('is-disabled', !hasExactSelection);
+        }
+
+        if (submitState !== null) {
+            submitState.textContent = hasExactSelection
+                ? 'Boton activo'
+                : `Boton deshabilitado: ${remainingSeatLabel.toLowerCase()}`;
+        }
+
+        if (submitMessage !== null) {
+            submitMessage.textContent = hasExactSelection
+                ? ''
+                : `Selecciona ${ticketCount} ${seatWord(ticketCount)} para reservar. ${remainingSeatLabel}.`;
+            submitMessage.hidden = hasExactSelection || !hasSubmitAttempt;
+        }
     };
 
     checkboxes.forEach((checkbox) => {
@@ -146,12 +196,25 @@ document.querySelectorAll('[data-seat-form]').forEach((form) => {
     });
 
     form.addEventListener('submit', (event) => {
+        hasSubmitAttempt = true;
         updateSeatState();
 
         if (submitButton.disabled) {
             event.preventDefault();
         }
     });
+
+    if (submitGuard !== null) {
+        submitGuard.addEventListener('click', (event) => {
+            if (!submitButton.disabled) {
+                return;
+            }
+
+            event.preventDefault();
+            hasSubmitAttempt = true;
+            updateSeatState();
+        });
+    }
 
     updateSeatState();
 });

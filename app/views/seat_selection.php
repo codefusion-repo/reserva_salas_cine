@@ -5,6 +5,31 @@ $hasShowtime = is_array($showtime);
 $pageMessages = $messages;
 $movieTitle = $hasShowtime ? (string) ($showtime['movie_title'] ?? 'Pelicula') : 'Seleccion de butacas';
 $ticketTotal = reservation_total_amount($ticketCount);
+$ticketTotalLabel = reservation_format_money($ticketTotal);
+$initialSelectedSeatKeys = array_filter(
+    array_keys($selectedSeatKeys ?? []),
+    static function (string $seatKey) use ($seatMap, $occupiedSeats): bool {
+        return isset($seatMap['lookup'][$seatKey]) && !isset($occupiedSeats[$seatKey]);
+    }
+);
+$initialSelectedSeatLabels = array_map(
+    static fn (string $seatKey): string => str_replace('-', '', $seatKey),
+    $initialSelectedSeatKeys
+);
+$initialSelectedSeatCount = count($initialSelectedSeatLabels);
+$initialRemainingSeatCount = max(0, $ticketCount - $initialSelectedSeatCount);
+$initialExtraSeatCount = max(0, $initialSelectedSeatCount - $ticketCount);
+$initialSeatListLabel = $initialSelectedSeatLabels !== [] ? implode(', ', $initialSelectedSeatLabels) : 'Sin butacas seleccionadas';
+$initialRemainingLabel = match (true) {
+    $initialExtraSeatCount > 0 => $initialExtraSeatCount === 1 ? 'Quita 1 butaca' : 'Quita ' . $initialExtraSeatCount . ' butacas',
+    $initialRemainingSeatCount === 0 => 'No faltan butacas',
+    $initialRemainingSeatCount === 1 => 'Falta 1 butaca',
+    default => 'Faltan ' . $initialRemainingSeatCount . ' butacas',
+};
+$initialButtonStateLabel = $initialSelectedSeatCount === $ticketCount
+    ? 'Boton activo'
+    : 'Boton deshabilitado: ' . strtolower($initialRemainingLabel);
+$initialSubmitMessage = 'Selecciona ' . $ticketCount . ' butaca' . ($ticketCount === 1 ? '' : 's') . ' para reservar. ' . $initialRemainingLabel . '.';
 $confirmedSeatLabels = [];
 $hasReservationConfirmation = $hasShowtime && is_array($reservationConfirmation ?? null);
 $confirmationStatusClass = 'unknown';
@@ -12,7 +37,7 @@ $confirmationStatusLabel = 'Sin estado';
 $confirmationSeatSummary = 'Sin butacas';
 $confirmationMovieLabel = '';
 $confirmationRoomLabel = '';
-$confirmationTotalLabel = reservation_format_money($ticketTotal);
+$confirmationTotalLabel = $ticketTotalLabel;
 $pageTitle = $hasReservationConfirmation ? 'Reserva confirmada' : $movieTitle . ' - Seleccion de butacas';
 
 foreach ($errors as $error) {
@@ -177,6 +202,7 @@ if ($hasReservationConfirmation) {
                         action="index.php?action=create_reservation"
                         data-seat-form
                         data-ticket-count="<?= e($ticketCount) ?>"
+                        data-ticket-total="<?= e($ticketTotalLabel) ?>"
                     >
                         <?= csrf_token_field() ?>
                         <input type="hidden" name="showtime_id" value="<?= e($showtime['id'] ?? '') ?>">
@@ -245,13 +271,41 @@ if ($hasReservationConfirmation) {
                                 </ul>
 
                                 <div class="seat-selected-summary" aria-live="polite">
-                                    <strong><span data-seat-selected-count>0</span> / <?= e($ticketCount) ?></strong>
-                                    <span data-seat-selected-list>Sin butacas</span>
+                                    <h2>Resumen</h2>
+
+                                    <dl class="seat-selection-metrics">
+                                        <div>
+                                            <dt>Entradas</dt>
+                                            <dd><span data-seat-ticket-count><?= e($ticketCount) ?></span> seleccionadas</dd>
+                                        </div>
+                                        <div>
+                                            <dt>Butacas</dt>
+                                            <dd><span data-seat-selected-count><?= e($initialSelectedSeatCount) ?></span> / <?= e($ticketCount) ?> seleccionadas</dd>
+                                        </div>
+                                        <div>
+                                            <dt>Faltan</dt>
+                                            <dd data-seat-remaining><?= e($initialRemainingLabel) ?></dd>
+                                        </div>
+                                        <div>
+                                            <dt>Total</dt>
+                                            <dd data-seat-current-total><?= e($ticketTotalLabel) ?></dd>
+                                        </div>
+                                    </dl>
+
+                                    <div class="seat-selected-list-box">
+                                        <span>Seleccionadas</span>
+                                        <strong data-seat-selected-list><?= e($initialSeatListLabel) ?></strong>
+                                    </div>
+
+                                    <p class="seat-submit-state" data-seat-submit-state><?= e($initialButtonStateLabel) ?></p>
+                                    <p class="seat-submit-message" data-seat-submit-message hidden><?= e($initialSubmitMessage) ?></p>
                                 </div>
 
-                                <button class="seat-submit" type="submit" data-seat-submit>
-                                    Reservar entradas
-                                </button>
+                                <div class="seat-submit-wrap" data-seat-submit-guard>
+                                    <button class="seat-submit" type="submit" data-seat-submit>
+                                        Reservar entradas
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </form>
