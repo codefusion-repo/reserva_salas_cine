@@ -11,6 +11,10 @@ $movieFilterOptions = $movieFilterOptions ?? [
     'classifications' => [],
 ];
 $hasActiveMovieFilters = $hasActiveMovieFilters ?? false;
+$upcomingMovies = $upcomingMovies ?? [];
+$upcomingLoadError = $upcomingLoadError ?? false;
+$upcomingSource = $upcomingSource ?? 'inactive_movies';
+$isUpcomingDemo = $upcomingSource === 'demo';
 ?>
 <!doctype html>
 <html lang="es">
@@ -177,6 +181,72 @@ $hasActiveMovieFilters = $hasActiveMovieFilters ?? false;
                 <?php endif; ?>
             </section>
         </div>
+
+        <section class="upcoming-section" aria-labelledby="upcoming-title">
+            <div class="upcoming-heading">
+                <div>
+                    <p class="eyebrow">Sin funciones publicadas</p>
+                    <h2 id="upcoming-title">Pr&oacute;ximos estrenos</h2>
+                </div>
+                <?php if ($isUpcomingDemo): ?>
+                    <p class="upcoming-source-note">Muestra demo referencial.</p>
+                <?php endif; ?>
+            </div>
+
+            <?php if ($upcomingLoadError): ?>
+                <div class="cartelera-state upcoming-state">
+                    <h2>No se pudieron cargar los estrenos</h2>
+                    <p>Intenta nuevamente mas tarde.</p>
+                </div>
+            <?php elseif ($upcomingMovies === []): ?>
+                <div class="cartelera-state upcoming-state">
+                    <h2>Sin pr&oacute;ximos estrenos</h2>
+                    <p>Los nuevos titulos se mostraran cuando esten publicados.</p>
+                </div>
+            <?php else: ?>
+                <div class="upcoming-grid">
+                    <?php foreach ($upcomingMovies as $upcomingMovie): ?>
+                        <?php
+                        $title = (string) ($upcomingMovie['title'] ?? 'Pelicula');
+                        $posterUrl = public_asset_url_if_exists($upcomingMovie['poster_path'] ?? null);
+                        $releaseLabel = trim((string) (
+                            $upcomingMovie['release_label']
+                            ?? $upcomingMovie['release_year']
+                            ?? ''
+                        ));
+                        $metaParts = array_filter(
+                            [
+                                (string) ($upcomingMovie['genre'] ?? ''),
+                                $releaseLabel,
+                                (string) ($upcomingMovie['classification'] ?? ''),
+                            ],
+                            static fn (string $value): bool => trim($value) !== ''
+                        );
+                        ?>
+                        <article class="upcoming-card">
+                            <div class="movie-poster-frame upcoming-poster-frame">
+                                <?php if ($posterUrl !== null): ?>
+                                    <img class="movie-poster" src="<?= e($posterUrl) ?>" alt="Poster de <?= e($title) ?>">
+                                <?php else: ?>
+                                    <div class="movie-poster-placeholder" role="img" aria-label="Poster no disponible para <?= e($title) ?>">
+                                        <span>ES Cine</span>
+                                        <strong><?= e($title) ?></strong>
+                                    </div>
+                                <?php endif; ?>
+                                <span class="upcoming-badge">Pr&oacute;ximamente</span>
+                            </div>
+                            <div class="upcoming-info">
+                                <h3><?= e($title) ?></h3>
+                                <?php if ($metaParts !== []): ?>
+                                    <p><?= e(implode(' - ', $metaParts)) ?></p>
+                                <?php endif; ?>
+                                <span class="upcoming-action" aria-disabled="true">A&uacute;n no disponible</span>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </section>
     </main>
 
     <script src="assets/js/app.js" defer></script>

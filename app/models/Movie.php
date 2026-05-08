@@ -39,6 +39,47 @@ function movie_active_all(array $filters = []): array
     );
 }
 
+function movie_upcoming_all(): array
+{
+    return db_fetch_all(
+        'SELECT id, title, genre, release_year, classification, poster_path
+         FROM movies
+         WHERE is_active = :is_active
+         ORDER BY release_year ASC, id ASC',
+        ['is_active' => 0]
+    );
+}
+
+function movie_upcoming_demo_all(): array
+{
+    return [
+        [
+            'id' => 'demo-1',
+            'title' => 'Horizonte Andino',
+            'genre' => 'Drama',
+            'release_label' => '2026',
+            'classification' => 'TE+7',
+            'poster_path' => null,
+        ],
+        [
+            'id' => 'demo-2',
+            'title' => 'Sala 13',
+            'genre' => 'Suspenso',
+            'release_label' => 'Proximo ciclo',
+            'classification' => 'TE+14',
+            'poster_path' => null,
+        ],
+        [
+            'id' => 'demo-3',
+            'title' => 'Viaje a Medianoche',
+            'genre' => 'Aventura',
+            'release_label' => 'Sin fecha publicada',
+            'classification' => 'TE',
+            'poster_path' => null,
+        ],
+    ];
+}
+
 function movie_like_pattern(string $value): string
 {
     return strtr($value, [

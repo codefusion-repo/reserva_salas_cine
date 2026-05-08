@@ -82,7 +82,10 @@ function render_dashboard(): void
         || $movieFilters['genre'] !== ''
         || $movieFilters['classification'] !== '';
     $movies = [];
+    $upcomingMovies = [];
+    $upcomingSource = 'inactive_movies';
     $movieLoadError = false;
+    $upcomingLoadError = false;
 
     try {
         $movieFilterOptions = movie_filter_options();
@@ -90,6 +93,18 @@ function render_dashboard(): void
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
         $movieLoadError = true;
+    }
+
+    try {
+        $upcomingMovies = movie_upcoming_all();
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        $upcomingLoadError = true;
+    }
+
+    if (!$upcomingLoadError && $upcomingMovies === []) {
+        $upcomingMovies = movie_upcoming_demo_all();
+        $upcomingSource = 'demo';
     }
 
     require __DIR__ . '/../views/dashboard.php';
