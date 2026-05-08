@@ -98,6 +98,12 @@ switch ($page) {
         render_reservation_ticket();
         break;
 
+    case 'confiteria':
+    case 'socios':
+    case 'pago':
+        render_coming_soon_page($page);
+        break;
+
     case 'admin':
         render_admin_panel();
         break;

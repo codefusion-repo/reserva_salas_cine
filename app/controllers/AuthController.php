@@ -304,6 +304,89 @@ function render_reservation_ticket(): void
     require __DIR__ . '/../views/ticket.php';
 }
 
+function render_coming_soon_page(string $page): void
+{
+    auth_require_login();
+
+    $pages = [
+        'confiteria' => [
+            'activeNav' => 'confiteria',
+            'title' => 'Confiteria',
+            'eyebrow' => 'Proximamente',
+            'headline' => 'Confiteria',
+            'lead' => 'Muy pronto podras ver combos, cabritas, bebidas y dulces antes de tu funcion.',
+            'support' => 'Esta seccion es un adelanto visual. No hay catalogo funcional, carrito ni compra activa.',
+            'accent' => 'Carrito futuro',
+            'accentCopy' => 'Los productos se muestran solo como teaser de una etapa posterior.',
+            'items' => [
+                ['icon' => '🍿', 'label' => 'Cabritas', 'copy' => 'Combos para salas y funciones futuras.'],
+                ['icon' => '🥤', 'label' => 'Bebidas', 'copy' => 'Opciones de bebestibles en preparacion.'],
+                ['icon' => '🍬', 'label' => 'Dulces', 'copy' => 'Snacks y chocolates como contenido demo.'],
+                ['icon' => '🛒', 'label' => 'Carrito', 'copy' => 'La compra de confiteria queda fuera de esta iteracion.'],
+            ],
+            'notes' => [
+                'No se puede agregar productos al carrito.',
+                'No se procesa ninguna compra de confiteria.',
+            ],
+        ],
+        'socios' => [
+            'activeNav' => 'socios',
+            'title' => 'Socios',
+            'eyebrow' => 'Proximamente',
+            'headline' => 'Hazte socio',
+            'lead' => 'Beneficios demo para socios llegaran en una etapa futura del sitio.',
+            'support' => 'Esta pantalla es solo placeholder visual. No registra membresias ni activa beneficios reales.',
+            'accent' => 'Solo en cines',
+            'accentCopy' => 'Descuentos demo, puntos ficticios, preventas y cumpleanos quedan planificados.',
+            'items' => [
+                ['icon' => '⭐', 'label' => 'Descuentos demo', 'copy' => 'Promociones de referencia para una version posterior.'],
+                ['icon' => '🎟️', 'label' => 'Preventa', 'copy' => 'Acceso anticipado aun no disponible.'],
+                ['icon' => '🎂', 'label' => 'Cumpleanos', 'copy' => 'Beneficios especiales pendientes.'],
+                ['icon' => '🏷️', 'label' => 'Cupones', 'copy' => 'Los cupones no estan implementados.'],
+            ],
+            'notes' => [
+                'No existe membresia real ni demo funcional.',
+                'No se generan puntos, cupones ni beneficios activos.',
+            ],
+        ],
+        'pago' => [
+            'activeNav' => 'pago',
+            'title' => 'Pago',
+            'eyebrow' => 'Proximamente',
+            'headline' => 'Pago simulado',
+            'lead' => 'El flujo de pago queda reservado para una iteracion posterior.',
+            'support' => 'Esta ruta solo muestra una pagina conceptual. No hay checkout funcional ni confirmacion de pago.',
+            'accent' => 'Sin pago real',
+            'accentCopy' => 'No existe pasarela, no se solicitan datos de tarjeta y no se almacena informacion bancaria.',
+            'items' => [
+                ['icon' => '💳', 'label' => 'Sin tarjeta', 'copy' => 'No hay campos para numero, CVV ni vencimiento.'],
+                ['icon' => '🧾', 'label' => 'Resumen futuro', 'copy' => 'El comprobante de pago simulado sera otro alcance.'],
+                ['icon' => '🚧', 'label' => 'Checkout pendiente', 'copy' => 'El flujo pending a confirmed no se implementa aqui.'],
+                ['icon' => '🔒', 'label' => 'Sin pasarela', 'copy' => 'No se conecta ninguna API ni proveedor externo.'],
+            ],
+            'notes' => [
+                'No hay pago real ni pasarela de pago.',
+                'No se solicitan ni almacenan datos de tarjeta.',
+                'No se modifica el flujo actual de reservas.',
+            ],
+        ],
+    ];
+
+    if (!isset($pages[$page])) {
+        render_not_found_page(
+            'Pagina no encontrada',
+            'La ruta solicitada no existe o ya no esta disponible.'
+        );
+        return;
+    }
+
+    $user = current_user();
+    $messages = flash_get();
+    $comingSoon = $pages[$page];
+
+    require __DIR__ . '/../views/coming_soon.php';
+}
+
 function handle_reservation_cancel(): void
 {
     auth_require_login();

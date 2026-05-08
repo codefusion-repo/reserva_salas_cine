@@ -25,12 +25,12 @@ if ($isAuthenticated) {
     $navItems[] = [
         'key' => 'confiteria',
         'label' => 'Confiteria',
-        'disabled' => true,
+        'href' => 'index.php?page=confiteria',
     ];
     $navItems[] = [
         'key' => 'socios',
         'label' => 'Hazte socio',
-        'disabled' => true,
+        'href' => 'index.php?page=socios',
     ];
 
     if ($isAdmin) {
