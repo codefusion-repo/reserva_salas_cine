@@ -3,15 +3,83 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../helpers/database.php';
 
-function movie_active_all(): array
+function movie_active_all(array $filters = []): array
 {
+    $sql = 'SELECT id, title, genre, release_year, classification, poster_path
+         FROM movies
+         WHERE is_active = :is_active';
+    $params = ['is_active' => 1];
+
+    $title = trim((string) ($filters['q'] ?? ''));
+
+    if ($title !== '') {
+        $sql .= " AND title LIKE :title ESCAPE '\\\\'";
+        $params['title'] = '%' . movie_like_pattern($title) . '%';
+    }
+
+    $genre = trim((string) ($filters['genre'] ?? ''));
+
+    if ($genre !== '') {
+        $sql .= ' AND genre = :genre';
+        $params['genre'] = $genre;
+    }
+
+    $classification = trim((string) ($filters['classification'] ?? ''));
+
+    if ($classification !== '') {
+        $sql .= ' AND classification = :classification';
+        $params['classification'] = $classification;
+    }
+
+    $sql .= ' ORDER BY id ASC';
+
     return db_fetch_all(
-        'SELECT id, title, genre, release_year, classification, poster_path
+        $sql,
+        $params
+    );
+}
+
+function movie_like_pattern(string $value): string
+{
+    return strtr($value, [
+        '\\' => '\\\\',
+        '%' => '\\%',
+        '_' => '\\_',
+    ]);
+}
+
+function movie_filter_options(): array
+{
+    $genres = db_fetch_all(
+        'SELECT DISTINCT genre
          FROM movies
          WHERE is_active = :is_active
-         ORDER BY id ASC',
+           AND genre IS NOT NULL
+           AND genre <> \'\'
+         ORDER BY genre ASC',
         ['is_active' => 1]
     );
+
+    $classifications = db_fetch_all(
+        'SELECT DISTINCT classification
+         FROM movies
+         WHERE is_active = :is_active
+           AND classification IS NOT NULL
+           AND classification <> \'\'
+         ORDER BY classification ASC',
+        ['is_active' => 1]
+    );
+
+    return [
+        'genres' => array_map(
+            static fn (array $row): string => (string) ($row['genre'] ?? ''),
+            $genres
+        ),
+        'classifications' => array_map(
+            static fn (array $row): string => (string) ($row['classification'] ?? ''),
+            $classifications
+        ),
+    ];
 }
 
 function movie_find_active_by_id(int $movieId): ?array

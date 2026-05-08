@@ -40,16 +40,53 @@ function render_not_found_page(string $heading, string $copy, array $messages = 
     render_error_page($heading, $copy, 404, $messages);
 }
 
+function movie_filter_value_from_request(mixed $value, int $maxLength = 80): string
+{
+    if (!is_scalar($value)) {
+        return '';
+    }
+
+    $normalized = preg_replace('/\s+/', ' ', trim((string) $value));
+
+    if ($normalized === null) {
+        return '';
+    }
+
+    if (function_exists('mb_substr')) {
+        return mb_substr($normalized, 0, $maxLength, 'UTF-8');
+    }
+
+    return substr($normalized, 0, $maxLength);
+}
+
+function movie_active_filters_from_request(array $request): array
+{
+    return [
+        'q' => movie_filter_value_from_request($request['q'] ?? ''),
+        'genre' => movie_filter_value_from_request($request['genre'] ?? ''),
+        'classification' => movie_filter_value_from_request($request['classification'] ?? ''),
+    ];
+}
+
 function render_dashboard(): void
 {
     auth_require_login();
     $user = current_user();
     $messages = flash_get();
+    $movieFilters = movie_active_filters_from_request($_GET);
+    $movieFilterOptions = [
+        'genres' => [],
+        'classifications' => [],
+    ];
+    $hasActiveMovieFilters = $movieFilters['q'] !== ''
+        || $movieFilters['genre'] !== ''
+        || $movieFilters['classification'] !== '';
     $movies = [];
     $movieLoadError = false;
 
     try {
-        $movies = movie_active_all();
+        $movieFilterOptions = movie_filter_options();
+        $movies = movie_active_all($movieFilters);
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
         $movieLoadError = true;
