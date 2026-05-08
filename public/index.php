@@ -48,6 +48,21 @@ if ($action === 'deactivate_room' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+if ($action === 'create_movie' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_movie_create();
+    exit;
+}
+
+if ($action === 'update_movie' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_movie_update();
+    exit;
+}
+
+if ($action === 'set_movie_active' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_movie_set_active();
+    exit;
+}
+
 if ($action === 'create_showtime' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     handle_showtime_create();
     exit;

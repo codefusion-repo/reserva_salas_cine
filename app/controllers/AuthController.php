@@ -714,6 +714,7 @@ function render_admin_panel(): void
     $messages = flash_get();
     $rooms = [];
     $activeRooms = [];
+    $movies = [];
     $activeMovies = [];
     $showtimes = [];
     $adminLoadError = false;
@@ -721,6 +722,7 @@ function render_admin_panel(): void
     try {
         $rooms = admin_rooms_all();
         $activeRooms = admin_rooms_active_all();
+        $movies = admin_movies_all();
         $activeMovies = admin_movies_active_all();
         $showtimes = admin_showtimes_all();
     } catch (Throwable $exception) {
@@ -841,6 +843,116 @@ function handle_room_deactivate(): void
     }
 
     redirect_to('index.php?page=admin#admin-rooms');
+}
+
+function handle_movie_create(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    [$payload, $errors] = admin_movie_payload_from_post();
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        redirect_to('index.php?page=admin#admin-movies');
+    }
+
+    try {
+        admin_movie_create(
+            $payload['title'],
+            $payload['synopsis'],
+            $payload['genre'],
+            $payload['release_year'],
+            $payload['classification'],
+            $payload['poster_path'],
+            $payload['is_active']
+        );
+        flash_set('success', 'Pelicula creada correctamente.');
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo crear la pelicula en este momento.');
+    }
+
+    redirect_to('index.php?page=admin#admin-movies');
+}
+
+function handle_movie_update(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    $movieId = positive_int_from_request($_POST['movie_id'] ?? null);
+    [$payload, $errors] = admin_movie_payload_from_post();
+
+    if ($movieId === null) {
+        $errors[] = 'Selecciona una pelicula valida para editar.';
+    }
+
+    if ($errors === [] && $movieId !== null) {
+        try {
+            if (admin_movie_find_by_id((int) $movieId) === null) {
+                $errors[] = 'La pelicula seleccionada no existe.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar la pelicula seleccionada.';
+        }
+    }
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        redirect_to('index.php?page=admin#admin-movies');
+    }
+
+    try {
+        admin_movie_update(
+            (int) $movieId,
+            $payload['title'],
+            $payload['synopsis'],
+            $payload['genre'],
+            $payload['release_year'],
+            $payload['classification'],
+            $payload['poster_path'],
+            $payload['is_active']
+        );
+        flash_set('success', 'Pelicula actualizada correctamente.');
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo actualizar la pelicula en este momento.');
+    }
+
+    redirect_to('index.php?page=admin#admin-movies');
+}
+
+function handle_movie_set_active(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    $movieId = positive_int_from_request($_POST['movie_id'] ?? null);
+    $targetStatus = admin_bool_from_post($_POST['target_status'] ?? 0);
+
+    if ($movieId === null) {
+        flash_set('error', 'Selecciona una pelicula valida para cambiar su estado.');
+        redirect_to('index.php?page=admin#admin-movies');
+    }
+
+    try {
+        if (admin_movie_find_by_id((int) $movieId) === null) {
+            flash_set('error', 'La pelicula seleccionada no existe.');
+        } else {
+            admin_movie_set_active((int) $movieId, $targetStatus);
+            flash_set(
+                'success',
+                $targetStatus ? 'Pelicula activada correctamente.' : 'Pelicula desactivada correctamente.'
+            );
+        }
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo cambiar el estado de la pelicula.');
+    }
+
+    redirect_to('index.php?page=admin#admin-movies');
 }
 
 function handle_showtime_create(): void
@@ -1026,6 +1138,61 @@ function admin_room_payload_from_post(): array
     ];
 }
 
+function admin_movie_payload_from_post(): array
+{
+    $title = admin_trimmed_text_from_post($_POST['title'] ?? '');
+    $synopsis = admin_trimmed_text_from_post($_POST['synopsis'] ?? '');
+    $genre = admin_trimmed_text_from_post($_POST['genre'] ?? '');
+    $releaseYear = admin_movie_release_year_from_post($_POST['release_year'] ?? null);
+    $classification = admin_trimmed_text_from_post($_POST['classification'] ?? '');
+    [$posterPath, $posterPathError] = admin_movie_poster_path_from_post($_POST['poster_path'] ?? '');
+    $isActive = admin_bool_from_post($_POST['is_active'] ?? 1);
+    $errors = [];
+
+    if ($title === '') {
+        $errors[] = 'El titulo de la pelicula es obligatorio.';
+    } elseif (admin_text_length($title) > 180) {
+        $errors[] = 'El titulo no puede superar 180 caracteres.';
+    }
+
+    if ($synopsis === '') {
+        $errors[] = 'La sinopsis de la pelicula es obligatoria.';
+    }
+
+    if ($genre === '') {
+        $errors[] = 'El genero de la pelicula es obligatorio.';
+    } elseif (admin_text_length($genre) > 80) {
+        $errors[] = 'El genero no puede superar 80 caracteres.';
+    }
+
+    if ($releaseYear === null) {
+        $errors[] = 'El ano de estreno debe ser un numero entre 1888 y ' . admin_movie_release_year_max() . '.';
+    }
+
+    if ($classification === '') {
+        $errors[] = 'La clasificacion de la pelicula es obligatoria.';
+    } elseif (admin_text_length($classification) > 20) {
+        $errors[] = 'La clasificacion no puede superar 20 caracteres.';
+    }
+
+    if ($posterPathError !== null) {
+        $errors[] = $posterPathError;
+    }
+
+    return [
+        [
+            'title' => $title,
+            'synopsis' => $synopsis,
+            'genre' => $genre,
+            'release_year' => $releaseYear ?? 0,
+            'classification' => $classification,
+            'poster_path' => $posterPath,
+            'is_active' => $isActive,
+        ],
+        $errors,
+    ];
+}
+
 function admin_showtime_payload_from_post(?int $excludeShowtimeId): array
 {
     $movieId = positive_int_from_request($_POST['movie_id'] ?? null);
@@ -1055,7 +1222,14 @@ function admin_showtime_payload_from_post(?int $excludeShowtimeId): array
 
     if ($movieId !== null) {
         try {
-            if (admin_movie_active_find_by_id($movieId) === null) {
+            $movieCanBeUsed = admin_movie_active_find_by_id($movieId) !== null;
+
+            if (!$movieCanBeUsed && $excludeShowtimeId !== null) {
+                $showtime = admin_showtime_find_by_id($excludeShowtimeId);
+                $movieCanBeUsed = $showtime !== null && (int) ($showtime['movie_id'] ?? 0) === $movieId;
+            }
+
+            if (!$movieCanBeUsed) {
                 $errors[] = 'La pelicula seleccionada no existe o no esta activa.';
             }
         } catch (Throwable $exception) {
@@ -1104,6 +1278,92 @@ function admin_showtime_payload_from_post(?int $excludeShowtimeId): array
         ],
         $errors,
     ];
+}
+
+function admin_trimmed_text_from_post(mixed $value): string
+{
+    if (!is_scalar($value)) {
+        return '';
+    }
+
+    return trim((string) $value);
+}
+
+function admin_text_length(string $value): int
+{
+    if (function_exists('mb_strlen')) {
+        return mb_strlen($value, 'UTF-8');
+    }
+
+    return strlen($value);
+}
+
+function admin_movie_release_year_from_post(mixed $value): ?int
+{
+    if (!is_scalar($value)) {
+        return null;
+    }
+
+    $value = trim((string) $value);
+
+    if ($value === '' || ctype_digit($value) === false) {
+        return null;
+    }
+
+    $year = (int) $value;
+
+    if ($year < 1888 || $year > admin_movie_release_year_max()) {
+        return null;
+    }
+
+    return $year;
+}
+
+function admin_movie_release_year_max(): int
+{
+    return (int) date('Y') + 10;
+}
+
+function admin_movie_poster_path_from_post(mixed $value): array
+{
+    if (!is_scalar($value)) {
+        return [null, 'La ruta del poster no es valida.'];
+    }
+
+    $path = trim((string) $value);
+
+    if ($path === '') {
+        return [null, null];
+    }
+
+    if (admin_text_length($path) > 255) {
+        return [null, 'La ruta del poster no puede superar 255 caracteres.'];
+    }
+
+    if (preg_match('/[\x00-\x1F\x7F]/', $path) === 1) {
+        return [null, 'La ruta del poster no puede contener caracteres de control.'];
+    }
+
+    $normalizedPath = str_replace('\\', '/', $path);
+
+    if (str_starts_with($normalizedPath, '/')) {
+        return [null, 'La ruta del poster debe ser relativa al directorio public.'];
+    }
+
+    if (
+        preg_match('#^(?:[a-z][a-z0-9+.-]*:)?//#i', $normalizedPath) === 1
+        || preg_match('#^[a-z][a-z0-9+.-]*:#i', $normalizedPath) === 1
+    ) {
+        return [null, 'La ruta del poster no puede ser una URL ni una ruta absoluta.'];
+    }
+
+    $segments = explode('/', $normalizedPath);
+
+    if (in_array('..', $segments, true) || in_array('.', $segments, true) || in_array('', $segments, true)) {
+        return [null, 'La ruta del poster no puede contener traversal ni segmentos vacios.'];
+    }
+
+    return [$normalizedPath, null];
 }
 
 function admin_datetime_from_post(mixed $value): ?string
