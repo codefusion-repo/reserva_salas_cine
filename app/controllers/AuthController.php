@@ -513,58 +513,61 @@ function render_coming_soon_page(string $page): void
         'socios' => [
             'activeNav' => 'socios',
             'title' => 'Socios',
-            'eyebrow' => 'Landing demo',
-            'headline' => 'Hazte socio',
-            'lead' => 'Descubre una muestra visual de los beneficios esperados para tu membresía.',
-            'support' => 'La activación de membresía no está disponible todavía.',
-            'accent' => 'Vista previa',
-            'accentCopy' => 'Estos beneficios son de muestra y no guardan estado real de socio.',
+            'eyebrow' => 'MEMBRESÍA DEMO',
+            'headline' => 'HAZTE SOCIO DEMO',
+            'panelKicker' => 'Demo en sesión',
+            'panelHeadline' => 'Activa tu membresía demo',
+            'lead' => 'Activa una membresía demo para probar el estado de socio durante esta sesión.',
+            'support' => '',
+            'accent' => 'Estado de sesión',
+            'accentCopy' => 'La membresía demo vive solo en tu sesión actual.',
+            'featureIcon' => 'DEMO',
             'items' => [
                 [
                     'icon' => '🏷️',
-                    'label' => 'Descuentos en entradas',
-                    'copy' => 'Beneficios visuales para la proxima etapa de socios.',
-                    'status' => 'Demo',
+                    'label' => 'Beneficios simulados',
+                    'copy' => 'Ventajas de socio simuladas sin aplicar descuentos reales.',
+                    'status' => 'Simulado',
                 ],
                 [
                     'icon' => '🎟️',
-                    'label' => 'Preventa de funciones',
-                    'copy' => 'Acceso temprano a funciones nuevas sin habilitación funcional.',
-                    'status' => 'Próximamente',
+                    'label' => 'Estado en sesión',
+                    'copy' => 'El estado de socio demo se conserva mientras mantengas la sesión activa.',
+                    'status' => 'Sesión',
                 ],
                 [
                     'icon' => '⭐',
                     'label' => 'Puntos ficticios',
-                    'copy' => 'Programa de acumulación visual para sumar ventajas.',
-                    'status' => 'Demo',
+                    'copy' => 'Referencia académica de beneficios, sin acumulación real.',
+                    'status' => 'Simulado',
                 ],
                 [
                     'icon' => '🎂',
-                    'label' => 'Beneficio de cumpleaños',
-                    'copy' => 'Beneficio especial de muestra para la fecha de registro.',
-                    'status' => 'En catálogo',
+                    'label' => 'Sin pago real',
+                    'copy' => 'No se solicita tarjeta, pasarela ni comprobante de pago.',
+                    'status' => 'Demo',
                 ],
                 [
                     'icon' => '🍿',
-                    'label' => 'Combos especiales',
-                    'copy' => 'Descuentos cruzados con confitería en una futura integración.',
-                    'status' => 'Preview',
+                    'label' => 'Sin descuentos activos',
+                    'copy' => 'La membresía no cambia precios de entradas, reservas ni confitería.',
+                    'status' => 'Sin precios',
                 ],
                 [
                     'icon' => '🎁',
-                    'label' => 'Beneficios exclusivos y preferencia',
-                    'copy' => 'Beneficios de acceso y atención prioritaria previstos.',
-                    'status' => 'En diseño',
+                    'label' => 'Proyecto académico',
+                    'copy' => 'Beneficios simulados para mostrar el flujo de socio demo.',
+                    'status' => 'Académico',
                 ],
             ],
             'heroActions' => [
-                ['type' => 'button', 'label' => 'Activación próximamente', 'disabled' => true],
                 ['type' => 'link', 'label' => 'Conoce beneficios', 'href' => '#socios-beneficios', 'class' => 'movie-state-link-secondary'],
             ],
             'benefitsLayout' => true,
             'benefitsSectionId' => 'socios-beneficios',
             'notes' => [
-                'No existe activación de membresía real ni demo funcional.',
+                'Membresía demo sin pago real.',
+                'Beneficios simulados para el proyecto académico.',
                 'No hay pagos, cupones, descuentos activos ni persistencia en base de datos.',
             ],
         ],
@@ -600,7 +603,35 @@ function render_coming_soon_page(string $page): void
     }
 
     $user = current_user();
+    $memberDemoActive = is_member_demo_active();
     $comingSoon = $pages[$page];
+
+    if ($page === 'socios') {
+        $comingSoon['lead'] = $memberDemoActive
+            ? 'Tu membresía demo está activa en esta sesión.'
+            : 'Activa una membresía demo para probar el estado de socio durante esta sesión.';
+        $comingSoon['notes'] = [];
+        $comingSoon['panelHeadline'] = $memberDemoActive
+            ? 'Membresía demo activa'
+            : 'Activa tu membresía demo';
+        $comingSoon['memberDemo'] = [
+            'isActive' => $memberDemoActive,
+            'stateActiveLabel' => 'Socio Cine Demo activo',
+            'stateInactiveLabel' => 'Sin membresía demo',
+            'stateActiveCopy' => 'Ya puedes ver tu estado de socio demo mientras mantengas la sesión iniciada.',
+            'stateInactiveCopy' => 'Activa la membresía demo para habilitar el estado de socio en esta sesión.',
+            'stateNotes' => [
+                $memberDemoActive
+                    ? 'Estado demo activo solo en esta sesión. No aplica descuentos reales.'
+                    : 'Demo académica sin pago real ni persistencia en base de datos.',
+            ],
+            'activateAction' => 'index.php?action=member_demo_activate',
+            'deactivateAction' => 'index.php?action=member_demo_deactivate',
+            'activateLabel' => 'ACTIVAR MEMBRESÍA DEMO',
+            'deactivateLabel' => 'DESACTIVAR MEMBRESÍA DEMO',
+        ];
+    }
+
     $cartSummary = [
         'items' => [],
         'total' => 0.0,
@@ -644,6 +675,36 @@ function render_coming_soon_page(string $page): void
     $messages = flash_get();
 
     require __DIR__ . '/../views/coming_soon.php';
+}
+
+function handle_member_demo_activate(): void
+{
+    auth_require_login();
+    csrf_require_valid_post();
+
+    if (is_member_demo_active() === true) {
+        flash_set('info', 'La membresía demo ya está activa.');
+        redirect_to('index.php?page=socios');
+    }
+
+    set_member_demo_active(true);
+    flash_set('success', 'Membresía demo activada correctamente.');
+    redirect_to('index.php?page=socios');
+}
+
+function handle_member_demo_deactivate(): void
+{
+    auth_require_login();
+    csrf_require_valid_post();
+
+    if (is_member_demo_active() === false) {
+        flash_set('info', 'La membresía demo ya está desactivada.');
+        redirect_to('index.php?page=socios');
+    }
+
+    set_member_demo_active(false);
+    flash_set('success', 'Membresía demo desactivada correctamente.');
+    redirect_to('index.php?page=socios');
 }
 
 function handle_concession_add(): void

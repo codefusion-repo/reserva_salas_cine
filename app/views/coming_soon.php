@@ -6,6 +6,11 @@ $activeNav = (string) ($comingSoon['activeNav'] ?? '');
 $items = is_array($comingSoon['items'] ?? null) ? $comingSoon['items'] : [];
 $notes = is_array($comingSoon['notes'] ?? null) ? $comingSoon['notes'] : [];
 $heroActions = is_array($comingSoon['heroActions'] ?? null) ? $comingSoon['heroActions'] : [];
+$leadText = trim((string) ($comingSoon['lead'] ?? ''));
+$supportText = trim((string) ($comingSoon['support'] ?? ''));
+$panelKicker = trim((string) ($comingSoon['panelKicker'] ?? 'Próximamente...'));
+$panelHeadline = trim((string) ($comingSoon['panelHeadline'] ?? 'Solo en cines...'));
+$featureIcon = trim((string) ($comingSoon['featureIcon'] ?? '🚧'));
 $useBenefitsLayout = ($comingSoon['benefitsLayout'] ?? false) === true;
 $benefitsSectionId = trim((string) ($comingSoon['benefitsSectionId'] ?? ''));
 $sectionClass = $useBenefitsLayout ? 'coming-soon-grid coming-soon-benefits-grid' : 'coming-soon-grid';
@@ -15,6 +20,21 @@ $catalogLoadError = ($comingSoon['catalogLoadError'] ?? false) === true;
 $catalogSetupRequired = ($comingSoon['catalogSetupRequired'] ?? false) === true;
 $cartSummary = is_array($cartSummary ?? null) ? $cartSummary : ['items' => [], 'total_label' => '$0 demo', 'is_empty' => true];
 $cartItems = is_array($cartSummary['items'] ?? null) ? $cartSummary['items'] : [];
+$memberDemo = is_array($comingSoon['memberDemo'] ?? null) ? $comingSoon['memberDemo'] : [];
+$memberDemoIsActive = (bool) ($memberDemo['isActive'] ?? false);
+$memberDemoStateActive = trim((string) ($memberDemo['stateActiveLabel'] ?? 'Socio Cine Demo activo'));
+$memberDemoStateInactive = trim((string) ($memberDemo['stateInactiveLabel'] ?? 'Sin membresía demo'));
+$memberDemoStateCopy = trim((string) (
+    $memberDemoIsActive
+        ? ($memberDemo['stateActiveCopy'] ?? 'Tu sesión tiene membresía demo activa.')
+        : ($memberDemo['stateInactiveCopy'] ?? 'Activa la membresía demo para ver el estado de socio en esta sesión.')
+));
+$memberDemoStateNotes = is_array($memberDemo['stateNotes'] ?? null) ? array_values(array_filter($memberDemo['stateNotes'], static fn (mixed $note): bool => trim((string) $note) !== '')) : [];
+$memberDemoActivateAction = trim((string) ($memberDemo['activateAction'] ?? 'index.php?action=member_demo_activate'));
+$memberDemoDeactivateAction = trim((string) ($memberDemo['deactivateAction'] ?? 'index.php?action=member_demo_deactivate'));
+$memberDemoActivateLabel = trim((string) ($memberDemo['activateLabel'] ?? 'Activar membresía demo'));
+$memberDemoDeactivateLabel = trim((string) ($memberDemo['deactivateLabel'] ?? 'Desactivar membresía demo'));
+$isMemberDemoPage = $memberDemo !== [];
 ?>
 <!doctype html>
 <html lang="es">
@@ -48,10 +68,16 @@ $cartItems = is_array($cartSummary['items'] ?? null) ? $cartSummary['items'] : [
 
         <section class="coming-soon-panel" aria-labelledby="coming-soon-title">
             <div class="coming-soon-copy">
-                <p class="coming-soon-kicker" aria-hidden="true">Próximamente...</p>
-                <h2 id="coming-soon-title">Solo en cines...</h2>
-                <p><?= e($comingSoon['lead'] ?? '') ?></p>
-                <p><?= e($comingSoon['support'] ?? '') ?></p>
+                <?php if ($panelKicker !== ''): ?>
+                    <p class="coming-soon-kicker" aria-hidden="true"><?= e($panelKicker) ?></p>
+                <?php endif; ?>
+                <h2 id="coming-soon-title"><?= e($panelHeadline !== '' ? $panelHeadline : ($comingSoon['headline'] ?? $pageTitle)) ?></h2>
+                <?php if ($leadText !== ''): ?>
+                    <p><?= e($leadText) ?></p>
+                <?php endif; ?>
+                <?php if ($supportText !== ''): ?>
+                    <p><?= e($supportText) ?></p>
+                <?php endif; ?>
 
                 <?php if ($notes !== []): ?>
                     <ul class="coming-soon-notes">
@@ -62,6 +88,32 @@ $cartItems = is_array($cartSummary['items'] ?? null) ? $cartSummary['items'] : [
                 <?php endif; ?>
 
                 <div class="coming-soon-actions">
+                    <?php if ($isMemberDemoPage): ?>
+                        <div class="member-demo-state<?= $memberDemoIsActive ? ' is-active' : '' ?>">
+                            <p class="member-demo-state-title"><?= e($memberDemoIsActive ? $memberDemoStateActive : $memberDemoStateInactive) ?></p>
+                            <p class="member-demo-state-copy"><?= e($memberDemoStateCopy) ?></p>
+                            <?php foreach ($memberDemoStateNotes as $memberDemoStateNote): ?>
+                                <p class="member-demo-state-copy"><?= e((string) $memberDemoStateNote) ?></p>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <?php if ($memberDemoIsActive): ?>
+                            <form action="<?= e($memberDemoDeactivateAction) ?>" method="post" class="member-demo-form">
+                                <?= csrf_token_field() ?>
+                                <button class="member-demo-action member-demo-action-secondary" type="submit">
+                                    <?= e($memberDemoDeactivateLabel) ?>
+                                </button>
+                            </form>
+                        <?php else: ?>
+                            <form action="<?= e($memberDemoActivateAction) ?>" method="post" class="member-demo-form">
+                                <?= csrf_token_field() ?>
+                                <button class="member-demo-action member-demo-action-primary" type="submit">
+                                    <?= e($memberDemoActivateLabel) ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
                     <?php if ($heroActions !== []): ?>
                         <?php foreach ($heroActions as $action): ?>
                             <?php
@@ -90,7 +142,7 @@ $cartItems = is_array($cartSummary['items'] ?? null) ? $cartSummary['items'] : [
             </div>
 
             <div class="coming-soon-feature">
-                <div class="coming-soon-badge" aria-hidden="true">🚧</div>
+                <div class="coming-soon-badge" aria-hidden="true"><?= e($featureIcon !== '' ? $featureIcon : '🚧') ?></div>
                 <span><?= e($comingSoon['accent'] ?? 'Proximamente') ?></span>
                 <p><?= e($comingSoon['accentCopy'] ?? '') ?></p>
             </div>
