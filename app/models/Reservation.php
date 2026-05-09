@@ -356,7 +356,7 @@ function reservation_create_with_seats(int $userId, array $showtime, array $sele
         $reservationStatement->execute([
             'user_id' => $userId,
             'showtime_id' => $showtimeId,
-            'status' => 'confirmed',
+            'status' => 'pending',
             'total_amount' => number_format($totalAmount, 2, '.', ''),
         ]);
 
@@ -396,6 +396,115 @@ function reservation_create_with_seats(int $userId, array $showtime, array $sele
             'ok' => false,
             'errors' => ['No se pudo crear la reserva en este momento. Intenta nuevamente.'],
             'conflicts' => [],
+        ];
+    }
+}
+
+function reservation_confirm_pending_for_user(int $reservationId, int $userId): array
+{
+    if ($reservationId <= 0 || $userId <= 0) {
+        return [
+            'ok' => false,
+            'message' => 'Selecciona una reserva pendiente valida.',
+        ];
+    }
+
+    $pdo = db();
+
+    try {
+        $pdo->beginTransaction();
+
+        $reservationStatement = $pdo->prepare(
+            'SELECT id, status
+             FROM reservations
+             WHERE id = :id
+               AND user_id = :user_id
+             LIMIT 1
+             FOR UPDATE'
+        );
+        $reservationStatement->execute([
+            'id' => $reservationId,
+            'user_id' => $userId,
+        ]);
+        $reservation = $reservationStatement->fetch();
+
+        if ($reservation === false) {
+            $pdo->rollBack();
+
+            return [
+                'ok' => false,
+                'message' => 'La reserva no existe o no pertenece a tu cuenta.',
+            ];
+        }
+
+        $status = (string) ($reservation['status'] ?? '');
+
+        if ($status === 'confirmed') {
+            $pdo->rollBack();
+
+            return [
+                'ok' => false,
+                'message' => 'La reserva ya esta confirmada.',
+            ];
+        }
+
+        if ($status === 'cancelled') {
+            $pdo->rollBack();
+
+            return [
+                'ok' => false,
+                'message' => 'La reserva cancelada no puede confirmarse.',
+            ];
+        }
+
+        if ($status !== 'pending') {
+            $pdo->rollBack();
+
+            return [
+                'ok' => false,
+                'message' => 'La reserva no esta disponible para checkout.',
+            ];
+        }
+
+        $updateStatement = $pdo->prepare(
+            'UPDATE reservations
+             SET status = :confirmed_status
+             WHERE id = :id
+               AND user_id = :user_id
+               AND status = :pending_status'
+        );
+        $updateStatement->execute([
+            'confirmed_status' => 'confirmed',
+            'id' => $reservationId,
+            'user_id' => $userId,
+            'pending_status' => 'pending',
+        ]);
+
+        if ($updateStatement->rowCount() !== 1) {
+            $pdo->rollBack();
+
+            return [
+                'ok' => false,
+                'message' => 'No se pudo confirmar la reserva porque su estado cambio.',
+            ];
+        }
+
+        $pdo->commit();
+
+        return [
+            'ok' => true,
+            'message' => 'Reserva confirmada con pago simulado.',
+        ];
+    } catch (Throwable $exception) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        error_log($exception->getMessage());
+
+        return [
+            'ok' => false,
+            'message' => 'No se pudo confirmar la reserva en este momento. Intenta nuevamente.',
         ];
     }
 }
