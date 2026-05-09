@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../helpers/auth.php';
 require_once __DIR__ . '/../helpers/assets.php';
+require_once __DIR__ . '/../helpers/coupons.php';
 require_once __DIR__ . '/../helpers/csrf.php';
 require_once __DIR__ . '/../helpers/security.php';
 require_once __DIR__ . '/../models/Admin.php';
@@ -250,6 +251,149 @@ function checkout_url(string $type, array $params = []): string
     return 'index.php?' . http_build_query($query);
 }
 
+function checkout_demo_money_label(float $amount): string
+{
+    return reservation_format_money($amount) . ' demo';
+}
+
+function checkout_coupon_percent_label(float $percent): string
+{
+    if (fmod($percent, 1.0) === 0.0) {
+        return (string) (int) $percent . '%';
+    }
+
+    return rtrim(rtrim(number_format($percent, 2, ',', '.'), '0'), ',') . '%';
+}
+
+function checkout_pricing_labels(string $type, float $subtotalAmount): array
+{
+    $pricing = checkout_coupon_price_summary($type, $subtotalAmount);
+    $pricing['subtotal_label'] = checkout_demo_money_label((float) ($pricing['subtotal_amount'] ?? 0));
+    $pricing['discount_label'] = checkout_demo_money_label((float) ($pricing['discount_amount'] ?? 0));
+    $pricing['total_label'] = checkout_demo_money_label((float) ($pricing['total_amount'] ?? 0));
+    $pricing['percent_label'] = checkout_coupon_percent_label((float) ($pricing['percent'] ?? 0.0));
+
+    return $pricing;
+}
+
+function checkout_coupon_redirect_url(string $type, ?int $reservationId = null): string
+{
+    if ($type === 'reservation') {
+        if ($reservationId === null) {
+            return 'index.php?page=my_reservations';
+        }
+
+        return checkout_url('reservation', ['reservation_id' => $reservationId]);
+    }
+
+    return checkout_url($type);
+}
+
+function checkout_coupon_apply_context(string $type, int $userId, ?int $reservationId): array
+{
+    if ($type === 'reservation') {
+        if ($reservationId === null) {
+            return [
+                'ok' => false,
+                'message' => 'Selecciona una reserva pendiente valida para aplicar cupon.',
+                'redirect_url' => 'index.php?page=my_reservations',
+            ];
+        }
+
+        try {
+            $reservation = reservation_find_for_user($reservationId, $userId);
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+
+            return [
+                'ok' => false,
+                'message' => 'No se pudo validar la reserva en este momento.',
+                'redirect_url' => checkout_coupon_redirect_url('reservation', $reservationId),
+            ];
+        }
+
+        if ($reservation === null) {
+            return [
+                'ok' => false,
+                'message' => 'La reserva no existe o no pertenece a tu cuenta.',
+                'redirect_url' => 'index.php?page=my_reservations',
+            ];
+        }
+
+        if ((string) ($reservation['status'] ?? '') !== 'pending') {
+            return [
+                'ok' => false,
+                'message' => 'Solo las reservas pendientes pueden usar cupon en checkout.',
+                'redirect_url' => checkout_coupon_redirect_url('reservation', $reservationId),
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'subtotal_amount' => (float) ($reservation['total_amount'] ?? 0),
+            'redirect_url' => checkout_coupon_redirect_url('reservation', $reservationId),
+        ];
+    }
+
+    if ($type === 'concessions') {
+        try {
+            if (!concession_products_table_exists()) {
+                return [
+                    'ok' => false,
+                    'message' => 'Los productos demo de confiteria no estan disponibles.',
+                    'redirect_url' => checkout_coupon_redirect_url('concessions'),
+                ];
+            }
+
+            $cartSummary = concession_cart_summary_from_products(concession_products_active_all());
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+
+            return [
+                'ok' => false,
+                'message' => 'No se pudo validar el carrito en este momento.',
+                'redirect_url' => checkout_coupon_redirect_url('concessions'),
+            ];
+        }
+
+        if (($cartSummary['items'] ?? []) === []) {
+            return [
+                'ok' => false,
+                'message' => 'Agrega productos al carrito antes de aplicar cupon.',
+                'redirect_url' => checkout_coupon_redirect_url('concessions'),
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'subtotal_amount' => (float) ($cartSummary['total'] ?? 0),
+            'redirect_url' => checkout_coupon_redirect_url('concessions'),
+        ];
+    }
+
+    if ($type === 'membership') {
+        if (is_member_demo_active()) {
+            return [
+                'ok' => false,
+                'message' => 'La membresia demo ya esta activa; no se puede aplicar cupon.',
+                'redirect_url' => checkout_coupon_redirect_url('membership'),
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'subtotal_amount' => CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
+            'redirect_url' => checkout_coupon_redirect_url('membership'),
+        ];
+    }
+
+    return [
+        'ok' => false,
+        'message' => 'El tipo de checkout no es valido.',
+        'redirect_url' => 'index.php?page=dashboard',
+    ];
+}
+
 function concession_cart_redirect(): void
 {
     redirect_to('index.php?page=confiteria');
@@ -370,7 +514,7 @@ function concession_checkout_last_receipt(): ?array
     return is_array($receipt) ? $receipt : null;
 }
 
-function concession_checkout_save_receipt(array $cartSummary, ?string $referenceCode = null): array
+function concession_checkout_save_receipt(array $cartSummary, ?string $referenceCode = null, array $pricing = []): array
 {
     app_session_start();
 
@@ -395,7 +539,9 @@ function concession_checkout_save_receipt(array $cartSummary, ?string $reference
             : 'CONF-' . date('Ymd-His') . '-' . random_int(100, 999),
         'created_at' => date('Y-m-d H:i:s'),
         'items' => $items,
-        'total_label' => (string) ($cartSummary['total_label'] ?? reservation_format_money(0) . ' demo'),
+        'subtotal_label' => (string) ($pricing['subtotal_label'] ?? $cartSummary['total_label'] ?? checkout_demo_money_label(0)),
+        'discount_label' => (string) ($pricing['discount_label'] ?? checkout_demo_money_label(0)),
+        'total_label' => (string) ($pricing['total_label'] ?? $cartSummary['total_label'] ?? checkout_demo_money_label(0)),
     ];
 
     $_SESSION[CONCESSIONS_LAST_CHECKOUT_SESSION_KEY] = $receipt;
@@ -898,7 +1044,8 @@ function render_checkout_page(): void
         'heading' => 'Checkout simulado',
         'lead' => 'Flujo academico sin pago real, sin pasarela y sin solicitud de datos bancarios.',
         'summary_title' => 'Resumen',
-        'total_label' => reservation_format_money(0) . ' demo',
+        'subtotal_amount' => 0.0,
+        'total_label' => checkout_demo_money_label(0),
         'can_confirm' => false,
         'return_url' => 'index.php?page=cartelera',
         'confirm_fields' => ['type' => $type],
@@ -954,7 +1101,8 @@ function render_checkout_page(): void
             'heading' => 'Confirma tu reserva',
             'lead' => 'Revisa las entradas antes de confirmar el pago simulado academico.',
             'summary_title' => 'Reserva pendiente',
-            'total_label' => reservation_format_money((float) ($reservation['total_amount'] ?? 0)),
+            'subtotal_amount' => (float) ($reservation['total_amount'] ?? 0),
+            'total_label' => checkout_demo_money_label((float) ($reservation['total_amount'] ?? 0)),
             'can_confirm' => true,
             'return_url' => 'index.php?page=my_reservations',
             'confirm_fields' => [
@@ -998,6 +1146,7 @@ function render_checkout_page(): void
             'heading' => 'Confiteria demo',
             'lead' => 'Confirma el carrito de sesion con pago simulado. No se crea una orden en base de datos.',
             'summary_title' => 'Carrito demo',
+            'subtotal_amount' => (float) ($cartSummary['total'] ?? 0),
             'total_label' => (string) ($cartSummary['total_label'] ?? reservation_format_money(0) . ' demo'),
             'can_confirm' => $cartItems !== [] && !$cartLoadError && !$catalogSetupRequired,
             'return_url' => 'index.php?page=confiteria',
@@ -1015,7 +1164,8 @@ function render_checkout_page(): void
             'heading' => 'Hazte socio demo',
             'lead' => 'Activa una membresia demo en esta sesion con pago simulado academico.',
             'summary_title' => CHECKOUT_MEMBERSHIP_PLAN_LABEL,
-            'total_label' => reservation_format_money(CHECKOUT_MEMBERSHIP_DEMO_TOTAL) . ' demo',
+            'subtotal_amount' => CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
+            'total_label' => checkout_demo_money_label(CHECKOUT_MEMBERSHIP_DEMO_TOTAL),
             'can_confirm' => !$memberDemoActive,
             'return_url' => 'index.php?page=socios',
             'member_demo_active' => $memberDemoActive,
@@ -1031,9 +1181,88 @@ function render_checkout_page(): void
         ]);
     }
 
+    $pricing = checkout_pricing_labels($type, (float) ($checkout['subtotal_amount'] ?? 0));
+    $checkout['pricing'] = $pricing;
+    $checkout['total_label'] = (string) ($pricing['total_label'] ?? checkout_demo_money_label(0));
+    $checkout['coupon_fields'] = $checkout['confirm_fields'];
     $messages = flash_get();
 
     require __DIR__ . '/../views/checkout.php';
+}
+
+function handle_coupon_apply(): void
+{
+    auth_require_login();
+    csrf_require_valid_post();
+
+    $user = current_user();
+    $type = checkout_type_from_request($_POST['type'] ?? null);
+    $reservationId = positive_int_from_request($_POST['reservation_id'] ?? null);
+
+    if ($type === null) {
+        flash_set('error', 'El tipo de checkout no es valido.');
+        redirect_to('index.php?page=dashboard');
+    }
+
+    $redirectUrl = checkout_coupon_redirect_url($type, $reservationId);
+    $code = checkout_coupon_code_from_value($_POST['coupon_code'] ?? null);
+
+    if ($code === '') {
+        flash_set('error', 'Ingresa un codigo de cupon.');
+        redirect_to($redirectUrl);
+    }
+
+    $coupon = checkout_coupon_find($code);
+
+    if ($coupon === null) {
+        flash_set('error', 'Cupon invalido.');
+        redirect_to($redirectUrl);
+    }
+
+    if (!checkout_coupon_applies_to_type($coupon, $type)) {
+        flash_set('error', 'Este cupon no aplica para este checkout.');
+        redirect_to($redirectUrl);
+    }
+
+    $context = checkout_coupon_apply_context($type, (int) ($user['id'] ?? 0), $reservationId);
+    $contextRedirectUrl = (string) ($context['redirect_url'] ?? $redirectUrl);
+
+    if (($context['ok'] ?? false) !== true) {
+        flash_set('error', (string) ($context['message'] ?? 'No se pudo aplicar el cupon.'));
+        redirect_to($contextRedirectUrl);
+    }
+
+    checkout_coupon_session_set($type, (string) ($coupon['code'] ?? $code));
+
+    $pricing = checkout_coupon_price_summary_for_code(
+        $type,
+        (string) ($coupon['code'] ?? $code),
+        (float) ($context['subtotal_amount'] ?? 0)
+    );
+
+    flash_set(
+        'success',
+        'Cupon aplicado: ' . (string) ($coupon['code'] ?? $code) . ' (-' . checkout_demo_money_label((float) ($pricing['discount_amount'] ?? 0)) . ').'
+    );
+    redirect_to($contextRedirectUrl);
+}
+
+function handle_coupon_remove(): void
+{
+    auth_require_login();
+    csrf_require_valid_post();
+
+    $type = checkout_type_from_request($_POST['type'] ?? null);
+    $reservationId = positive_int_from_request($_POST['reservation_id'] ?? null);
+
+    if ($type === null) {
+        flash_set('error', 'El tipo de checkout no es valido.');
+        redirect_to('index.php?page=dashboard');
+    }
+
+    checkout_coupon_session_remove($type);
+    flash_set('success', 'Cupon quitado.');
+    redirect_to(checkout_coupon_redirect_url($type, $reservationId));
 }
 
 function handle_checkout_confirm(): void
@@ -1060,7 +1289,11 @@ function handle_checkout_confirm(): void
             redirect_to('index.php?page=my_reservations');
         }
 
-        $result = reservation_confirm_pending_for_user($reservationId, (int) ($user['id'] ?? 0));
+        $result = reservation_confirm_pending_for_user(
+            $reservationId,
+            (int) ($user['id'] ?? 0),
+            checkout_coupon_session_code('reservation')
+        );
         $isOk = ($result['ok'] ?? false) === true;
 
         flash_set(
@@ -1069,6 +1302,7 @@ function handle_checkout_confirm(): void
         );
 
         if ($isOk) {
+            checkout_coupon_session_remove('reservation');
             redirect_to('index.php?page=ticket&reservation_id=' . (int) $reservationId);
         }
 
@@ -1116,14 +1350,15 @@ function handle_checkout_confirm(): void
         }
 
         $totalAmount = (float) ($cartSummary['total'] ?? 0);
+        $pricing = checkout_pricing_labels('concessions', $totalAmount);
         $paymentResult = payment_create_simulated(
             (int) ($user['id'] ?? 0),
             'concessions',
             null,
             $paymentItems,
             $totalAmount,
-            0.0,
-            $totalAmount
+            (float) ($pricing['discount_amount'] ?? 0),
+            (float) ($pricing['total_amount'] ?? $totalAmount)
         );
 
         if (($paymentResult['ok'] ?? false) !== true) {
@@ -1132,18 +1367,21 @@ function handle_checkout_confirm(): void
         }
 
         $payment = is_array($paymentResult['payment'] ?? null) ? $paymentResult['payment'] : [];
-        concession_checkout_save_receipt($cartSummary, (string) ($payment['reference_code'] ?? ''));
+        concession_checkout_save_receipt($cartSummary, (string) ($payment['reference_code'] ?? ''), $pricing);
         concession_cart_save([]);
+        checkout_coupon_session_remove('concessions');
         flash_set('success', 'Checkout de confiteria confirmado con pago simulado.');
         redirect_to(checkout_url('concessions', ['result' => 'success']));
     }
 
     if ($type === 'membership') {
         if (is_member_demo_active()) {
+            checkout_coupon_session_remove('membership');
             flash_set('info', 'La membresia demo ya esta activa.');
             redirect_to('index.php?page=socios');
         }
 
+        $pricing = checkout_pricing_labels('membership', CHECKOUT_MEMBERSHIP_DEMO_TOTAL);
         $paymentResult = payment_create_simulated(
             (int) ($user['id'] ?? 0),
             'membership',
@@ -1158,8 +1396,8 @@ function handle_checkout_confirm(): void
                 ],
             ],
             CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
-            0.0,
-            CHECKOUT_MEMBERSHIP_DEMO_TOTAL
+            (float) ($pricing['discount_amount'] ?? 0),
+            (float) ($pricing['total_amount'] ?? CHECKOUT_MEMBERSHIP_DEMO_TOTAL)
         );
 
         if (($paymentResult['ok'] ?? false) !== true) {
@@ -1168,6 +1406,7 @@ function handle_checkout_confirm(): void
         }
 
         set_member_demo_active(true);
+        checkout_coupon_session_remove('membership');
         flash_set('success', 'Membresia demo activada con pago simulado.');
         redirect_to('index.php?page=socios');
     }
@@ -1503,6 +1742,7 @@ function handle_concession_clear(): void
     auth_require_login();
     csrf_require_valid_post();
     concession_cart_save([]);
+    checkout_coupon_session_remove('concessions');
     flash_set('success', 'Carrito demo vaciado.');
     concession_cart_redirect();
 }

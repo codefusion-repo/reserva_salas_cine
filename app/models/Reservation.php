@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../helpers/database.php';
+require_once __DIR__ . '/../helpers/coupons.php';
 require_once __DIR__ . '/Payment.php';
 
 const RESERVATION_ACTIVE_STATUSES = ['pending', 'confirmed'];
@@ -401,7 +402,7 @@ function reservation_create_with_seats(int $userId, array $showtime, array $sele
     }
 }
 
-function reservation_confirm_pending_for_user(int $reservationId, int $userId): array
+function reservation_confirm_pending_for_user(int $reservationId, int $userId, ?string $couponCode = null): array
 {
     if ($reservationId <= 0 || $userId <= 0) {
         return [
@@ -495,7 +496,10 @@ function reservation_confirm_pending_for_user(int $reservationId, int $userId): 
         $seatStatement->execute(['reservation_id' => $reservationId]);
         $seats = $seatStatement->fetchAll();
         $seatCount = max(1, count($seats));
-        $totalAmount = (float) ($reservation['total_amount'] ?? 0);
+        $subtotalAmount = (float) ($reservation['total_amount'] ?? 0);
+        $pricing = checkout_coupon_price_summary_for_code('reservation', $couponCode, $subtotalAmount);
+        $discountAmount = (float) ($pricing['discount_amount'] ?? 0);
+        $totalAmount = (float) ($pricing['total_amount'] ?? $subtotalAmount);
 
         $payment = payment_insert_simulated_paid(
             $pdo,
@@ -507,12 +511,12 @@ function reservation_confirm_pending_for_user(int $reservationId, int $userId): 
                     'item_type' => 'ticket',
                     'item_label' => 'Entradas reserva ' . reservation_visual_code($reservationId),
                     'quantity' => $seatCount,
-                    'unit_amount' => $totalAmount / $seatCount,
-                    'total_amount' => $totalAmount,
+                    'unit_amount' => $subtotalAmount / $seatCount,
+                    'total_amount' => $subtotalAmount,
                 ],
             ],
-            $totalAmount,
-            0.0,
+            $subtotalAmount,
+            $discountAmount,
             $totalAmount
         );
 
