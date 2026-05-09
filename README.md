@@ -1,24 +1,31 @@
 # Reserva Salas Cine
 
-Sistema web académico para gestionar reservas de salas de cine, desarrollado con PHP, JavaScript, HTML, CSS y MySQL/MariaDB.
+Sistema web académico de reserva de salas adaptado a un flujo de cine. La aplicación permite registrarse, iniciar sesión, revisar cartelera, seleccionar funciones y butacas, crear reservas, confirmarlas mediante checkout simulado y administrar la operación base desde un panel protegido.
 
-El proyecto adapta el enunciado de reserva de salas a un flujo tipo cine: cartelera, detalle de película, selección de función, selección de butacas y reserva.
+El proyecto se mantiene XAMPP-first y dependency-light:
+
+- PHP vanilla.
+- MySQL/MariaDB.
+- HTML, CSS y JavaScript.
+- Apache mediante XAMPP como entorno oficial.
+- No requiere Laravel, Composer, React, Next, Docker, cloud, APIs externas, CDN ni pasarela de pagos.
 
 ## Estado del proyecto
 
-MVP académico en desarrollo.
+El estado actual es un MVP académico con base funcional implementada. El tag `v0.9.0-instituto-base` existe como checkpoint base histórico; el repositorio actual incluye trabajo posterior de funcionalidad, refactor, pagos simulados y pulido responsive.
 
-Target oficial de entrega:
+Target oficial:
 
-- Windows + XAMPP
-- PHP vanilla
-- MySQL/MariaDB
-- Apache
-- phpMyAdmin
+- Windows + XAMPP.
+- Ruta: `C:\xampp\htdocs\reserva_salas_cine`.
+- URL: `http://localhost/reserva_salas_cine/public/`.
+- Base de datos: `reserva_salas_cine`.
+- Usuario DB local: `root`.
+- Password DB local: vacío.
 
-WSL Ubuntu puede usarse como entorno equivalente de desarrollo, pero la entrega final debe funcionar en XAMPP.
+WSL Ubuntu o Apache local pueden usarse como apoyo de desarrollo, pero no reemplazan la validación final en Windows + XAMPP. Este README no declara entrega final; esa decisión requiere evidencia de ejecución en XAMPP real.
 
-## Documentación operativa
+## Documentación relacionada
 
 - [Reglas para agentes](AGENTS.md)
 - [Alcance del proyecto](docs/SCOPE.md)
@@ -26,346 +33,206 @@ WSL Ubuntu puede usarse como entorno equivalente de desarrollo, pero la entrega 
 - [Validación](docs/VALIDATION.md)
 - [Checklist final XAMPP](docs/XAMPP_FINAL_CHECKLIST.md)
 - [Fuentes de verdad](docs/SOURCE_OF_TRUTH.md)
+- Fuente funcional académica: `docs/functional/Trabajo 3 web.pdf`
+- Mockups aprobados: `docs/mockups/approved/`
 
-## Stack
-
-- PHP vanilla
-- MySQL/MariaDB
-- JavaScript
-- HTML
-- CSS
-- XAMPP
-
-## Target oficial
-
-El proyecto debe poder ejecutarse en XAMPP usando:
-
-- Ruta del proyecto:
-
-      C:\xampp\htdocs\reserva_salas_cine
-
-- URL local:
-
-      http://localhost/reserva_salas_cine/public/
-
-- Base de datos:
-
-      reserva_salas_cine
-
-- Usuario local esperado:
-
-      root
-
-- Password local esperado:
-
-      vacío
-
-## Entorno equivalente de desarrollo
-
-Durante el desarrollo se puede usar WSL Ubuntu con Apache, PHP y MariaDB.
-
-Ruta equivalente actual:
-
-    /var/www/html/reserva_salas_cine
-
-URL equivalente:
-
-    http://localhost/reserva_salas_cine/public/
-
-Importante: WSL no reemplaza la validación final en XAMPP. No se deben agregar dependencias, rutas, usuarios de base de datos o configuraciones que rompan la ejecución en XAMPP.
-
-## Estado funcional implementado
-
-La evidencia actual del repositorio implementa:
-
-- Registro, inicio de sesión, cierre de sesión y control de sesión activa.
-- Roles de usuario: administrador y usuario normal.
-- Cartelera con películas activas desde base de datos.
-- Detalle de película con funciones activas por fecha y sala.
-- Selección de cantidad de entradas.
-- Selección de butacas por función.
-- Creación de reservas con butacas asociadas.
-- Visualización de reservas del usuario autenticado.
-- Cancelación de reservas propias.
-- Panel administrador para crear, editar y desactivar salas.
-- Panel administrador para crear, editar, activar y desactivar funciones.
-- Validación para evitar reservar una butaca ya ocupada en la misma función.
-- Validación para evitar funciones activas traslapadas en la misma sala.
-
-## Pendiente o futuro
-
-No está implementado como funcionalidad completa:
-
-- CRUD administrador de películas. Las películas existen como datos de cartelera.
-- Vista administrador de todas las reservas del sistema (#32).
-- Visual 404 dedicado (#22); existen respuestas y mensajes controlados básicos.
-- CSRF en formularios POST (#35), pendiente después de #55.
-- Autorización POST admin fail-closed (#55), pendiente antes de #35.
-- Checkout, pagos, cupones, confitería y socios funcionales.
-- Pago real, pasarela de pago, compra real de confitería y membresías reales.
-- Pantallas finales de Confitería/Socios/Pago. Hoy son navegación visual
-  placeholder o alcance futuro, no módulos funcionales completos.
-
-## Fuera de alcance
-
-Este MVP no incluye:
-
-- Pago real.
-- Pasarela de pago.
-- Checkout real.
-- Cupones funcionales.
-- APIs externas.
-- Frameworks como Laravel, React o Next.js.
-- Docker.
-- Deploy en la nube.
-- CI/CD.
-- Compra real de productos de confitería.
-- Membresías reales.
-- Sistema avanzado de reportes.
-
-## Estructura esperada
-
-    reserva_salas_cine/
-    ├── app/
-    │   ├── controllers/
-    │   ├── helpers/
-    │   ├── middleware/
-    │   ├── models/
-    │   └── views/
-    ├── config/
-    │   ├── database.php
-    │   └── database.local.php
-    ├── database/
-    │   ├── schema.sql
-    │   └── seed.sql
-    ├── docs/
-    │   ├── BUSINESS_RULES.md
-    │   ├── PROJECT_BRIEF.md
-    │   ├── SCOPE.md
-    │   ├── SOURCE_OF_TRUTH.md
-    │   ├── VALIDATION.md
-    │   ├── XAMPP_FINAL_CHECKLIST.md
-    │   ├── functional/
-    │   └── mockups/
-    ├── public/
-    │   ├── assets/
-    │   │   ├── css/
-    │   │   ├── img/
-    │   │   └── js/
-    │   ├── uploads/
-    │   │   └── .gitkeep
-    │   └── index.php
-    ├── .gitignore
-    └── README.md
-
-## Configuración de base de datos
-
-Los valores por defecto deben ser compatibles con XAMPP:
-
-    DB_HOST=localhost
-    DB_NAME=reserva_salas_cine
-    DB_USER=root
-    DB_PASS=
-
-Si se necesita una configuración local distinta en WSL u otro entorno, debe usarse un archivo local ignorado por Git, por ejemplo:
-
-    config/database.local.php
-
-No se deben versionar contraseñas reales ni credenciales personales.
+`Project OS` es referencia de workflow, proceso y disciplina operativa. No reemplaza la fuente funcional del proyecto ni las reglas de negocio de Reserva Salas Cine.
 
 ## Instalación en XAMPP
 
-1.  Copiar o clonar el proyecto dentro de:
+1. Clonar o copiar el proyecto en:
 
-    C:\xampp\htdocs\reserva_salas_cine
+   ```text
+   C:\xampp\htdocs\reserva_salas_cine
+   ```
 
-2.  Iniciar XAMPP.
+2. Abrir el panel de XAMPP e iniciar:
 
-3.  Activar:
-    - Apache
-    - MySQL
+   - Apache.
+   - MySQL.
 
-4.  Abrir phpMyAdmin:
+3. Crear la base de datos `reserva_salas_cine` desde phpMyAdmin:
 
-    http://localhost/phpmyadmin
+   ```text
+   http://localhost/phpmyadmin
+   ```
 
-5.  Crear la base de datos:
+   Cotejamiento recomendado:
 
-        reserva_salas_cine
+   ```text
+   utf8mb4_unicode_ci
+   ```
 
-    Con cotejamiento recomendado:
+4. Importar los archivos SQL en este orden:
 
-        utf8mb4_unicode_ci
+   ```text
+   database/schema.sql
+   database/seed.sql
+   ```
 
-6.  Importar el esquema:
+5. Abrir la aplicación:
 
-    database/schema.sql
-
-7.  Importar datos iniciales:
-
-    database/seed.sql
-
-8.  Abrir el proyecto:
-
-    http://localhost/reserva_salas_cine/public/
-
-## Instalación equivalente en WSL
-
-1. Ubicar el proyecto en:
-
-   /var/www/html/reserva_salas_cine
-
-2. Verificar Apache:
-
-   sudo systemctl status apache2
-
-3. Verificar MariaDB:
-
-   sudo systemctl status mariadb
-
-4. Crear la base de datos:
-
-   sudo mysql -e "CREATE DATABASE IF NOT EXISTS reserva_salas_cine CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-5. Importar esquema:
-
-   sudo mysql reserva_salas_cine < database/schema.sql
-
-6. Importar datos iniciales:
-
-   sudo mysql reserva_salas_cine < database/seed.sql
-
-7. Abrir:
-
+   ```text
    http://localhost/reserva_salas_cine/public/
+   ```
 
-## Modelo de datos inicial
+## Configuración de base de datos
 
-Tablas mínimas esperadas:
+La configuración versionada en `config/database.php` usa defaults compatibles con XAMPP:
 
-- users
-- rooms
-- movies
-- showtimes
-- reservations
-- reservation_seats
+```text
+DB_HOST=localhost
+DB_NAME=reserva_salas_cine
+DB_USER=root
+DB_PASS=
+```
 
-Responsabilidades principales:
+Si un entorno local necesita credenciales distintas, usar un override local:
 
-- users: usuarios, credenciales y roles.
-- rooms: salas disponibles.
-- movies: películas de cartelera.
-- showtimes: funciones por película, sala y horario.
-- reservations: reservas realizadas por usuarios.
-- reservation_seats: butacas asociadas a cada reserva.
+```text
+config/database.local.php
+```
 
-## Reglas técnicas
+Ese archivo está ignorado por Git y no debe usarse para versionar secretos, credenciales personales, dumps con datos reales ni configuración privada de XAMPP.
 
-- Usar PHP vanilla.
-- Usar PDO para conexión a MySQL/MariaDB.
-- Usar prepared statements en consultas SQL.
-- Usar password_hash para registrar contraseñas.
-- Usar password_verify para iniciar sesión.
-- No guardar contraseñas en texto plano.
-- Validar formularios en PHP.
-- Usar JavaScript solo como mejora de experiencia, no como única validación.
-- Escapar salida HTML con htmlspecialchars.
-- Proteger rutas administrativas por rol.
-- Mantener el código simple y entendible.
-- No agregar dependencias obligatorias que compliquen XAMPP.
+## Credenciales demo
 
-## Flujo principal del usuario
+Las credenciales demo fueron verificadas contra los hashes versionados en `database/seed.sql`. No se deben copiar ni exponer los hashes en documentación operativa.
 
-1. Usuario se registra o inicia sesión.
-2. Ve la cartelera.
-3. Selecciona una película.
-4. Selecciona día, horario y cantidad de entradas.
-5. Selecciona butacas disponibles.
-6. Confirma la reserva.
-7. Puede ver y cancelar sus reservas.
+| Rol | Correo | Password |
+| --- | --- | --- |
+| Administrador | `admin@reservacine.local` | `AdminDemo123!` |
+| Usuario | `usuario@reservacine.local` | `UsuarioDemo123!` |
 
-## Flujo principal del administrador
+## Modelo de datos actual
 
-1. Administrador inicia sesión.
-2. Gestiona salas.
-3. Gestiona funciones asociadas a películas existentes.
-4. Evita crear funciones traslapadas en la misma sala.
+`database/schema.sql` define la base académica y las extensiones demo actuales:
 
-Pendiente: el administrador todavía no cuenta con CRUD de películas ni vista de
-todas las reservas del sistema (#32).
+- `users`: usuarios, hash de contraseña y rol.
+- `rooms`: salas, ubicación, capacidad y estado.
+- `movies`: cartelera y metadata de películas.
+- `showtimes`: funciones asociadas a película y sala.
+- `reservations`: reservas con estados `pending`, `confirmed` y `cancelled`.
+- `reservation_seats`: butacas asociadas a una reserva y función.
+- `payments`: pagos simulados por reserva, confitería o membresía.
+- `payment_items`: ítems asociados a pagos simulados.
+- `coupons`: cupones demo por tipo de checkout.
+- `concession_products`: catálogo demo de confitería.
+- `user_memberships`: membresía demo persistida por usuario.
 
-## Validaciones obligatorias
+`database/seed.sql` carga usuarios demo, salas, películas, productos de confitería, cupones demo y funciones iniciales.
 
-### Autenticación
+## Flujo de usuario
 
-- No permitir registro con campos vacíos.
-- No permitir correos duplicados.
-- No permitir login con credenciales incorrectas.
-- Mantener sesión activa.
-- Permitir cerrar sesión.
+Estado implementado en rutas y controladores actuales:
 
-### Reservas
+1. Registro, login, logout y control de sesión.
+2. Cartelera autenticada con filtros por texto, género y clasificación.
+3. Detalle de película con funciones activas, sala, formato, idioma y disponibilidad.
+4. Selección de cantidad de entradas.
+5. Selección de butacas por función, con bloqueo de butacas ocupadas.
+6. Creación de reserva en estado `pending`.
+7. Checkout simulado de reserva para confirmar la reserva y registrar pago demo.
+8. Aplicación y remoción de cupones demo cuando corresponden al tipo de checkout.
+9. Vista "Mis reservas" con reservas del usuario autenticado.
+10. Cancelación de reservas propias.
+11. Ticket visual para reservas confirmadas o canceladas.
+12. Vista "Mis pagos", detalle de pago, comprobante e impresión/descarga TXT.
+13. Confitería demo con catálogo desde base de datos, carrito en sesión y checkout simulado.
+14. Socios demo con membresía persistida por usuario, activación vía checkout simulado y desactivación.
+15. Perfil de usuario con resumen de cuenta, reservas, pagos y estado de membresía demo.
 
-- No permitir reservas sin usuario autenticado.
-- No permitir reservas sin función seleccionada.
-- No permitir cantidad de entradas menor a 1.
-- No permitir seleccionar más butacas que entradas.
-- No permitir reservar una butaca ya ocupada.
-- No permitir reservar funciones inexistentes o inactivas.
-- Al cancelar una reserva, liberar o invalidar correctamente las butacas asociadas.
+Los pagos son simulados: no hay cobros reales, no se piden datos bancarios y no existe conexión con proveedores externos.
 
-### Administración
+## Flujo administrador
 
-- Solo administradores pueden acceder al panel admin.
-- No permitir crear salas con campos vacíos.
-- No permitir crear funciones con horario inválido.
-- No permitir funciones traslapadas en la misma sala.
+El panel administrador requiere rol `admin`. El estado actual incluye:
 
-## Validación manual final
+- Acceso protegido y vista de denegación para usuarios sin rol administrador.
+- Resumen administrativo.
+- Gestión de salas: crear, editar, activar/desactivar y eliminar cuando aplica.
+- Gestión de películas: crear, editar, activar/desactivar y eliminar cuando aplica.
+- Gestión de funciones: crear, editar, activar/desactivar, eliminar cuando aplica y filtrar.
+- Validación de traslape para funciones activas en la misma sala.
+- Vista administrativa de reservas con filtros.
+- Gestión de productos de confitería: crear, editar, activar/desactivar y eliminar.
+- Gestión de cupones demo: crear, editar y activar/desactivar.
+- Vista administrativa de pagos simulados con filtros.
+- Detalle de pago administrativo, comprobante y descarga TXT.
 
-La lista detallada para la validación final en Windows + XAMPP está en
-[docs/XAMPP_FINAL_CHECKLIST.md](docs/XAMPP_FINAL_CHECKLIST.md). Esa lista no
-declara readiness por sí sola; la entrega final requiere ejecución real en
-XAMPP y evidencia.
+Las acciones POST administrativas usan guard de rol y CSRF.
 
-Antes de entregar, comprobar en XAMPP:
+## Pendiente, demo o fuera de alcance
 
-- [ ] Apache inicia correctamente.
-- [ ] MySQL inicia correctamente.
-- [ ] El proyecto está en C:\xampp\htdocs\reserva_salas_cine.
-- [ ] La URL abre: http://localhost/reserva_salas_cine/public/.
-- [ ] La base reserva_salas_cine existe.
-- [ ] database/schema.sql importa sin errores.
-- [ ] database/seed.sql importa sin errores.
-- [ ] Registro de usuario probado.
-- [ ] Login probado.
-- [ ] Logout probado.
-- [ ] Rol usuario probado.
-- [ ] Rol administrador probado.
-- [ ] Cartelera probada.
-- [ ] Detalle de película probado.
-- [ ] Selección de horario probada.
-- [ ] Selección de entradas probada.
-- [ ] Selección de butacas probada.
-- [ ] Reserva creada correctamente.
-- [ ] Conflicto de butaca probado.
-- [ ] Cancelación de reserva probada.
-- [ ] Panel admin probado.
-- [ ] Conflicto de funciones traslapadas probado.
-- [ ] Funcionalidades futuras no implementadas marcadas como N/A cuando aplique.
-- [ ] Errores PHP revisados en navegador o logs de Apache.
-- [ ] No hay contraseñas reales ni datos sensibles en Git.
+No está implementado ni forma parte del alcance académico actual:
 
-## Gestión del trabajo
+- Cobros reales.
+- Pasarela de pagos.
+- Captura o almacenamiento de datos reales de tarjeta.
+- APIs externas.
+- Pedidos reales de confitería, stock, despacho o integración de caja.
+- Membresías reales, puntos reales o beneficios comerciales reales.
+- Deploy cloud.
+- CI/CD.
+- Docker.
+- Frameworks frontend o backend obligatorios.
 
-El desarrollo se organiza mediante issues y PRs en GitHub.
+La ruta visual `pago` se mantiene como pantalla conceptual. Los checkouts demo reales se abren desde reservas, confitería y socios.
 
-Regla general:
+## Validación
 
-- No cerrar issues sin evidencia.
-- No aprobar PRs solo por claims.
-- Cada PR debe incluir validación ejecutada.
-- La compatibilidad XAMPP es obligatoria para la entrega final.
+Documentación de validación:
+
+- [docs/VALIDATION.md](docs/VALIDATION.md)
+- [docs/XAMPP_FINAL_CHECKLIST.md](docs/XAMPP_FINAL_CHECKLIST.md)
+
+Para cambios documentales, ejecutar como mínimo:
+
+```bash
+git status --short --branch
+git diff --check
+```
+
+Para apoyo técnico en desarrollo, también pueden usarse:
+
+```bash
+find . -name "*.php" -print0 | xargs -0 -n1 php -l
+curl -I http://localhost/reserva_salas_cine/public/
+```
+
+Para validación final manual en Windows + XAMPP, registrar evidencia de:
+
+- Apache y MySQL iniciados desde XAMPP.
+- Proyecto ubicado en `C:\xampp\htdocs\reserva_salas_cine`.
+- URL oficial abierta: `http://localhost/reserva_salas_cine/public/`.
+- Base de datos `reserva_salas_cine` creada.
+- Importación de `database/schema.sql` y `database/seed.sql` sin errores.
+- Flujos de usuario, administrador, reserva, checkout simulado, pagos, cupones, confitería, socios y perfil probados cuando apliquen.
+- Revisión de errores visibles y logs de Apache/XAMPP.
+
+WSL puede aportar evidencia de apoyo, pero la entrega final requiere ejecución real en Windows + XAMPP y evidencia revisable.
+
+## Seguridad y calidad
+
+Reglas implementadas o requeridas por el proyecto:
+
+- Conexión a MySQL/MariaDB mediante PDO.
+- Consultas con prepared statements.
+- Contraseñas con `password_hash` y verificación con `password_verify`.
+- Escape de salida dinámica con `e()` / `htmlspecialchars`.
+- Validación de formularios en PHP.
+- CSRF en formularios POST implementados.
+- Rutas y acciones admin protegidas por rol.
+- Sesión regenerada al iniciar sesión.
+- Sin datos reales de tarjeta.
+- Pagos simulados solamente.
+- Sin secretos versionados.
+
+## Workflow
+
+El trabajo se organiza mediante issues, PRs, commits y evidencia revisable. No se deben cerrar issues, declarar entrega final, crear tags/releases ni afirmar cumplimiento sin evidencia.
+
+El repositorio `codefusion-repo/project-os` funciona como referencia de workflow/proceso. Las funcionalidades y reglas de negocio de esta aplicación se validan contra el repositorio actual, `docs/functional/Trabajo 3 web.pdf`, `docs/BUSINESS_RULES.md`, `docs/SCOPE.md`, mockups aprobados y evidencia de implementación.
 
 ## Licencia
 
