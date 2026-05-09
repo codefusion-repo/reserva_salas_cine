@@ -5801,6 +5801,8 @@ p {
     }
 
     .cinema-topbar {
+        position: relative;
+        z-index: 10;
         display: grid;
         grid-template-columns: 76px minmax(0, 1fr);
         gap: 8px 10px;
@@ -5873,12 +5875,14 @@ p {
     }
 
     .user-menu {
-        display: contents;
+        position: relative;
+        grid-column: 2;
+        grid-row: 1;
+        width: 100%;
+        min-width: 0;
     }
 
     .user-pill {
-        grid-column: 2;
-        grid-row: 1;
         width: 100%;
         min-width: 0;
         min-height: 42px;
@@ -5922,16 +5926,18 @@ p {
     }
 
     .user-dropdown {
-        grid-column: 1 / -1;
-        grid-row: 2;
-        position: static;
-        width: 100%;
+        position: absolute;
+        z-index: 30;
+        top: calc(100% + 8px);
+        right: 0;
+        left: auto;
+        width: min(280px, calc(100vw - 24px));
         min-width: 0;
-        margin-top: 6px;
+        margin-top: 0;
         padding: 8px;
         border: 1px solid var(--line);
         border-radius: 5px;
-        box-shadow: none;
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
     }
 
     .user-dropdown a {
