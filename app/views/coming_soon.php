@@ -6,6 +6,9 @@ $activeNav = (string) ($comingSoon['activeNav'] ?? '');
 $items = is_array($comingSoon['items'] ?? null) ? $comingSoon['items'] : [];
 $notes = is_array($comingSoon['notes'] ?? null) ? $comingSoon['notes'] : [];
 $heroActions = is_array($comingSoon['heroActions'] ?? null) ? $comingSoon['heroActions'] : [];
+$panelKicker = trim((string) ($comingSoon['panelKicker'] ?? 'Próximamente...'));
+$panelHeadline = trim((string) ($comingSoon['panelHeadline'] ?? 'Solo en cines...'));
+$featureIcon = trim((string) ($comingSoon['featureIcon'] ?? '🚧'));
 $useBenefitsLayout = ($comingSoon['benefitsLayout'] ?? false) === true;
 $benefitsSectionId = trim((string) ($comingSoon['benefitsSectionId'] ?? ''));
 $sectionClass = $useBenefitsLayout ? 'coming-soon-grid coming-soon-benefits-grid' : 'coming-soon-grid';
@@ -19,6 +22,11 @@ $memberDemo = is_array($comingSoon['memberDemo'] ?? null) ? $comingSoon['memberD
 $memberDemoIsActive = (bool) ($memberDemo['isActive'] ?? false);
 $memberDemoStateActive = trim((string) ($memberDemo['stateActiveLabel'] ?? 'Socio Cine Demo activo'));
 $memberDemoStateInactive = trim((string) ($memberDemo['stateInactiveLabel'] ?? 'Sin membresía demo'));
+$memberDemoStateCopy = trim((string) (
+    $memberDemoIsActive
+        ? ($memberDemo['stateActiveCopy'] ?? 'Tu sesión tiene membresía demo activa.')
+        : ($memberDemo['stateInactiveCopy'] ?? 'Activa la membresía demo para ver el estado de socio en esta sesión.')
+));
 $memberDemoBenefitLine = trim((string) ($memberDemo['benefitLine'] ?? 'Membresía demo sin pago real'));
 $memberDemoAcademicLine = trim((string) ($memberDemo['academicLine'] ?? 'Beneficios simulados para el proyecto académico'));
 $memberDemoActivateAction = trim((string) ($memberDemo['activateAction'] ?? 'index.php?action=member_demo_activate'));
@@ -59,8 +67,10 @@ $isMemberDemoPage = $memberDemo !== [];
 
         <section class="coming-soon-panel" aria-labelledby="coming-soon-title">
             <div class="coming-soon-copy">
-                <p class="coming-soon-kicker" aria-hidden="true">Próximamente...</p>
-                <h2 id="coming-soon-title">Solo en cines...</h2>
+                <?php if ($panelKicker !== ''): ?>
+                    <p class="coming-soon-kicker" aria-hidden="true"><?= e($panelKicker) ?></p>
+                <?php endif; ?>
+                <h2 id="coming-soon-title"><?= e($panelHeadline !== '' ? $panelHeadline : ($comingSoon['headline'] ?? $pageTitle)) ?></h2>
                 <p><?= e($comingSoon['lead'] ?? '') ?></p>
                 <p><?= e($comingSoon['support'] ?? '') ?></p>
 
@@ -76,6 +86,7 @@ $isMemberDemoPage = $memberDemo !== [];
                     <?php if ($isMemberDemoPage): ?>
                         <div class="member-demo-state<?= $memberDemoIsActive ? ' is-active' : '' ?>">
                             <p class="member-demo-state-title"><?= e($memberDemoIsActive ? $memberDemoStateActive : $memberDemoStateInactive) ?></p>
+                            <p class="member-demo-state-copy"><?= e($memberDemoStateCopy) ?></p>
                             <p class="member-demo-state-copy"><?= e($memberDemoBenefitLine) ?></p>
                             <p class="member-demo-state-copy"><?= e($memberDemoAcademicLine) ?></p>
                         </div>
@@ -83,14 +94,14 @@ $isMemberDemoPage = $memberDemo !== [];
                         <?php if ($memberDemoIsActive): ?>
                             <form action="<?= e($memberDemoDeactivateAction) ?>" method="post" class="member-demo-form">
                                 <?= csrf_token_field() ?>
-                                <button class="coming-soon-cta-button movie-state-link-secondary" type="submit">
+                                <button class="member-demo-action member-demo-action-secondary" type="submit">
                                     <?= e($memberDemoDeactivateLabel) ?>
                                 </button>
                             </form>
                         <?php else: ?>
                             <form action="<?= e($memberDemoActivateAction) ?>" method="post" class="member-demo-form">
                                 <?= csrf_token_field() ?>
-                                <button class="coming-soon-cta-button" type="submit">
+                                <button class="member-demo-action member-demo-action-primary" type="submit">
                                     <?= e($memberDemoActivateLabel) ?>
                                 </button>
                             </form>
@@ -125,7 +136,7 @@ $isMemberDemoPage = $memberDemo !== [];
             </div>
 
             <div class="coming-soon-feature">
-                <div class="coming-soon-badge" aria-hidden="true">🚧</div>
+                <div class="coming-soon-badge" aria-hidden="true"><?= e($featureIcon !== '' ? $featureIcon : '🚧') ?></div>
                 <span><?= e($comingSoon['accent'] ?? 'Proximamente') ?></span>
                 <p><?= e($comingSoon['accentCopy'] ?? '') ?></p>
             </div>

@@ -2750,6 +2750,47 @@ p {
     margin: 0;
 }
 
+.member-demo-action {
+    display: inline-flex;
+    min-height: 46px;
+    min-width: 230px;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 12px 18px;
+    border: 0;
+    border-radius: 7px;
+    color: #ffffff;
+    cursor: pointer;
+    font: 900 var(--font-md) Arial, Helvetica, sans-serif;
+    line-height: 1.1;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.member-demo-action-primary {
+    background: var(--accent);
+}
+
+.member-demo-action-primary:hover,
+.member-demo-action-primary:focus {
+    background: var(--accent-dark);
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+}
+
+.member-demo-action-secondary {
+    border: 1px solid rgba(255, 255, 255, 0.46);
+    background: #343d47;
+}
+
+.member-demo-action-secondary:hover,
+.member-demo-action-secondary:focus {
+    background: #202b35;
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+}
+
 .coming-soon-actions .movie-state-link {
     margin-top: 0;
 }
@@ -4838,16 +4879,19 @@ p {
     font: 800 var(--font-md) Arial, Helvetica, sans-serif;
     text-transform: uppercase;
     text-align: center;
-    cursor: not-allowed;
-    background: #b0b8c2;
-    color: #10202d;
+    cursor: pointer;
+    background: var(--accent);
+    color: #ffffff;
 }
 
 .coming-soon-actions .coming-soon-cta-button.movie-state-link-secondary {
-    background: #f0f1f4;
+    background: #343d47;
 }
 
 .coming-soon-actions .coming-soon-cta-button[disabled] {
+    cursor: not-allowed;
+    background: #b0b8c2;
+    color: #10202d;
     opacity: 0.88;
 }
 
@@ -4863,5 +4907,9 @@ p {
     .coming-soon-actions .coming-soon-cta-button {
         min-width: 100%;
         justify-content: center;
+    }
+
+    .coming-soon-actions .member-demo-action {
+        min-width: 100%;
     }
 }
