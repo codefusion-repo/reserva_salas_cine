@@ -91,6 +91,7 @@ if ($isAuthenticated) {
                 </button>
                 <div class="user-dropdown">
                     <span><?= e($headerUser['email'] ?? '') ?></span>
+                    <a href="index.php?page=profile"<?= $activeNav === 'profile' ? ' aria-current="page"' : '' ?>>Mi perfil</a>
                     <a href="index.php?page=my_reservations">Mis reservas</a>
                     <a href="index.php?page=my_payments">Mis pagos</a>
                     <a href="index.php?action=logout">Cerrar sesion</a>

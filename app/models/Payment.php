@@ -235,6 +235,26 @@ function payment_user_all(int $userId): array
     );
 }
 
+function payment_simulated_count_for_user(int $userId): int
+{
+    if ($userId <= 0) {
+        return 0;
+    }
+
+    $row = db_fetch_one(
+        'SELECT COUNT(*) AS payment_count
+         FROM payments
+         WHERE user_id = :user_id
+           AND status = :status',
+        [
+            'user_id' => $userId,
+            'status' => PAYMENT_STATUS_SIMULATED_PAID,
+        ]
+    );
+
+    return (int) ($row['payment_count'] ?? 0);
+}
+
 function payment_find_for_user(int $paymentId, int $userId): ?array
 {
     if ($paymentId <= 0 || $userId <= 0) {
