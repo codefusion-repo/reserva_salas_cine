@@ -7,6 +7,7 @@ $summaryRooms = is_array($adminSummary['rooms'] ?? null) ? $adminSummary['rooms'
 $summaryMovies = is_array($adminSummary['movies'] ?? null) ? $adminSummary['movies'] : [];
 $summaryShowtimes = is_array($adminSummary['showtimes'] ?? null) ? $adminSummary['showtimes'] : [];
 $nextShowtime = is_array($adminSummary['next_showtime'] ?? null) ? $adminSummary['next_showtime'] : null;
+$adminShowtimeFilters = is_array($adminShowtimeFilters ?? null) ? $adminShowtimeFilters : [];
 $nextShowtimeValue = 'Sin fecha';
 $nextShowtimeDetail = 'No hay funciones activas proximas';
 
@@ -425,6 +426,64 @@ if ($nextShowtime !== null) {
                     <?php endif; ?>
                 </div>
 
+                <?php if ($adminMode === 'list'): ?>
+                    <?php
+                    $hasAdminShowtimeFilters = (int) ($adminShowtimeFilters['room_id'] ?? 0) > 0
+                        || (string) ($adminShowtimeFilters['date_from'] ?? '') !== ''
+                        || (string) ($adminShowtimeFilters['date_to'] ?? '') !== ''
+                        || (string) ($adminShowtimeFilters['status'] ?? '') !== ''
+                        || (string) ($adminShowtimeFilters['q'] ?? '') !== '';
+                    ?>
+                    <form class="admin-form admin-showtime-filter" method="get" action="index.php#admin-showtimes" data-filter-form>
+                        <input type="hidden" name="page" value="admin">
+                        <input type="hidden" name="admin_section" value="showtimes">
+                        <label>
+                            <span>Sala</span>
+                            <select name="showtime_room_id">
+                                <option value="">Todas</option>
+                                <?php foreach ($rooms as $room): ?>
+                                    <?php $filterRoomId = (int) ($room['id'] ?? 0); ?>
+                                    <option
+                                        value="<?= e($filterRoomId) ?>"
+                                        <?= (int) ($adminShowtimeFilters['room_id'] ?? 0) === $filterRoomId ? 'selected' : '' ?>
+                                    >
+                                        <?= e(trim(($room['name'] ?? '') . ' - ' . ($room['location'] ?? ''), ' -')) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Fecha desde</span>
+                            <input type="date" name="showtime_date_from" value="<?= e((string) ($adminShowtimeFilters['date_from'] ?? '')) ?>">
+                        </label>
+                        <label>
+                            <span>Fecha hasta</span>
+                            <input type="date" name="showtime_date_to" value="<?= e((string) ($adminShowtimeFilters['date_to'] ?? '')) ?>">
+                        </label>
+                        <label>
+                            <span>Estado</span>
+                            <select name="showtime_status">
+                                <option value="" <?= (string) ($adminShowtimeFilters['status'] ?? '') === '' ? 'selected' : '' ?>>Todas</option>
+                                <option value="active" <?= (string) ($adminShowtimeFilters['status'] ?? '') === 'active' ? 'selected' : '' ?>>Activas</option>
+                                <option value="inactive" <?= (string) ($adminShowtimeFilters['status'] ?? '') === 'inactive' ? 'selected' : '' ?>>Inactivas</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Buscar pelicula</span>
+                            <input
+                                type="search"
+                                name="showtime_q"
+                                value="<?= e((string) ($adminShowtimeFilters['q'] ?? '')) ?>"
+                                maxlength="80"
+                                placeholder="Titulo de pelicula"
+                            >
+                        </label>
+                        <div class="admin-filter-actions">
+                            <a class="admin-filter-reset" href="index.php?page=admin&admin_section=showtimes#admin-showtimes">Limpiar</a>
+                        </div>
+                    </form>
+                <?php endif; ?>
+
                 <?php if ($adminMode === 'create' && ($activeMovies === [] || $activeRooms === [])): ?>
                     <div class="admin-empty">
                         <h3>Faltan peliculas o salas activas</h3>
@@ -560,7 +619,7 @@ if ($nextShowtime !== null) {
                     <?php endif; ?>
                 <?php elseif ($showtimes === []): ?>
                     <div class="admin-empty">
-                        <h3>Sin funciones</h3>
+                        <h3><?= $hasAdminShowtimeFilters ? 'No hay funciones que coincidan con los filtros.' : 'Sin funciones' ?></h3>
                     </div>
                 <?php else: ?>
                     <div class="admin-list admin-showtime-list" role="list">

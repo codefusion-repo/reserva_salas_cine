@@ -766,6 +766,7 @@ function render_admin_panel(): void
     $movies = [];
     $activeMovies = [];
     $showtimes = [];
+    $adminShowtimeFilters = admin_showtime_filters_from_request($_GET);
     $adminReservationFilters = admin_reservation_filters_from_request($_GET);
     $adminReservations = [];
     $adminSummary = [];
@@ -780,7 +781,7 @@ function render_admin_panel(): void
         $activeRooms = admin_rooms_active_all();
         $movies = admin_movies_all();
         $activeMovies = admin_movies_active_all();
-        $showtimes = admin_showtimes_all();
+        $showtimes = admin_showtimes_all($adminShowtimeFilters);
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
         http_response_code(500);
@@ -1401,6 +1402,56 @@ function admin_reservation_filters_from_request(array $request): array
         'status' => $status,
         'q' => movie_filter_value_from_request($request['q'] ?? '', 80),
     ];
+}
+
+function admin_showtime_filters_from_request(array $request): array
+{
+    $status = '';
+    $statusValue = '';
+
+    if (is_scalar($request['showtime_status'] ?? null)) {
+        $statusValue = strtolower(trim((string) $request['showtime_status']));
+    }
+
+    if (in_array($statusValue, ['active', 'inactive'], true)) {
+        $status = $statusValue;
+    }
+
+    return [
+        'room_id' => positive_int_from_request($request['showtime_room_id'] ?? null),
+        'date_from' => admin_date_filter_from_request($request['showtime_date_from'] ?? null),
+        'date_to' => admin_date_filter_from_request($request['showtime_date_to'] ?? null),
+        'status' => $status,
+        'q' => movie_filter_value_from_request($request['showtime_q'] ?? '', 80),
+    ];
+}
+
+function admin_date_filter_from_request(mixed $value): string
+{
+    if (!is_scalar($value)) {
+        return '';
+    }
+
+    $date = trim((string) $value);
+
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+        return '';
+    }
+
+    $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+    $errors = DateTimeImmutable::getLastErrors();
+
+    if (
+        $parsed === false
+        || (
+            is_array($errors)
+            && ((int) ($errors['warning_count'] ?? 0) > 0 || (int) ($errors['error_count'] ?? 0) > 0)
+        )
+    ) {
+        return '';
+    }
+
+    return $parsed->format('Y-m-d');
 }
 
 function admin_section_from_request(mixed $value): string
