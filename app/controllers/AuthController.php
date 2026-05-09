@@ -145,6 +145,12 @@ function payment_invoice_text(array $payment, array $items, array $user): string
         $accountLabel = 'Usuario';
     }
 
+    $accountEmail = payment_plain_text_value($user['email'] ?? '');
+
+    if ($accountEmail === '') {
+        $accountEmail = 'No informado';
+    }
+
     $reservationCode = payment_reservation_code($payment);
     $movieTitle = payment_plain_text_value($payment['movie_title'] ?? '');
     $roomLabel = trim(
@@ -170,6 +176,7 @@ function payment_invoice_text(array $payment, array $items, array $user): string
         'Metodo: ' . payment_method_label((string) ($payment['payment_method'] ?? '')),
         'Fecha: ' . payment_paid_at_label($payment),
         'Usuario: ' . $accountLabel,
+        'Email: ' . $accountEmail,
     ];
 
     if ($reservationCode !== '') {

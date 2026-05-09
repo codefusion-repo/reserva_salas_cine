@@ -11,6 +11,7 @@ $paidAtLabel = payment_paid_at_label($payment);
 $reservationCode = payment_reservation_code($payment);
 $summaryLabel = payment_summary_label($payment);
 $accountLabel = trim((string) ($user['name'] ?? ''));
+$accountEmail = trim((string) ($user['email'] ?? ''));
 $movieTitle = trim((string) ($payment['movie_title'] ?? ''));
 $roomLabel = trim(
     (string) ($payment['room_name'] ?? '') . ' - ' . (string) ($payment['room_location'] ?? ''),
@@ -24,6 +25,10 @@ $showtimeLabel = reservation_datetime_label($payment['starts_at'] ?? '');
 
 if ($accountLabel === '') {
     $accountLabel = 'Usuario';
+}
+
+if ($accountEmail === '') {
+    $accountEmail = 'No informado';
 }
 ?>
 <!doctype html>
@@ -101,6 +106,10 @@ if ($accountLabel === '') {
                 <div>
                     <dt>Usuario</dt>
                     <dd><?= e($accountLabel) ?></dd>
+                </div>
+                <div>
+                    <dt>Email</dt>
+                    <dd><?= e($accountEmail) ?></dd>
                 </div>
                 <div>
                     <dt>Metodo</dt>
