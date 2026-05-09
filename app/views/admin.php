@@ -203,6 +203,9 @@ if ($nextShowtime !== null) {
                             $roomActive = (int) ($room['is_active'] ?? 0) === 1;
                             $targetStatus = $roomActive ? '0' : '1';
                             $targetLabel = $roomActive ? 'Desactivar' : 'Activar';
+                            $confirmAction = $roomActive
+                                ? '¿Desactivar esta sala? Las funciones asociadas podrían dejar de estar disponibles para nuevas reservas.'
+                                : '¿Activar esta sala? Volverá a estar disponible para nuevas funciones.';
                             ?>
                             <div class="admin-row admin-room-row" role="listitem">
                                 <span><?= e($room['name'] ?? '') ?></span>
@@ -221,7 +224,7 @@ if ($nextShowtime !== null) {
                                             type="submit"
                                             name="target_status"
                                             value="<?= e($targetStatus) ?>"
-                                            data-confirm-action="<?= e($targetLabel) ?> esta sala?"
+                                            data-confirm-action="<?= e($confirmAction) ?>"
                                         >
                                             <?= e($targetLabel) ?>
                                         </button>
@@ -363,6 +366,9 @@ if ($nextShowtime !== null) {
                             $movieActive = (int) ($movie['is_active'] ?? 0) === 1;
                             $targetStatus = $movieActive ? '0' : '1';
                             $targetLabel = $movieActive ? 'Desactivar' : 'Activar';
+                            $confirmAction = $movieActive
+                                ? '¿Desactivar esta película? Sus funciones podrían dejar de estar disponibles para nuevas reservas.'
+                                : '¿Activar esta película? Volverá a estar disponible para nuevas funciones.';
                             $movieSynopsis = preg_replace('/\s+/', ' ', trim((string) ($movie['synopsis'] ?? '')));
                             if ($movieSynopsis === null) {
                                 $movieSynopsis = '';
@@ -388,7 +394,7 @@ if ($nextShowtime !== null) {
                                             type="submit"
                                             name="target_status"
                                             value="<?= e($targetStatus) ?>"
-                                            data-confirm-action="<?= e($targetLabel) ?> esta pelicula?"
+                                            data-confirm-action="<?= e($confirmAction) ?>"
                                         >
                                             <?= e($targetLabel) ?>
                                         </button>
@@ -639,6 +645,9 @@ if ($nextShowtime !== null) {
                             $showtimeActive = (int) ($showtime['is_active'] ?? 0) === 1;
                             $targetStatus = $showtimeActive ? '0' : '1';
                             $targetLabel = $showtimeActive ? 'Desactivar' : 'Activar';
+                            $confirmAction = $showtimeActive
+                                ? '¿Desactivar esta función? Ya no aparecerá como disponible para nuevas reservas.'
+                                : '¿Activar esta función? Se validará que no traslape con otra función activa.';
                             ?>
                             <div class="admin-row admin-showtime-row" role="listitem">
                                 <span><?= e($showtime['movie_title'] ?? '') ?></span>
@@ -660,7 +669,7 @@ if ($nextShowtime !== null) {
                                             type="submit"
                                             name="target_status"
                                             value="<?= e($targetStatus) ?>"
-                                            data-confirm-action="<?= e($targetLabel) ?> esta funcion?"
+                                            data-confirm-action="<?= e($confirmAction) ?>"
                                         >
                                             <?= e($targetLabel) ?>
                                         </button>
