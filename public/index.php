@@ -2,6 +2,15 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../app/controllers/AuthController.php';
+require_once __DIR__ . '/../app/controllers/ErrorController.php';
+require_once __DIR__ . '/../app/controllers/MovieController.php';
+require_once __DIR__ . '/../app/controllers/ReservationController.php';
+require_once __DIR__ . '/../app/controllers/CheckoutController.php';
+require_once __DIR__ . '/../app/controllers/PaymentController.php';
+require_once __DIR__ . '/../app/controllers/ConcessionController.php';
+require_once __DIR__ . '/../app/controllers/MembershipController.php';
+require_once __DIR__ . '/../app/controllers/AdminController.php';
+require_once __DIR__ . '/../app/controllers/PageController.php';
 
 app_session_start();
 
