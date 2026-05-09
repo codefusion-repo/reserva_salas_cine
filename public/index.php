@@ -43,6 +43,11 @@ if ($action === 'cancel_reservation' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+if ($action === 'checkout_confirm' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_checkout_confirm();
+    exit;
+}
+
 if ($action === 'create_room' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     handle_room_create();
     exit;
@@ -186,6 +191,10 @@ switch ($page) {
 
     case 'ticket':
         render_reservation_ticket();
+        break;
+
+    case 'checkout':
+        render_checkout_page();
         break;
 
     case 'confiteria':

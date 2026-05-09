@@ -14,7 +14,11 @@ require_once __DIR__ . '/../models/User.php';
 const AUTH_MIN_PASSWORD_LENGTH = 8;
 const CONCESSION_PRODUCTS_SETUP_MESSAGE = 'La tabla de productos de confitería no está instalada. Ejecuta database/upgrade_concession_products.sql o reimporta schema.sql y seed.sql en el entorno local.';
 const CONCESSIONS_CART_SESSION_KEY = 'concessions_cart';
+const CONCESSIONS_LAST_CHECKOUT_SESSION_KEY = 'last_concessions_checkout';
 const CONCESSIONS_CART_MAX_QUANTITY = 10;
+const CHECKOUT_ALLOWED_TYPES = ['reservation', 'concessions', 'membership'];
+const CHECKOUT_MEMBERSHIP_PLAN_LABEL = 'Socio Cine Demo';
+const CHECKOUT_MEMBERSHIP_DEMO_TOTAL = 0.0;
 
 function auth_mode_from_page(?string $page): string
 {
@@ -42,6 +46,24 @@ function render_error_page(string $heading, string $copy, int $statusCode = 404,
 function render_not_found_page(string $heading, string $copy, array $messages = []): void
 {
     render_error_page($heading, $copy, 404, $messages);
+}
+
+function checkout_type_from_request(mixed $value): ?string
+{
+    if (!is_scalar($value)) {
+        return null;
+    }
+
+    $type = strtolower(trim((string) $value));
+
+    return in_array($type, CHECKOUT_ALLOWED_TYPES, true) ? $type : null;
+}
+
+function checkout_url(string $type, array $params = []): string
+{
+    $query = array_merge(['page' => 'checkout', 'type' => $type], $params);
+
+    return 'index.php?' . http_build_query($query);
 }
 
 function concession_cart_redirect(): void
@@ -153,6 +175,46 @@ function concession_cart_summary_from_products(array $products): array
         'is_empty' => $items === [],
         'pruned' => $pruned,
     ];
+}
+
+function concession_checkout_last_receipt(): ?array
+{
+    app_session_start();
+
+    $receipt = $_SESSION[CONCESSIONS_LAST_CHECKOUT_SESSION_KEY] ?? null;
+
+    return is_array($receipt) ? $receipt : null;
+}
+
+function concession_checkout_save_receipt(array $cartSummary): array
+{
+    app_session_start();
+
+    $items = [];
+
+    foreach (($cartSummary['items'] ?? []) as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+
+        $items[] = [
+            'name' => (string) ($item['name'] ?? ''),
+            'quantity' => (int) ($item['quantity'] ?? 0),
+            'unit_price_label' => (string) ($item['unit_price_label'] ?? ''),
+            'subtotal_label' => (string) ($item['subtotal_label'] ?? ''),
+        ];
+    }
+
+    $receipt = [
+        'code' => 'CONF-' . date('Ymd-His') . '-' . random_int(100, 999),
+        'created_at' => date('Y-m-d H:i:s'),
+        'items' => $items,
+        'total_label' => (string) ($cartSummary['total_label'] ?? reservation_format_money(0) . ' demo'),
+    ];
+
+    $_SESSION[CONCESSIONS_LAST_CHECKOUT_SESSION_KEY] = $receipt;
+
+    return $receipt;
 }
 
 function movie_filter_value_from_request(mixed $value, int $maxLength = 80): string
@@ -410,12 +472,8 @@ function handle_reservation_create(): void
         return;
     }
 
-    flash_set('success', 'Reserva creada correctamente.');
-    redirect_to(
-        'index.php?page=seats&showtime_id=' . (int) $showtimeId
-        . '&tickets=' . (int) $ticketCount
-        . '&reservation_id=' . (int) $result['reservation_id']
-    );
+    flash_set('success', 'Reserva pendiente creada. Confirma el pago simulado para completarla.');
+    redirect_to(checkout_url('reservation', ['reservation_id' => (int) $result['reservation_id']]));
 }
 
 function render_my_reservations(): void
@@ -479,6 +537,249 @@ function render_reservation_ticket(): void
     require __DIR__ . '/../views/ticket.php';
 }
 
+function render_checkout_page(): void
+{
+    auth_require_login();
+
+    $user = current_user();
+    $type = checkout_type_from_request($_GET['type'] ?? null);
+
+    if ($type === null) {
+        render_not_found_page(
+            'Checkout no encontrado',
+            'El tipo de checkout solicitado no existe o no esta disponible.',
+            flash_get()
+        );
+        return;
+    }
+
+    $checkout = [
+        'type' => $type,
+        'active_nav' => 'cartelera',
+        'title' => 'Checkout simulado',
+        'eyebrow' => 'Pago simulado academico',
+        'heading' => 'Checkout simulado',
+        'lead' => 'Flujo academico sin pago real, sin pasarela y sin solicitud de datos bancarios.',
+        'summary_title' => 'Resumen',
+        'total_label' => reservation_format_money(0) . ' demo',
+        'can_confirm' => false,
+        'return_url' => 'index.php?page=cartelera',
+        'confirm_fields' => ['type' => $type],
+    ];
+
+    if ($type === 'reservation') {
+        $reservationId = positive_int_from_request($_GET['reservation_id'] ?? null);
+
+        if ($reservationId === null) {
+            render_not_found_page(
+                'Reserva no encontrada',
+                'Selecciona una reserva pendiente valida para abrir el checkout.',
+                flash_get()
+            );
+            return;
+        }
+
+        try {
+            $reservation = reservation_find_for_user($reservationId, (int) ($user['id'] ?? 0));
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            render_error_page(
+                'No se pudo cargar el checkout',
+                'Intenta nuevamente mas tarde.',
+                500,
+                flash_get()
+            );
+            return;
+        }
+
+        if ($reservation === null) {
+            render_not_found_page(
+                'Reserva no encontrada',
+                'La reserva solicitada no existe o no pertenece a tu cuenta.',
+                flash_get()
+            );
+            return;
+        }
+
+        if ((string) ($reservation['status'] ?? '') !== 'pending') {
+            render_error_page(
+                'Checkout no disponible',
+                'Solo las reservas pendientes pueden confirmarse con checkout simulado.',
+                409,
+                flash_get()
+            );
+            return;
+        }
+
+        $checkout = array_replace($checkout, [
+            'active_nav' => 'my_reservations',
+            'title' => 'Checkout reserva',
+            'heading' => 'Confirma tu reserva',
+            'lead' => 'Revisa las entradas antes de confirmar el pago simulado academico.',
+            'summary_title' => 'Reserva pendiente',
+            'total_label' => reservation_format_money((float) ($reservation['total_amount'] ?? 0)),
+            'can_confirm' => true,
+            'return_url' => 'index.php?page=my_reservations',
+            'confirm_fields' => [
+                'type' => 'reservation',
+                'reservation_id' => (string) $reservationId,
+            ],
+            'reservation' => $reservation,
+            'showtime_labels' => reservation_showtime_labels($reservation),
+        ]);
+    } elseif ($type === 'concessions') {
+        $cartSummary = [
+            'items' => [],
+            'total' => 0.0,
+            'total_label' => reservation_format_money(0) . ' demo',
+            'is_empty' => true,
+            'pruned' => false,
+        ];
+        $cartLoadError = false;
+        $catalogSetupRequired = false;
+
+        try {
+            if (!concession_products_table_exists()) {
+                $catalogSetupRequired = true;
+            } else {
+                $cartSummary = concession_cart_summary_from_products(concession_products_active_all());
+
+                if (($cartSummary['pruned'] ?? false) === true) {
+                    flash_set('info', 'Se quitaron del carrito productos que ya no estan activos.');
+                }
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $cartLoadError = true;
+        }
+
+        $cartItems = is_array($cartSummary['items'] ?? null) ? $cartSummary['items'] : [];
+
+        $checkout = array_replace($checkout, [
+            'active_nav' => 'confiteria',
+            'title' => 'Checkout confiteria',
+            'heading' => 'Confiteria demo',
+            'lead' => 'Confirma el carrito de sesion con pago simulado. No se crea una orden en base de datos.',
+            'summary_title' => 'Carrito demo',
+            'total_label' => (string) ($cartSummary['total_label'] ?? reservation_format_money(0) . ' demo'),
+            'can_confirm' => $cartItems !== [] && !$cartLoadError && !$catalogSetupRequired,
+            'return_url' => 'index.php?page=confiteria',
+            'cart_summary' => $cartSummary,
+            'cart_load_error' => $cartLoadError,
+            'catalog_setup_required' => $catalogSetupRequired,
+            'last_receipt' => concession_checkout_last_receipt(),
+        ]);
+    } elseif ($type === 'membership') {
+        $memberDemoActive = is_member_demo_active();
+
+        $checkout = array_replace($checkout, [
+            'active_nav' => 'socios',
+            'title' => 'Checkout socios',
+            'heading' => 'Hazte socio demo',
+            'lead' => 'Activa una membresia demo en esta sesion con pago simulado academico.',
+            'summary_title' => CHECKOUT_MEMBERSHIP_PLAN_LABEL,
+            'total_label' => reservation_format_money(CHECKOUT_MEMBERSHIP_DEMO_TOTAL) . ' demo',
+            'can_confirm' => !$memberDemoActive,
+            'return_url' => 'index.php?page=socios',
+            'member_demo_active' => $memberDemoActive,
+            'membership_plan' => [
+                'name' => CHECKOUT_MEMBERSHIP_PLAN_LABEL,
+                'total_label' => reservation_format_money(CHECKOUT_MEMBERSHIP_DEMO_TOTAL) . ' demo',
+                'benefits' => [
+                    'Estado de socio visible durante la sesion actual.',
+                    'Beneficios academicos simulados sin descuentos reales.',
+                    'Sin persistencia en base de datos y sin cambios en usuarios.',
+                ],
+            ],
+        ]);
+    }
+
+    $messages = flash_get();
+
+    require __DIR__ . '/../views/checkout.php';
+}
+
+function handle_checkout_confirm(): void
+{
+    auth_require_login();
+    csrf_require_valid_post();
+
+    $user = current_user();
+    $type = checkout_type_from_request($_POST['type'] ?? null);
+
+    if ($type === null) {
+        render_not_found_page(
+            'Checkout no encontrado',
+            'El tipo de checkout enviado no existe o no esta disponible.'
+        );
+        return;
+    }
+
+    if ($type === 'reservation') {
+        $reservationId = positive_int_from_request($_POST['reservation_id'] ?? null);
+
+        if ($reservationId === null) {
+            flash_set('error', 'Selecciona una reserva pendiente valida.');
+            redirect_to('index.php?page=my_reservations');
+        }
+
+        $result = reservation_confirm_pending_for_user($reservationId, (int) ($user['id'] ?? 0));
+        $isOk = ($result['ok'] ?? false) === true;
+
+        flash_set(
+            $isOk ? 'success' : 'error',
+            (string) ($result['message'] ?? 'No se pudo confirmar la reserva.')
+        );
+
+        if ($isOk) {
+            redirect_to('index.php?page=ticket&reservation_id=' . (int) $reservationId);
+        }
+
+        redirect_to(checkout_url('reservation', ['reservation_id' => (int) $reservationId]));
+    }
+
+    if ($type === 'concessions') {
+        $cartSummary = [
+            'items' => [],
+            'total' => 0.0,
+            'total_label' => reservation_format_money(0) . ' demo',
+            'is_empty' => true,
+            'pruned' => false,
+        ];
+
+        try {
+            if (concession_products_table_exists()) {
+                $cartSummary = concession_cart_summary_from_products(concession_products_active_all());
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            flash_set('error', 'No se pudo validar el carrito en este momento.');
+            redirect_to(checkout_url('concessions'));
+        }
+
+        if (($cartSummary['items'] ?? []) === []) {
+            flash_set('error', 'Agrega productos al carrito antes de confirmar el checkout.');
+            redirect_to(checkout_url('concessions'));
+        }
+
+        concession_checkout_save_receipt($cartSummary);
+        concession_cart_save([]);
+        flash_set('success', 'Checkout de confiteria confirmado con pago simulado.');
+        redirect_to(checkout_url('concessions', ['result' => 'success']));
+    }
+
+    if ($type === 'membership') {
+        if (is_member_demo_active()) {
+            flash_set('info', 'La membresia demo ya esta activa.');
+            redirect_to('index.php?page=socios');
+        }
+
+        set_member_demo_active(true);
+        flash_set('success', 'Membresia demo activada con pago simulado.');
+        redirect_to('index.php?page=socios');
+    }
+}
+
 function render_coming_soon_page(string $page): void
 {
     auth_require_login();
@@ -490,7 +791,7 @@ function render_coming_soon_page(string $page): void
             'eyebrow' => 'Confiteria demo',
             'headline' => 'Confiteria',
             'lead' => 'Catálogo demo de combos para acompañar tu función con carrito simple en sesión.',
-            'support' => 'La compra real no está disponible: no hay pago real, no hay checkout y no se crean pedidos.',
+            'support' => 'La compra real no está disponible: el checkout es simulado y no crea pedidos.',
             'accent' => 'Carrito demo',
             'accentCopy' => 'El carrito guarda solo IDs y cantidades en sesión. Los precios se recalculan desde productos activos.',
             'catalog' => [],
@@ -500,13 +801,13 @@ function render_coming_soon_page(string $page): void
             'items' => [
                 ['icon' => '🍿', 'label' => 'Productos activos', 'copy' => 'El catálogo visible se lee desde concession_products.'],
                 ['icon' => '🛒', 'label' => 'Carrito en sesión', 'copy' => 'Solo guarda product_id y cantidad por item.'],
-                ['icon' => '💳', 'label' => 'Sin pago real', 'copy' => 'No existe pasarela, tarjeta ni checkout funcional.'],
+                ['icon' => '💳', 'label' => 'Pago simulado', 'copy' => 'No existe pasarela, tarjeta ni pedido persistido.'],
                 ['icon' => '🧾', 'label' => 'Sin pedidos', 'copy' => 'No se crean compras, stock ni ordenes de confiteria.'],
             ],
             'notes' => [
                 'Compra real no disponible.',
                 'No hay pago real.',
-                'Checkout se implementará después.',
+                'Checkout simulado sin pasarela.',
                 'Sin stock, pedidos ni persistencia del carrito en base de datos.',
             ],
         ],
@@ -625,9 +926,10 @@ function render_coming_soon_page(string $page): void
                     ? 'Estado demo activo solo en esta sesión. No aplica descuentos reales.'
                     : 'Demo académica sin pago real ni persistencia en base de datos.',
             ],
-            'activateAction' => 'index.php?action=member_demo_activate',
+            'activateAction' => checkout_url('membership'),
+            'activateMethod' => 'get',
             'deactivateAction' => 'index.php?action=member_demo_deactivate',
-            'activateLabel' => 'ACTIVAR MEMBRESÍA DEMO',
+            'activateLabel' => 'IR A CHECKOUT DEMO',
             'deactivateLabel' => 'DESACTIVAR MEMBRESÍA DEMO',
         ];
     }
@@ -687,9 +989,8 @@ function handle_member_demo_activate(): void
         redirect_to('index.php?page=socios');
     }
 
-    set_member_demo_active(true);
-    flash_set('success', 'Membresía demo activada correctamente.');
-    redirect_to('index.php?page=socios');
+    flash_set('info', 'Confirma la membresía demo desde el checkout simulado.');
+    redirect_to(checkout_url('membership'));
 }
 
 function handle_member_demo_deactivate(): void

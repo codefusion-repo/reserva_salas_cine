@@ -39,6 +39,9 @@ $confirmationMovieLabel = '';
 $confirmationRoomLabel = '';
 $confirmationTotalLabel = $ticketTotalLabel;
 $confirmationCode = '';
+$confirmationEyebrow = 'Reserva creada';
+$confirmationHeading = 'Reserva confirmada';
+$confirmationLead = 'Guardamos tu reserva. Puedes revisarla desde tu perfil de reservas.';
 $pageTitle = $hasReservationConfirmation ? 'Reserva confirmada' : $movieTitle . ' - Seleccion de butacas';
 
 foreach ($errors as $error) {
@@ -58,6 +61,12 @@ if ($hasReservationConfirmation) {
     $confirmationStatus = (string) ($reservationConfirmation['status'] ?? '');
     $confirmationStatusClass = reservation_status_css_class($confirmationStatus);
     $confirmationStatusLabel = reservation_status_label($confirmationStatus);
+    $confirmationEyebrow = $confirmationStatus === 'pending' ? 'Reserva pendiente' : 'Reserva creada';
+    $confirmationHeading = $confirmationStatus === 'pending' ? 'Reserva pendiente' : 'Reserva confirmada';
+    $confirmationLead = $confirmationStatus === 'pending'
+        ? 'Guardamos tu reserva pendiente. Confirma el pago simulado para completarla.'
+        : 'Guardamos tu reserva. Puedes revisarla desde tu perfil de reservas.';
+    $pageTitle = $confirmationHeading;
     $confirmationSeatSummary = $confirmedSeatLabels !== [] ? implode(', ', $confirmedSeatLabels) : 'Sin butacas';
     $confirmationFormatLabel = trim(
         (string) ($showtime['format_label'] ?? '') . ' - ' . (string) ($showtime['language_label'] ?? ''),
@@ -113,9 +122,9 @@ if ($hasReservationConfirmation) {
                 <div class="reservation-confirmation-head">
                     <span class="reservation-confirmation-mark" aria-hidden="true"></span>
                     <div class="reservation-confirmation-copy">
-                        <p class="eyebrow">Reserva creada</p>
-                        <h1 id="reservation-confirmation-title">Reserva confirmada</h1>
-                        <p>Guardamos tu reserva. Puedes revisarla desde tu perfil de reservas.</p>
+                        <p class="eyebrow"><?= e($confirmationEyebrow) ?></p>
+                        <h1 id="reservation-confirmation-title"><?= e($confirmationHeading) ?></h1>
+                        <p><?= e($confirmationLead) ?></p>
                     </div>
                     <div class="reservation-confirmation-meta">
                         <span class="reservation-confirmation-id"><?= e($confirmationCode) ?></span>
@@ -155,7 +164,11 @@ if ($hasReservationConfirmation) {
                 </dl>
 
                 <div class="reservation-confirmation-actions" aria-label="Acciones de reserva">
-                    <a class="reservation-confirmation-action reservation-confirmation-action-primary" href="index.php?page=ticket&amp;reservation_id=<?= e($reservationConfirmation['id'] ?? '') ?>">Ver ticket</a>
+                    <?php if ((string) ($reservationConfirmation['status'] ?? '') === 'pending'): ?>
+                        <a class="reservation-confirmation-action reservation-confirmation-action-primary" href="index.php?page=checkout&amp;type=reservation&amp;reservation_id=<?= e($reservationConfirmation['id'] ?? '') ?>">Ir a checkout simulado</a>
+                    <?php else: ?>
+                        <a class="reservation-confirmation-action reservation-confirmation-action-primary" href="index.php?page=ticket&amp;reservation_id=<?= e($reservationConfirmation['id'] ?? '') ?>">Ver ticket</a>
+                    <?php endif; ?>
                     <a class="reservation-confirmation-action reservation-confirmation-action-primary" href="index.php?page=my_reservations">Ver mis reservas</a>
                     <a class="reservation-confirmation-action reservation-confirmation-action-secondary" href="index.php?page=cartelera">Volver a cartelera</a>
                 </div>

@@ -31,6 +31,7 @@ $memberDemoStateCopy = trim((string) (
 ));
 $memberDemoStateNotes = is_array($memberDemo['stateNotes'] ?? null) ? array_values(array_filter($memberDemo['stateNotes'], static fn (mixed $note): bool => trim((string) $note) !== '')) : [];
 $memberDemoActivateAction = trim((string) ($memberDemo['activateAction'] ?? 'index.php?action=member_demo_activate'));
+$memberDemoActivateMethod = strtolower(trim((string) ($memberDemo['activateMethod'] ?? 'post')));
 $memberDemoDeactivateAction = trim((string) ($memberDemo['deactivateAction'] ?? 'index.php?action=member_demo_deactivate'));
 $memberDemoActivateLabel = trim((string) ($memberDemo['activateLabel'] ?? 'Activar membresía demo'));
 $memberDemoDeactivateLabel = trim((string) ($memberDemo['deactivateLabel'] ?? 'Desactivar membresía demo'));
@@ -104,6 +105,10 @@ $isMemberDemoPage = $memberDemo !== [];
                                     <?= e($memberDemoDeactivateLabel) ?>
                                 </button>
                             </form>
+                        <?php elseif ($memberDemoActivateMethod === 'get'): ?>
+                            <a class="member-demo-action member-demo-action-primary" href="<?= e($memberDemoActivateAction) ?>">
+                                <?= e($memberDemoActivateLabel) ?>
+                            </a>
                         <?php else: ?>
                             <form action="<?= e($memberDemoActivateAction) ?>" method="post" class="member-demo-form">
                                 <?= csrf_token_field() ?>
@@ -155,7 +160,7 @@ $isMemberDemoPage = $memberDemo !== [];
                         <p class="eyebrow">Catálogo demo</p>
                         <h2 id="confiteria-catalog-title">Combos de confitería</h2>
                     </div>
-                    <p>Compra real no disponible. No hay pago real y el checkout se implementará después.</p>
+                    <p>Compra real no disponible. El checkout es simulado y no crea pedidos.</p>
                 </div>
 
                 <div class="confiteria-shop-layout">
@@ -269,7 +274,11 @@ $isMemberDemoPage = $memberDemo !== [];
                         </div>
 
                         <div class="confiteria-cart-actions">
-                            <button class="confiteria-checkout-disabled" type="button" disabled>Checkout próximamente</button>
+                            <?php if ($cartItems === []): ?>
+                                <button class="confiteria-checkout-disabled" type="button" disabled>Carrito vacío</button>
+                            <?php else: ?>
+                                <a class="confiteria-checkout-link" href="index.php?page=checkout&amp;type=concessions">Ir a checkout simulado</a>
+                            <?php endif; ?>
                             <?php if ($cartItems !== []): ?>
                                 <form action="index.php?action=concession_clear" method="post">
                                     <?= csrf_token_field() ?>
@@ -278,7 +287,7 @@ $isMemberDemoPage = $memberDemo !== [];
                             <?php endif; ?>
                         </div>
 
-                        <p class="confiteria-cart-note">Compra real no disponible. No hay pago real ni pedidos.</p>
+                        <p class="confiteria-cart-note">Compra real no disponible. No hay pago real ni pedidos persistidos.</p>
                     </aside>
                 </div>
             </section>
