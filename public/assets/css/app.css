@@ -5804,7 +5804,7 @@ p {
         display: grid;
         grid-template-columns: 76px minmax(0, 1fr);
         gap: 8px 10px;
-        align-items: center;
+        align-items: start;
         min-height: 0;
         padding: 10px 12px 12px;
     }
@@ -5854,31 +5854,33 @@ p {
     .user-badge-group {
         grid-column: 2;
         grid-row: 1;
-        display: flex;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
         width: 100%;
         min-width: 0;
-        align-items: center;
-        justify-content: flex-end;
+        align-items: start;
         gap: 6px;
-        flex-direction: row;
     }
 
     .member-demo-badge {
+        grid-column: 1;
+        grid-row: 1;
         min-height: 26px;
-        flex: 0 0 auto;
+        align-self: center;
         padding: 4px 7px;
         font-size: 0.56rem;
         line-height: 1;
     }
 
     .user-menu {
-        width: auto;
-        min-width: 0;
-        flex: 1 1 auto;
+        display: contents;
     }
 
     .user-pill {
+        grid-column: 2;
+        grid-row: 1;
         width: 100%;
+        min-width: 0;
         min-height: 42px;
         justify-content: space-between;
         gap: 6px;
@@ -5920,6 +5922,8 @@ p {
     }
 
     .user-dropdown {
+        grid-column: 1 / -1;
+        grid-row: 2;
         position: static;
         width: 100%;
         min-width: 0;
@@ -5942,23 +5946,21 @@ p {
     }
 
     .cinema-nav {
+        display: grid;
         grid-column: 1 / -1;
         grid-row: 2;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         width: 100%;
         gap: 6px;
-        align-items: center;
-        justify-content: flex-start;
-        overflow-x: auto;
-        padding: 2px 0;
-        flex-wrap: nowrap;
-        scrollbar-width: thin;
-        -webkit-overflow-scrolling: touch;
+        overflow: visible;
+        padding: 0;
     }
 
     .cinema-nav a,
     .cinema-nav .nav-placeholder {
         min-height: 32px;
-        flex: 0 0 auto;
+        min-width: 0;
+        width: 100%;
         padding: 0 8px;
         border: 1px solid rgba(255, 255, 255, 0.22);
         border-radius: 5px;
@@ -6617,7 +6619,7 @@ p {
         min-height: 30px;
         padding-right: 7px;
         padding-left: 7px;
-        font-size: 0.64rem;
+        font-size: 0.6rem;
     }
 
     .filter-heading,
