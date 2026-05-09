@@ -103,6 +103,21 @@ if ($action === 'deactivate_showtime' && $_SERVER['REQUEST_METHOD'] === 'POST') 
     exit;
 }
 
+if ($action === 'create_concession_product' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_concession_product_create();
+    exit;
+}
+
+if ($action === 'update_concession_product' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_concession_product_update();
+    exit;
+}
+
+if ($action === 'set_concession_product_active' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_concession_product_set_active();
+    exit;
+}
+
 if ($page === null) {
     $page = auth_check() ? 'dashboard' : 'login';
 }

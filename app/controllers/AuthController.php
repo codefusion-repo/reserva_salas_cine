@@ -6,6 +6,7 @@ require_once __DIR__ . '/../helpers/assets.php';
 require_once __DIR__ . '/../helpers/csrf.php';
 require_once __DIR__ . '/../helpers/security.php';
 require_once __DIR__ . '/../models/Admin.php';
+require_once __DIR__ . '/../models/ConcessionProduct.php';
 require_once __DIR__ . '/../models/Movie.php';
 require_once __DIR__ . '/../models/Reservation.php';
 require_once __DIR__ . '/../models/User.php';
@@ -377,68 +378,21 @@ function render_coming_soon_page(string $page): void
             'lead' => 'Catálogo demo / visual de combos para acompañar tu función.',
             'support' => 'La compra funcional aún no está disponible: no hay carrito funcional, no hay pago real y ningún botón procesa pedidos.',
             'accent' => 'Demo visual',
-            'accentCopy' => 'Los productos se muestran como referencia de una etapa posterior, sin stock, carrito ni persistencia.',
-            'catalog' => [
-                [
-                    'icon' => '🍿🥤',
-                    'label' => 'Popular',
-                    'name' => 'Combo Clasico',
-                    'description' => 'Cabritas medianas + bebida.',
-                    'price' => '$4.500 demo',
-                    'button' => 'Agregar pronto',
-                ],
-                [
-                    'icon' => '🍿🥤🥤',
-                    'label' => 'Para compartir',
-                    'name' => 'Combo Doble',
-                    'description' => 'Cabritas grandes + 2 bebidas.',
-                    'price' => '$7.900 demo',
-                    'button' => 'Agregar pronto',
-                ],
-                [
-                    'icon' => '🌭',
-                    'label' => 'Snack',
-                    'name' => 'Nachos Cine',
-                    'description' => 'Nachos + salsa.',
-                    'price' => '$3.800 demo',
-                    'button' => 'Próximamente',
-                ],
-                [
-                    'icon' => '🍫',
-                    'label' => 'Dulce',
-                    'name' => 'Dulce Mix',
-                    'description' => 'Chocolates + gomitas.',
-                    'price' => '$3.200 demo',
-                    'button' => 'Próximamente',
-                ],
-                [
-                    'icon' => '🥤',
-                    'label' => 'Bebida',
-                    'name' => 'Bebida individual',
-                    'description' => 'Bebida mediana.',
-                    'price' => '$1.500 demo',
-                    'button' => 'Agregar pronto',
-                ],
-                [
-                    'icon' => '🍿',
-                    'label' => 'Cabritas',
-                    'name' => 'Cabritas grandes',
-                    'description' => 'Cabritas grandes.',
-                    'price' => '$3.000 demo',
-                    'button' => 'Agregar pronto',
-                ],
-            ],
+            'accentCopy' => 'Los productos activos se muestran como referencia de una etapa posterior, sin stock, carrito ni pedidos.',
+            'catalog' => [],
+            'showCatalog' => true,
+            'catalogLoadError' => false,
             'items' => [
                 ['icon' => '🍿', 'label' => 'Catálogo demo', 'copy' => 'Combos visibles solo como muestra para la experiencia de cine.'],
                 ['icon' => '🛒', 'label' => 'Sin carrito', 'copy' => 'No se agrega ningún producto ni se muta la sesión.'],
                 ['icon' => '💳', 'label' => 'Sin pago real', 'copy' => 'No existe checkout, pago simulado ni pasarela.'],
-                ['icon' => '🧾', 'label' => 'Sin persistencia', 'copy' => 'No se crean tablas, seed, stock ni pedidos.'],
+                ['icon' => '🧾', 'label' => 'Sin pedidos', 'copy' => 'No se crean compras, stock ni ordenes de confiteria.'],
             ],
             'notes' => [
                 'Compra funcional aún no disponible.',
                 'No hay carrito funcional.',
                 'No hay pago real.',
-                'Catálogo demo / visual sin stock ni administración de productos.',
+                'Catálogo demo / visual sin stock, pedidos ni checkout.',
             ],
         ],
         'socios' => [
@@ -495,6 +449,26 @@ function render_coming_soon_page(string $page): void
     $user = current_user();
     $messages = flash_get();
     $comingSoon = $pages[$page];
+
+    if ($page === 'confiteria') {
+        try {
+            $comingSoon['catalog'] = array_map(
+                static fn (array $product): array => [
+                    'icon' => (string) ($product['icon'] ?? ''),
+                    'label' => (string) ($product['badge'] ?? ''),
+                    'name' => (string) ($product['name'] ?? ''),
+                    'description' => (string) ($product['description'] ?? ''),
+                    'price' => reservation_format_money((float) ($product['price_amount'] ?? 0)) . ' demo',
+                    'button' => 'Agregar pronto',
+                ],
+                concession_products_active_all()
+            );
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $comingSoon['catalog'] = [];
+            $comingSoon['catalogLoadError'] = true;
+        }
+    }
 
     require __DIR__ . '/../views/coming_soon.php';
 }
@@ -782,7 +756,7 @@ function render_admin_panel(): void
     $adminSection = admin_section_from_request($_GET['admin_section'] ?? null);
     $adminMode = admin_mode_from_request($_GET['admin_mode'] ?? null);
 
-    if (!in_array($adminSection, ['rooms', 'movies', 'showtimes'], true)) {
+    if (!in_array($adminSection, ['rooms', 'movies', 'showtimes', 'concessions'], true)) {
         $adminMode = 'list';
     }
 
@@ -808,6 +782,11 @@ function render_admin_panel(): void
             'url' => admin_section_url('showtimes'),
         ],
         [
+            'key' => 'concessions',
+            'label' => 'Confiteria',
+            'url' => admin_section_url('concessions'),
+        ],
+        [
             'key' => 'reservations',
             'label' => 'Reservas',
             'url' => admin_section_url('reservations'),
@@ -818,6 +797,7 @@ function render_admin_panel(): void
     $movies = [];
     $activeMovies = [];
     $showtimes = [];
+    $concessionProducts = [];
     $adminShowtimeFilters = admin_showtime_filters_from_request($_GET);
     $adminReservationFilters = admin_reservation_filters_from_request($_GET);
     $adminReservations = [];
@@ -834,6 +814,7 @@ function render_admin_panel(): void
         $movies = admin_movies_all();
         $activeMovies = admin_movies_active_all();
         $showtimes = admin_showtimes_all($adminShowtimeFilters);
+        $concessionProducts = concession_products_all();
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
         http_response_code(500);
@@ -877,6 +858,15 @@ function render_admin_panel(): void
                 } else {
                     $adminEditItem = admin_showtime_find_by_id($showtimeId);
                     $adminModeError = $adminEditItem === null ? 'La funcion seleccionada no existe.' : '';
+                }
+            } elseif ($adminSection === 'concessions') {
+                $productId = positive_int_from_request($_GET['product_id'] ?? null);
+
+                if ($productId === null) {
+                    $adminModeError = 'Selecciona un producto valido para editar.';
+                } else {
+                    $adminEditItem = concession_product_find_by_id($productId);
+                    $adminModeError = $adminEditItem === null ? 'El producto seleccionado no existe.' : '';
                 }
             }
         } catch (Throwable $exception) {
@@ -1408,6 +1398,132 @@ function handle_showtime_delete(): void
     redirect_to(admin_section_url('showtimes'));
 }
 
+function handle_concession_product_create(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    [$payload, $errors] = admin_concession_product_payload_from_post();
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        redirect_to(admin_section_url('concessions'));
+    }
+
+    try {
+        concession_product_create(
+            $payload['name'],
+            $payload['description'],
+            $payload['price_amount'],
+            $payload['icon'],
+            $payload['badge'],
+            $payload['is_active'],
+            $payload['sort_order']
+        );
+        flash_set('success', 'Producto de confiteria creado correctamente.');
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo crear el producto de confiteria en este momento.');
+    }
+
+    redirect_to(admin_section_url('concessions'));
+}
+
+function handle_concession_product_update(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    $productId = positive_int_from_request($_POST['product_id'] ?? null);
+    [$payload, $errors] = admin_concession_product_payload_from_post();
+
+    if ($productId === null) {
+        $errors[] = 'Selecciona un producto valido para editar.';
+    }
+
+    if ($errors === [] && $productId !== null) {
+        try {
+            if (concession_product_find_by_id((int) $productId) === null) {
+                $errors[] = 'El producto seleccionado no existe.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar el producto seleccionado.';
+        }
+    }
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        redirect_to(admin_section_url('concessions'));
+    }
+
+    try {
+        concession_product_update(
+            (int) $productId,
+            $payload['name'],
+            $payload['description'],
+            $payload['price_amount'],
+            $payload['icon'],
+            $payload['badge'],
+            $payload['is_active'],
+            $payload['sort_order']
+        );
+        flash_set('success', 'Producto de confiteria actualizado correctamente.');
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo actualizar el producto de confiteria en este momento.');
+    }
+
+    redirect_to(admin_section_url('concessions'));
+}
+
+function handle_concession_product_set_active(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    $productId = positive_int_from_request($_POST['product_id'] ?? null);
+    $targetStatus = admin_target_status_from_post($_POST['target_status'] ?? null);
+    $errors = [];
+
+    if ($productId === null) {
+        $errors[] = 'Selecciona un producto valido para cambiar su estado.';
+    }
+
+    if ($targetStatus === null) {
+        $errors[] = 'Selecciona un estado valido para el producto.';
+    }
+
+    if ($productId !== null) {
+        try {
+            if (concession_product_find_by_id((int) $productId) === null) {
+                $errors[] = 'El producto seleccionado no existe.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar el producto seleccionado.';
+        }
+    }
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        redirect_to(admin_section_url('concessions'));
+    }
+
+    try {
+        concession_product_set_active((int) $productId, $targetStatus);
+        flash_set(
+            'success',
+            $targetStatus ? 'Producto de confiteria activado correctamente.' : 'Producto de confiteria desactivado correctamente.'
+        );
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo actualizar el estado del producto en este momento.');
+    }
+
+    redirect_to(admin_section_url('concessions'));
+}
+
 function admin_room_payload_from_post(): array
 {
     $name = trim((string) ($_POST['name'] ?? ''));
@@ -1513,7 +1629,7 @@ function admin_section_from_request(mixed $value): string
     }
 
     $section = strtolower(trim((string) $value));
-    $allowedSections = ['summary', 'rooms', 'movies', 'showtimes', 'reservations'];
+    $allowedSections = ['summary', 'rooms', 'movies', 'showtimes', 'concessions', 'reservations'];
 
     return in_array($section, $allowedSections, true) ? $section : 'summary';
 }
@@ -1539,7 +1655,7 @@ function admin_section_url(string $section, string $mode = 'list', array $params
         'admin_section' => $section,
     ];
 
-    if (in_array($section, ['rooms', 'movies', 'showtimes'], true) && $mode !== 'list') {
+    if (in_array($section, ['rooms', 'movies', 'showtimes', 'concessions'], true) && $mode !== 'list') {
         $query['admin_mode'] = $mode;
     }
 
@@ -1694,6 +1810,55 @@ function admin_showtime_payload_from_post(?int $excludeShowtimeId): array
     ];
 }
 
+function admin_concession_product_payload_from_post(): array
+{
+    $name = admin_trimmed_text_from_post($_POST['name'] ?? '');
+    $description = admin_trimmed_text_from_post($_POST['description'] ?? '');
+    $priceAmount = admin_price_amount_from_post($_POST['price_amount'] ?? null);
+    $icon = admin_optional_text_from_post($_POST['icon'] ?? '', 20);
+    $badge = admin_optional_text_from_post($_POST['badge'] ?? '', 40);
+    $sortOrder = admin_sort_order_from_post($_POST['sort_order'] ?? null);
+    $isActive = admin_bool_from_post($_POST['is_active'] ?? 1);
+    $errors = [];
+
+    if ($name === '') {
+        $errors[] = 'El nombre del producto es obligatorio.';
+    } elseif (admin_text_length($name) > 120) {
+        $errors[] = 'El nombre del producto no puede superar 120 caracteres.';
+    }
+
+    if ($description === '') {
+        $errors[] = 'La descripcion del producto es obligatoria.';
+    } elseif (admin_text_length($description) > 255) {
+        $errors[] = 'La descripcion del producto no puede superar 255 caracteres.';
+    }
+
+    if ($priceAmount === null) {
+        $errors[] = 'El precio debe ser numerico y mayor que 0.';
+    }
+
+    if ($icon === null) {
+        $errors[] = 'El icono no puede superar 20 caracteres ni contener caracteres de control.';
+    }
+
+    if ($badge === null) {
+        $errors[] = 'La etiqueta no puede superar 40 caracteres ni contener caracteres de control.';
+    }
+
+    return [
+        [
+            'name' => $name,
+            'description' => $description,
+            'price_amount' => $priceAmount ?? 0.0,
+            'icon' => $icon,
+            'badge' => $badge,
+            'sort_order' => $sortOrder,
+            'is_active' => $isActive,
+        ],
+        $errors,
+    ];
+}
+
 function admin_trimmed_text_from_post(mixed $value): string
 {
     if (!is_scalar($value)) {
@@ -1710,6 +1875,57 @@ function admin_text_length(string $value): int
     }
 
     return strlen($value);
+}
+
+function admin_optional_text_from_post(mixed $value, int $maxLength): ?string
+{
+    if (!is_scalar($value)) {
+        return null;
+    }
+
+    $text = trim((string) $value);
+
+    if ($text === '') {
+        return '';
+    }
+
+    if (admin_text_length($text) > $maxLength || preg_match('/[\x00-\x1F\x7F]/', $text) === 1) {
+        return null;
+    }
+
+    return $text;
+}
+
+function admin_price_amount_from_post(mixed $value): ?float
+{
+    if (!is_scalar($value)) {
+        return null;
+    }
+
+    $normalized = str_replace(',', '.', trim((string) $value));
+
+    if (!preg_match('/^\d{1,8}(?:\.\d{1,2})?$/', $normalized)) {
+        return null;
+    }
+
+    $amount = (float) $normalized;
+
+    return $amount > 0 ? $amount : null;
+}
+
+function admin_sort_order_from_post(mixed $value): int
+{
+    if (!is_scalar($value)) {
+        return 0;
+    }
+
+    $normalized = trim((string) $value);
+
+    if ($normalized === '' || !preg_match('/^-?\d+$/', $normalized)) {
+        return 0;
+    }
+
+    return min(9999, max(0, (int) $normalized));
 }
 
 function admin_movie_release_year_from_post(mixed $value): ?int
