@@ -864,6 +864,204 @@ if ($nextShowtime !== null) {
             </section>
             <?php endif; ?>
 
+            <?php if ($adminSection === 'coupons'): ?>
+            <section id="admin-coupons" class="admin-section" aria-labelledby="admin-coupons-title">
+                <div class="admin-section-heading">
+                    <div>
+                        <p class="eyebrow">Cupones demo</p>
+                        <h2 id="admin-coupons-title"><?= !$couponsTableReady ? 'Configuracion requerida' : ($adminMode === 'create' ? 'Nuevo cupon' : ($adminMode === 'edit' ? 'Editar cupon' : 'Gestion de cupones demo')) ?></h2>
+                    </div>
+                    <?php if ($couponsTableReady && $adminMode === 'list'): ?>
+                        <a class="admin-section-action" href="<?= e(admin_section_url('coupons', 'create')) ?>">Nuevo cupon</a>
+                    <?php elseif ($couponsTableReady): ?>
+                        <a class="admin-section-action admin-section-action-secondary" href="<?= e(admin_section_url('coupons')) ?>">Volver a Cupones</a>
+                    <?php endif; ?>
+                </div>
+
+                <?php if (!$couponsTableReady): ?>
+                    <div class="admin-empty">
+                        <h3>Seccion no instalada</h3>
+                        <p>Para habilitar esta seccion en una base existente, reimporta database/schema.sql y database/seed.sql.</p>
+                    </div>
+                <?php elseif ($adminMode === 'create'): ?>
+                    <form class="admin-form admin-coupon-create" method="post" action="index.php?action=create_coupon">
+                        <?= csrf_token_field() ?>
+                        <label>
+                            <span>Codigo</span>
+                            <input type="text" name="code" maxlength="24" autocomplete="off" placeholder="CINE10" required>
+                        </label>
+                        <label class="admin-field-wide">
+                            <span>Descripcion</span>
+                            <input type="text" name="description" maxlength="255" placeholder="Cine 10" required>
+                        </label>
+                        <label>
+                            <span>Checkout</span>
+                            <select name="checkout_type" required>
+                                <?php foreach (COUPON_ALLOWED_CHECKOUT_TYPES as $checkoutTypeOption): ?>
+                                    <option value="<?= e($checkoutTypeOption) ?>"><?= e(coupon_checkout_type_label($checkoutTypeOption)) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Descuento</span>
+                            <select name="discount_type" required>
+                                <?php foreach (COUPON_ALLOWED_DISCOUNT_TYPES as $discountTypeOption): ?>
+                                    <option value="<?= e($discountTypeOption) ?>"><?= e(coupon_discount_type_label($discountTypeOption)) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Valor</span>
+                            <input type="number" name="discount_value" min="1" max="99999999.99" step="0.01" required>
+                        </label>
+                        <label>
+                            <span>Inicio</span>
+                            <input type="datetime-local" name="starts_at">
+                        </label>
+                        <label>
+                            <span>Termino</span>
+                            <input type="datetime-local" name="ends_at">
+                        </label>
+                        <label>
+                            <span>Estado</span>
+                            <select name="is_active" required>
+                                <option value="1">Activo</option>
+                                <option value="0">Inactivo</option>
+                            </select>
+                        </label>
+                        <button type="submit">Crear cupon</button>
+                    </form>
+                <?php elseif ($adminMode === 'edit'): ?>
+                    <?php if ($adminModeError !== '' || !is_array($adminEditItem)): ?>
+                        <div class="admin-empty">
+                            <h3>No se pudo abrir el cupon</h3>
+                            <p><?= e($adminModeError !== '' ? $adminModeError : 'El cupon seleccionado no esta disponible.') ?></p>
+                            <a class="admin-filter-reset" href="<?= e(admin_section_url('coupons')) ?>">Volver a Cupones</a>
+                        </div>
+                    <?php else: ?>
+                        <?php $couponEditActive = (int) ($adminEditItem['is_active'] ?? 0) === 1; ?>
+                        <form class="admin-form admin-coupon-create" method="post" action="index.php?action=update_coupon">
+                            <?= csrf_token_field() ?>
+                            <input type="hidden" name="coupon_id" value="<?= e($adminEditItem['id'] ?? '') ?>">
+                            <label>
+                                <span>Codigo</span>
+                                <input type="text" name="code" value="<?= e($adminEditItem['code'] ?? '') ?>" maxlength="24" autocomplete="off" required>
+                            </label>
+                            <label class="admin-field-wide">
+                                <span>Descripcion</span>
+                                <input type="text" name="description" value="<?= e($adminEditItem['description'] ?? '') ?>" maxlength="255" required>
+                            </label>
+                            <label>
+                                <span>Checkout</span>
+                                <select name="checkout_type" required>
+                                    <?php foreach (COUPON_ALLOWED_CHECKOUT_TYPES as $checkoutTypeOption): ?>
+                                        <option
+                                            value="<?= e($checkoutTypeOption) ?>"
+                                            <?= (string) ($adminEditItem['checkout_type'] ?? '') === $checkoutTypeOption ? 'selected' : '' ?>
+                                        >
+                                            <?= e(coupon_checkout_type_label($checkoutTypeOption)) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
+                            <label>
+                                <span>Descuento</span>
+                                <select name="discount_type" required>
+                                    <?php foreach (COUPON_ALLOWED_DISCOUNT_TYPES as $discountTypeOption): ?>
+                                        <option
+                                            value="<?= e($discountTypeOption) ?>"
+                                            <?= (string) ($adminEditItem['discount_type'] ?? '') === $discountTypeOption ? 'selected' : '' ?>
+                                        >
+                                            <?= e(coupon_discount_type_label($discountTypeOption)) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
+                            <label>
+                                <span>Valor</span>
+                                <input type="number" name="discount_value" value="<?= e($adminEditItem['discount_value'] ?? '') ?>" min="1" max="99999999.99" step="0.01" required>
+                            </label>
+                            <label>
+                                <span>Inicio</span>
+                                <input type="datetime-local" name="starts_at" value="<?= e(admin_datetime_input_value($adminEditItem['starts_at'] ?? '')) ?>">
+                            </label>
+                            <label>
+                                <span>Termino</span>
+                                <input type="datetime-local" name="ends_at" value="<?= e(admin_datetime_input_value($adminEditItem['ends_at'] ?? '')) ?>">
+                            </label>
+                            <label>
+                                <span>Estado</span>
+                                <select name="is_active" required>
+                                    <option value="1" <?= $couponEditActive ? 'selected' : '' ?>>Activo</option>
+                                    <option value="0" <?= !$couponEditActive ? 'selected' : '' ?>>Inactivo</option>
+                                </select>
+                            </label>
+                            <button type="submit">Guardar cupon</button>
+                        </form>
+                    <?php endif; ?>
+                <?php elseif ($coupons === []): ?>
+                    <div class="admin-empty">
+                        <h3>Sin cupones demo</h3>
+                    </div>
+                <?php else: ?>
+                    <div class="admin-list admin-coupon-list" role="list">
+                        <div class="admin-list-head admin-coupon-row" aria-hidden="true">
+                            <span>Codigo</span>
+                            <span>Descripcion</span>
+                            <span>Checkout</span>
+                            <span>Tipo</span>
+                            <span>Valor</span>
+                            <span>Vigencia</span>
+                            <span>Estado</span>
+                            <span>Acciones</span>
+                        </div>
+
+                        <?php foreach ($coupons as $coupon): ?>
+                            <?php
+                            $couponActive = (int) ($coupon['is_active'] ?? 0) === 1;
+                            $targetStatus = $couponActive ? '0' : '1';
+                            $targetLabel = $couponActive ? 'Desactivar' : 'Activar';
+                            $confirmAction = $couponActive
+                                ? '¿Desactivar este cupon? Ya no aplicara en checkout.'
+                                : '¿Activar este cupon? Volvera a aplicar si esta vigente.';
+                            $discountValue = (float) ($coupon['discount_value'] ?? 0);
+                            $discountLabel = (string) ($coupon['discount_type'] ?? '') === 'fixed'
+                                ? checkout_demo_money_label($discountValue)
+                                : checkout_coupon_percent_label($discountValue);
+                            ?>
+                            <div class="admin-row admin-coupon-row" role="listitem">
+                                <span><?= e($coupon['code'] ?? '') ?></span>
+                                <span class="admin-text-truncate"><?= e($coupon['description'] ?? '') ?></span>
+                                <span><?= e(coupon_checkout_type_label((string) ($coupon['checkout_type'] ?? ''))) ?></span>
+                                <span><?= e(coupon_discount_type_label((string) ($coupon['discount_type'] ?? ''))) ?></span>
+                                <span><?= e($discountLabel) ?></span>
+                                <span><?= e(coupon_schedule_label($coupon)) ?></span>
+                                <span class="admin-status-badge status-<?= e(admin_status_css_class($coupon['is_active'] ?? 0)) ?>">
+                                    <?= e(admin_status_label($coupon['is_active'] ?? 0)) ?>
+                                </span>
+                                <div class="admin-actions admin-coupon-actions">
+                                    <a class="admin-action-link" href="<?= e(admin_section_url('coupons', 'edit', ['coupon_id' => (int) ($coupon['id'] ?? 0)])) ?>">Editar</a>
+                                    <form method="post" action="index.php?action=set_coupon_active">
+                                        <?= csrf_token_field() ?>
+                                        <input type="hidden" name="coupon_id" value="<?= e($coupon['id'] ?? '') ?>">
+                                        <button
+                                            class="<?= $couponActive ? 'admin-danger' : 'admin-secondary' ?>"
+                                            type="submit"
+                                            name="target_status"
+                                            value="<?= e($targetStatus) ?>"
+                                            data-confirm-action="<?= e($confirmAction) ?>"
+                                        >
+                                            <?= e($targetLabel) ?>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </section>
+            <?php endif; ?>
+
             <?php if ($adminSection === 'reservations'): ?>
             <section id="admin-reservations" class="admin-section" aria-labelledby="admin-reservations-title">
                 <div class="admin-section-heading">

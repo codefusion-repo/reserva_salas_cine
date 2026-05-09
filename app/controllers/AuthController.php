@@ -8,6 +8,7 @@ require_once __DIR__ . '/../helpers/csrf.php';
 require_once __DIR__ . '/../helpers/security.php';
 require_once __DIR__ . '/../models/Admin.php';
 require_once __DIR__ . '/../models/ConcessionProduct.php';
+require_once __DIR__ . '/../models/Coupon.php';
 require_once __DIR__ . '/../models/Movie.php';
 require_once __DIR__ . '/../models/Payment.php';
 require_once __DIR__ . '/../models/Reservation.php';
@@ -15,6 +16,7 @@ require_once __DIR__ . '/../models/User.php';
 
 const AUTH_MIN_PASSWORD_LENGTH = 8;
 const CONCESSION_PRODUCTS_SETUP_MESSAGE = 'La tabla de productos de confitería no está instalada. Ejecuta database/upgrade_concession_products.sql o reimporta schema.sql y seed.sql en el entorno local.';
+const COUPONS_SETUP_MESSAGE = 'La tabla de cupones demo no esta instalada. Reimporta database/schema.sql y database/seed.sql en el entorno local.';
 const CONCESSIONS_CART_SESSION_KEY = 'concessions_cart';
 const CONCESSIONS_LAST_CHECKOUT_SESSION_KEY = 'last_concessions_checkout';
 const CONCESSIONS_CART_MAX_QUANTITY = 10;
@@ -265,13 +267,25 @@ function checkout_coupon_percent_label(float $percent): string
     return rtrim(rtrim(number_format($percent, 2, ',', '.'), '0'), ',') . '%';
 }
 
+function checkout_coupon_discount_label(array $pricing): string
+{
+    $discountType = (string) ($pricing['discount_type'] ?? 'percent');
+    $discountValue = (float) ($pricing['discount_value'] ?? 0.0);
+
+    if ($discountType === 'fixed') {
+        return 'Fijo ' . checkout_demo_money_label($discountValue);
+    }
+
+    return checkout_coupon_percent_label($discountValue);
+}
+
 function checkout_pricing_labels(string $type, float $subtotalAmount): array
 {
     $pricing = checkout_coupon_price_summary($type, $subtotalAmount);
     $pricing['subtotal_label'] = checkout_demo_money_label((float) ($pricing['subtotal_amount'] ?? 0));
     $pricing['discount_label'] = checkout_demo_money_label((float) ($pricing['discount_amount'] ?? 0));
     $pricing['total_label'] = checkout_demo_money_label((float) ($pricing['total_amount'] ?? 0));
-    $pricing['percent_label'] = checkout_coupon_percent_label((float) ($pricing['percent'] ?? 0.0));
+    $pricing['percent_label'] = checkout_coupon_discount_label($pricing);
 
     return $pricing;
 }
@@ -1219,6 +1233,11 @@ function handle_coupon_apply(): void
         redirect_to($redirectUrl);
     }
 
+    if (!checkout_coupon_is_active_now($coupon)) {
+        flash_set('error', 'Cupon invalido o inactivo.');
+        redirect_to($redirectUrl);
+    }
+
     if (!checkout_coupon_applies_to_type($coupon, $type)) {
         flash_set('error', 'Este cupon no aplica para este checkout.');
         redirect_to($redirectUrl);
@@ -2022,7 +2041,7 @@ function render_admin_panel(): void
     $adminSection = admin_section_from_request($_GET['admin_section'] ?? null);
     $adminMode = admin_mode_from_request($_GET['admin_mode'] ?? null);
 
-    if (!in_array($adminSection, ['rooms', 'movies', 'showtimes', 'concessions'], true)) {
+    if (!in_array($adminSection, ['rooms', 'movies', 'showtimes', 'concessions', 'coupons'], true)) {
         $adminMode = 'list';
     }
 
@@ -2053,6 +2072,11 @@ function render_admin_panel(): void
             'url' => admin_section_url('concessions'),
         ],
         [
+            'key' => 'coupons',
+            'label' => 'Cupones',
+            'url' => admin_section_url('coupons'),
+        ],
+        [
             'key' => 'payments',
             'label' => 'Pagos',
             'url' => 'index.php?page=admin_payments',
@@ -2070,6 +2094,8 @@ function render_admin_panel(): void
     $showtimes = [];
     $concessionProducts = [];
     $concessionProductsTableReady = false;
+    $coupons = [];
+    $couponsTableReady = false;
     $adminShowtimeFilters = admin_showtime_filters_from_request($_GET);
     $adminReservationFilters = admin_reservation_filters_from_request($_GET);
     $adminReservations = [];
@@ -2101,6 +2127,17 @@ function render_admin_panel(): void
             } catch (Throwable $exception) {
                 error_log($exception->getMessage());
                 $concessionProducts = [];
+            }
+        }
+
+        $couponsTableReady = coupons_table_exists();
+
+        if ($couponsTableReady) {
+            try {
+                $coupons = coupons_all();
+            } catch (Throwable $exception) {
+                error_log($exception->getMessage());
+                $coupons = [];
             }
         }
     }
@@ -2154,6 +2191,18 @@ function render_admin_panel(): void
                 } else {
                     $adminEditItem = concession_product_find_by_id($productId);
                     $adminModeError = $adminEditItem === null ? 'El producto seleccionado no existe.' : '';
+                }
+            } elseif ($adminSection === 'coupons') {
+                $couponId = positive_int_from_request($_GET['coupon_id'] ?? null);
+
+                if (!$couponsTableReady) {
+                    $adminModeError = 'La tabla de cupones demo no esta instalada.';
+                    $adminEditItem = null;
+                } elseif ($couponId === null) {
+                    $adminModeError = 'Selecciona un cupon valido para editar.';
+                } else {
+                    $adminEditItem = coupon_find_by_id($couponId);
+                    $adminModeError = $adminEditItem === null ? 'El cupon seleccionado no existe.' : '';
                 }
             }
         } catch (Throwable $exception) {
@@ -3049,6 +3098,172 @@ function handle_concession_product_delete(): void
     redirect_to(admin_section_url('concessions'));
 }
 
+function handle_admin_coupon_create(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    if (!coupons_table_exists()) {
+        flash_set('error', COUPONS_SETUP_MESSAGE);
+        redirect_to(admin_section_url('coupons'));
+    }
+
+    [$payload, $errors] = admin_coupon_payload_from_post();
+
+    if ($errors === []) {
+        try {
+            if (coupon_code_exists($payload['code'])) {
+                $errors[] = 'Ya existe un cupon con ese codigo.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar el codigo del cupon.';
+        }
+    }
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        redirect_to(admin_section_url('coupons', 'create'));
+    }
+
+    try {
+        coupon_create(
+            $payload['code'],
+            $payload['description'],
+            $payload['checkout_type'],
+            $payload['discount_type'],
+            $payload['discount_value'],
+            $payload['is_active'],
+            $payload['starts_at'],
+            $payload['ends_at']
+        );
+        flash_set('success', 'Cupon demo creado correctamente.');
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo crear el cupon demo. Revisa que el codigo no este duplicado.');
+    }
+
+    redirect_to(admin_section_url('coupons'));
+}
+
+function handle_admin_coupon_update(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    if (!coupons_table_exists()) {
+        flash_set('error', COUPONS_SETUP_MESSAGE);
+        redirect_to(admin_section_url('coupons'));
+    }
+
+    $couponId = positive_int_from_request($_POST['coupon_id'] ?? null);
+    [$payload, $errors] = admin_coupon_payload_from_post();
+
+    if ($couponId === null) {
+        $errors[] = 'Selecciona un cupon valido para editar.';
+    }
+
+    if ($errors === [] && $couponId !== null) {
+        try {
+            if (coupon_find_by_id((int) $couponId) === null) {
+                $errors[] = 'El cupon seleccionado no existe.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar el cupon seleccionado.';
+        }
+    }
+
+    if ($errors === [] && $couponId !== null) {
+        try {
+            if (coupon_code_exists($payload['code'], (int) $couponId)) {
+                $errors[] = 'Ya existe otro cupon con ese codigo.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar el codigo del cupon.';
+        }
+    }
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        $redirectParams = $couponId !== null ? ['coupon_id' => (int) $couponId] : [];
+        redirect_to(admin_section_url('coupons', 'edit', $redirectParams));
+    }
+
+    try {
+        coupon_update(
+            (int) $couponId,
+            $payload['code'],
+            $payload['description'],
+            $payload['checkout_type'],
+            $payload['discount_type'],
+            $payload['discount_value'],
+            $payload['is_active'],
+            $payload['starts_at'],
+            $payload['ends_at']
+        );
+        flash_set('success', 'Cupon demo actualizado correctamente.');
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo actualizar el cupon demo en este momento.');
+    }
+
+    redirect_to(admin_section_url('coupons'));
+}
+
+function handle_admin_coupon_set_active(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    if (!coupons_table_exists()) {
+        flash_set('error', COUPONS_SETUP_MESSAGE);
+        redirect_to(admin_section_url('coupons'));
+    }
+
+    $couponId = positive_int_from_request($_POST['coupon_id'] ?? null);
+    $targetStatus = admin_target_status_from_post($_POST['target_status'] ?? null);
+    $errors = [];
+
+    if ($couponId === null) {
+        $errors[] = 'Selecciona un cupon valido para cambiar su estado.';
+    }
+
+    if ($targetStatus === null) {
+        $errors[] = 'Selecciona un estado valido para el cupon.';
+    }
+
+    if ($couponId !== null) {
+        try {
+            if (coupon_find_by_id((int) $couponId) === null) {
+                $errors[] = 'El cupon seleccionado no existe.';
+            }
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $errors[] = 'No se pudo validar el cupon seleccionado.';
+        }
+    }
+
+    if ($errors !== []) {
+        admin_flash_errors($errors);
+        redirect_to(admin_section_url('coupons'));
+    }
+
+    try {
+        coupon_set_active((int) $couponId, $targetStatus);
+        flash_set(
+            'success',
+            $targetStatus ? 'Cupon demo activado correctamente.' : 'Cupon demo desactivado correctamente.'
+        );
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo actualizar el estado del cupon en este momento.');
+    }
+
+    redirect_to(admin_section_url('coupons'));
+}
+
 function admin_room_payload_from_post(): array
 {
     $name = trim((string) ($_POST['name'] ?? ''));
@@ -3187,7 +3402,7 @@ function admin_section_from_request(mixed $value): string
     }
 
     $section = strtolower(trim((string) $value));
-    $allowedSections = ['summary', 'rooms', 'movies', 'showtimes', 'concessions', 'reservations'];
+    $allowedSections = ['summary', 'rooms', 'movies', 'showtimes', 'concessions', 'coupons', 'reservations'];
 
     return in_array($section, $allowedSections, true) ? $section : 'summary';
 }
@@ -3213,7 +3428,7 @@ function admin_section_url(string $section, string $mode = 'list', array $params
         'admin_section' => $section,
     ];
 
-    if (in_array($section, ['rooms', 'movies', 'showtimes', 'concessions'], true) && $mode !== 'list') {
+    if (in_array($section, ['rooms', 'movies', 'showtimes', 'concessions', 'coupons'], true) && $mode !== 'list') {
         $query['admin_mode'] = $mode;
     }
 
@@ -3415,6 +3630,120 @@ function admin_concession_product_payload_from_post(): array
         ],
         $errors,
     ];
+}
+
+function admin_coupon_payload_from_post(): array
+{
+    $code = checkout_coupon_code_from_value($_POST['code'] ?? '');
+    $description = admin_trimmed_text_from_post($_POST['description'] ?? '');
+    $checkoutType = admin_coupon_choice_from_post($_POST['checkout_type'] ?? '', COUPON_ALLOWED_CHECKOUT_TYPES);
+    $discountType = admin_coupon_choice_from_post($_POST['discount_type'] ?? '', COUPON_ALLOWED_DISCOUNT_TYPES);
+    $discountValue = admin_coupon_discount_value_from_post($_POST['discount_value'] ?? null);
+    $isActive = admin_bool_from_post($_POST['is_active'] ?? 1);
+    [$startsAt, $startsAtError] = admin_optional_datetime_from_post($_POST['starts_at'] ?? null, 'inicio');
+    [$endsAt, $endsAtError] = admin_optional_datetime_from_post($_POST['ends_at'] ?? null, 'termino');
+    $errors = [];
+
+    if ($code === '') {
+        $errors[] = 'El codigo del cupon es obligatorio.';
+    } elseif (!preg_match('/^[A-Z0-9_-]{3,24}$/', $code)) {
+        $errors[] = 'El codigo debe tener 3 a 24 caracteres, sin espacios, usando letras, numeros, guion o guion bajo.';
+    }
+
+    if ($description === '') {
+        $errors[] = 'La descripcion del cupon es obligatoria.';
+    } elseif (admin_text_length($description) > 255 || preg_match('/[\x00-\x1F\x7F]/', $description) === 1) {
+        $errors[] = 'La descripcion no puede superar 255 caracteres ni contener caracteres de control.';
+    }
+
+    if ($checkoutType === null) {
+        $errors[] = 'Selecciona un tipo de checkout valido para el cupon.';
+    }
+
+    if ($discountType === null) {
+        $errors[] = 'Selecciona un tipo de descuento valido.';
+    }
+
+    if ($discountValue === null) {
+        $errors[] = 'El descuento debe ser numerico y mayor que 0.';
+    } elseif ($discountType === 'percent' && ($discountValue < 1.0 || $discountValue > 100.0)) {
+        $errors[] = 'El descuento porcentual debe estar entre 1 y 100.';
+    }
+
+    if ($startsAtError !== null) {
+        $errors[] = $startsAtError;
+    }
+
+    if ($endsAtError !== null) {
+        $errors[] = $endsAtError;
+    }
+
+    if ($startsAt !== null && $endsAt !== null && new DateTimeImmutable($endsAt) <= new DateTimeImmutable($startsAt)) {
+        $errors[] = 'La fecha de termino debe ser posterior a la fecha de inicio.';
+    }
+
+    return [
+        [
+            'code' => $code,
+            'description' => $description,
+            'checkout_type' => $checkoutType ?? 'reservation',
+            'discount_type' => $discountType ?? 'percent',
+            'discount_value' => $discountValue ?? 0.0,
+            'is_active' => $isActive,
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
+        ],
+        $errors,
+    ];
+}
+
+function admin_coupon_choice_from_post(mixed $value, array $allowedValues): ?string
+{
+    if (!is_scalar($value)) {
+        return null;
+    }
+
+    $choice = strtolower(trim((string) $value));
+
+    return in_array($choice, $allowedValues, true) ? $choice : null;
+}
+
+function admin_coupon_discount_value_from_post(mixed $value): ?float
+{
+    if (!is_scalar($value)) {
+        return null;
+    }
+
+    $normalized = str_replace(',', '.', trim((string) $value));
+
+    if (!preg_match('/^\d{1,8}(?:\.\d{1,2})?$/', $normalized)) {
+        return null;
+    }
+
+    $amount = (float) $normalized;
+
+    return $amount > 0 ? $amount : null;
+}
+
+function admin_optional_datetime_from_post(mixed $value, string $fieldLabel): array
+{
+    if (!is_scalar($value)) {
+        return [null, null];
+    }
+
+    $rawValue = trim((string) $value);
+
+    if ($rawValue === '') {
+        return [null, null];
+    }
+
+    $date = admin_datetime_from_post($rawValue);
+
+    if ($date === null) {
+        return [null, 'Ingresa una fecha y hora de ' . $fieldLabel . ' valida.'];
+    }
+
+    return [$date, null];
 }
 
 function admin_trimmed_text_from_post(mixed $value): string

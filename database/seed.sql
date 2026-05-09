@@ -54,6 +54,21 @@ ON DUPLICATE KEY UPDATE
     is_active = VALUES(is_active),
     sort_order = VALUES(sort_order);
 
+INSERT INTO coupons (code, description, checkout_type, discount_type, discount_value, is_active, starts_at, ends_at)
+VALUES
+    ('CINE10', 'Cine 10', 'reservation', 'percent', 10.00, 1, NULL, NULL),
+    ('COMBO15', 'Combo 15', 'concessions', 'percent', 15.00, 1, NULL, NULL),
+    ('SOCIO20', 'Socio 20', 'membership', 'percent', 20.00, 1, NULL, NULL),
+    ('FUSION5', 'Fusion 5', 'all', 'percent', 5.00, 1, NULL, NULL)
+ON DUPLICATE KEY UPDATE
+    description = VALUES(description),
+    checkout_type = VALUES(checkout_type),
+    discount_type = VALUES(discount_type),
+    discount_value = VALUES(discount_value),
+    is_active = VALUES(is_active),
+    starts_at = VALUES(starts_at),
+    ends_at = VALUES(ends_at);
+
 INSERT INTO showtimes (id, movie_id, room_id, starts_at, ends_at, format_label, language_label, is_active)
 VALUES
     (1, 1, 1, '2026-05-03 15:00:00', '2026-05-03 17:05:00', '2D', 'Subtitulada', 1),
