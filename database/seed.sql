@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 USE reserva_salas_cine;
 
 INSERT INTO users (id, name, email, password_hash, role)
@@ -34,6 +36,23 @@ ON DUPLICATE KEY UPDATE
     classification = VALUES(classification),
     poster_path = VALUES(poster_path),
     is_active = VALUES(is_active);
+
+INSERT INTO concession_products (id, name, description, price_amount, icon, badge, is_active, sort_order)
+VALUES
+    (1, 'Combo Clasico', 'Cabritas medianas + bebida.', 4500.00, '🍿🥤', 'Popular', 1, 10),
+    (2, 'Combo Doble', 'Cabritas grandes + 2 bebidas.', 7900.00, '🍿🥤🥤', 'Para compartir', 1, 20),
+    (3, 'Nachos Cine', 'Nachos + salsa.', 3800.00, '🌭', 'Snack', 1, 30),
+    (4, 'Dulce Mix', 'Chocolates + gomitas.', 3200.00, '🍫', 'Dulce', 1, 40),
+    (5, 'Bebida individual', 'Bebida mediana.', 1500.00, '🥤', 'Bebida', 1, 50),
+    (6, 'Cabritas grandes', 'Cabritas grandes.', 3000.00, '🍿', 'Cabritas', 1, 60)
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    description = VALUES(description),
+    price_amount = VALUES(price_amount),
+    icon = VALUES(icon),
+    badge = VALUES(badge),
+    is_active = VALUES(is_active),
+    sort_order = VALUES(sort_order);
 
 INSERT INTO showtimes (id, movie_id, room_id, starts_at, ends_at, format_label, language_label, is_active)
 VALUES

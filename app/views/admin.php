@@ -693,6 +693,177 @@ if ($nextShowtime !== null) {
             </section>
             <?php endif; ?>
 
+            <?php if ($adminSection === 'concessions'): ?>
+            <section id="admin-concessions" class="admin-section" aria-labelledby="admin-concessions-title">
+                <div class="admin-section-heading">
+                    <div>
+                        <p class="eyebrow">Confiteria / Productos</p>
+                        <h2 id="admin-concessions-title"><?= !$concessionProductsTableReady ? 'Configuracion requerida' : ($adminMode === 'create' ? 'Nuevo producto' : ($adminMode === 'edit' ? 'Editar producto' : 'Gestion de productos demo')) ?></h2>
+                    </div>
+                    <?php if ($concessionProductsTableReady && $adminMode === 'list'): ?>
+                        <a class="admin-section-action" href="<?= e(admin_section_url('concessions', 'create')) ?>">Nuevo producto</a>
+                    <?php elseif ($concessionProductsTableReady): ?>
+                        <a class="admin-section-action admin-section-action-secondary" href="<?= e(admin_section_url('concessions')) ?>">Volver a Confiteria</a>
+                    <?php endif; ?>
+                </div>
+
+                <?php if (!$concessionProductsTableReady): ?>
+                    <div class="admin-empty">
+                        <h3>Seccion no instalada</h3>
+                        <p>Para habilitar esta sección en una base existente, ejecuta database/upgrade_concession_products.sql o reimporta database/schema.sql y database/seed.sql.</p>
+                    </div>
+                <?php elseif ($adminMode === 'create'): ?>
+                    <form class="admin-form admin-concession-product-create" method="post" action="index.php?action=create_concession_product">
+                        <?= csrf_token_field() ?>
+                        <label>
+                            <span>Nombre</span>
+                            <input type="text" name="name" maxlength="120" required>
+                        </label>
+                        <label class="admin-field-wide">
+                            <span>Descripcion</span>
+                            <textarea name="description" rows="3" maxlength="255" required></textarea>
+                        </label>
+                        <label>
+                            <span>Precio demo</span>
+                            <input type="number" name="price_amount" min="1" step="0.01" required>
+                        </label>
+                        <label>
+                            <span>Icono</span>
+                            <input type="text" name="icon" maxlength="20" placeholder="🍿">
+                        </label>
+                        <label>
+                            <span>Etiqueta</span>
+                            <input type="text" name="badge" maxlength="40" placeholder="Popular">
+                        </label>
+                        <label>
+                            <span>Orden</span>
+                            <input type="number" name="sort_order" value="0" min="0" max="9999" step="1" required>
+                        </label>
+                        <label>
+                            <span>Estado</span>
+                            <select name="is_active" required>
+                                <option value="1">Activo</option>
+                                <option value="0">Inactivo</option>
+                            </select>
+                        </label>
+                        <button type="submit">Crear producto</button>
+                    </form>
+                <?php elseif ($adminMode === 'edit'): ?>
+                    <?php if ($adminModeError !== '' || !is_array($adminEditItem)): ?>
+                        <div class="admin-empty">
+                            <h3>No se pudo abrir el producto</h3>
+                            <p><?= e($adminModeError !== '' ? $adminModeError : 'El producto seleccionado no esta disponible.') ?></p>
+                            <a class="admin-filter-reset" href="<?= e(admin_section_url('concessions')) ?>">Volver a Confiteria</a>
+                        </div>
+                    <?php else: ?>
+                        <?php $productEditActive = (int) ($adminEditItem['is_active'] ?? 0) === 1; ?>
+                        <form class="admin-form admin-concession-product-create" method="post" action="index.php?action=update_concession_product">
+                            <?= csrf_token_field() ?>
+                            <input type="hidden" name="product_id" value="<?= e($adminEditItem['id'] ?? '') ?>">
+                            <label>
+                                <span>Nombre</span>
+                                <input type="text" name="name" value="<?= e($adminEditItem['name'] ?? '') ?>" maxlength="120" required>
+                            </label>
+                            <label class="admin-field-wide">
+                                <span>Descripcion</span>
+                                <textarea name="description" rows="3" maxlength="255" required><?= e($adminEditItem['description'] ?? '') ?></textarea>
+                            </label>
+                            <label>
+                                <span>Precio demo</span>
+                                <input type="number" name="price_amount" value="<?= e($adminEditItem['price_amount'] ?? '') ?>" min="1" step="0.01" required>
+                            </label>
+                            <label>
+                                <span>Icono</span>
+                                <input type="text" name="icon" value="<?= e($adminEditItem['icon'] ?? '') ?>" maxlength="20" placeholder="🍿">
+                            </label>
+                            <label>
+                                <span>Etiqueta</span>
+                                <input type="text" name="badge" value="<?= e($adminEditItem['badge'] ?? '') ?>" maxlength="40" placeholder="Popular">
+                            </label>
+                            <label>
+                                <span>Orden</span>
+                                <input type="number" name="sort_order" value="<?= e($adminEditItem['sort_order'] ?? '0') ?>" min="0" max="9999" step="1" required>
+                            </label>
+                            <label>
+                                <span>Estado</span>
+                                <select name="is_active" required>
+                                    <option value="1" <?= $productEditActive ? 'selected' : '' ?>>Activo</option>
+                                    <option value="0" <?= !$productEditActive ? 'selected' : '' ?>>Inactivo</option>
+                                </select>
+                            </label>
+                            <button type="submit">Guardar producto</button>
+                        </form>
+                    <?php endif; ?>
+                <?php elseif ($concessionProducts === []): ?>
+                    <div class="admin-empty">
+                        <h3>Sin productos demo</h3>
+                    </div>
+                <?php else: ?>
+                    <div class="admin-list admin-concession-product-list" role="list">
+                        <div class="admin-list-head admin-concession-product-row" aria-hidden="true">
+                            <span>Nombre</span>
+                            <span>Descripcion</span>
+                            <span>Precio</span>
+                            <span>Icono</span>
+                            <span>Etiqueta</span>
+                            <span>Orden</span>
+                            <span>Estado</span>
+                            <span>Acciones</span>
+                        </div>
+
+                        <?php foreach ($concessionProducts as $product): ?>
+                            <?php
+                            $productActive = (int) ($product['is_active'] ?? 0) === 1;
+                            $targetStatus = $productActive ? '0' : '1';
+                            $targetLabel = $productActive ? 'Desactivar' : 'Activar';
+                            $confirmAction = $productActive
+                                ? '¿Desactivar este producto? Ya no aparecerá en Confitería.'
+                                : '¿Activar este producto? Volverá a aparecer en Confitería.';
+                            ?>
+                            <div class="admin-row admin-concession-product-row" role="listitem">
+                                <span><?= e($product['name'] ?? '') ?></span>
+                                <span class="admin-text-truncate"><?= e($product['description'] ?? '') ?></span>
+                                <span><?= e(reservation_format_money((float) ($product['price_amount'] ?? 0))) ?></span>
+                                <span><?= e($product['icon'] ?? '') ?></span>
+                                <span><?= e($product['badge'] ?? '') ?></span>
+                                <span><?= e($product['sort_order'] ?? '0') ?></span>
+                                <span class="admin-status-badge status-<?= e(admin_status_css_class($product['is_active'] ?? 0)) ?>">
+                                    <?= e(admin_status_label($product['is_active'] ?? 0)) ?>
+                                </span>
+                                <div class="admin-actions">
+                                    <a class="admin-action-link" href="<?= e(admin_section_url('concessions', 'edit', ['product_id' => (int) ($product['id'] ?? 0)])) ?>">Editar</a>
+                                    <form method="post" action="index.php?action=set_concession_product_active">
+                                        <?= csrf_token_field() ?>
+                                        <input type="hidden" name="product_id" value="<?= e($product['id'] ?? '') ?>">
+                                        <button
+                                            class="<?= $productActive ? 'admin-danger' : 'admin-secondary' ?>"
+                                            type="submit"
+                                            name="target_status"
+                                            value="<?= e($targetStatus) ?>"
+                                            data-confirm-action="<?= e($confirmAction) ?>"
+                                        >
+                                            <?= e($targetLabel) ?>
+                                        </button>
+                                    </form>
+                                    <form method="post" action="index.php?action=delete_concession_product">
+                                        <?= csrf_token_field() ?>
+                                        <input type="hidden" name="product_id" value="<?= e($product['id'] ?? '') ?>">
+                                        <button
+                                            class="admin-danger admin-delete"
+                                            type="submit"
+                                            data-confirm-action="¿Eliminar este producto de confitería? Esta acción no se puede deshacer."
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </section>
+            <?php endif; ?>
+
             <?php if ($adminSection === 'reservations'): ?>
             <section id="admin-reservations" class="admin-section" aria-labelledby="admin-reservations-title">
                 <div class="admin-section-heading">
