@@ -58,6 +58,16 @@ if ($action === 'checkout_confirm' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+if ($action === 'coupon_apply' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_coupon_apply();
+    exit;
+}
+
+if ($action === 'coupon_remove' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_coupon_remove();
+    exit;
+}
+
 if ($action === 'create_room' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     handle_room_create();
     exit;

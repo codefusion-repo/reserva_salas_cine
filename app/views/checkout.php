@@ -9,9 +9,18 @@ $eyebrow = (string) ($checkout['eyebrow'] ?? 'Pago simulado academico');
 $lead = (string) ($checkout['lead'] ?? '');
 $summaryTitle = (string) ($checkout['summary_title'] ?? 'Resumen');
 $totalLabel = (string) ($checkout['total_label'] ?? reservation_format_money(0) . ' demo');
+$pricing = is_array($checkout['pricing'] ?? null) ? $checkout['pricing'] : [];
+$subtotalLabel = (string) ($pricing['subtotal_label'] ?? reservation_format_money(0) . ' demo');
+$discountLabel = (string) ($pricing['discount_label'] ?? reservation_format_money(0) . ' demo');
+$totalFinalLabel = (string) ($pricing['total_label'] ?? $totalLabel);
+$couponApplied = ($pricing['applied'] ?? false) === true;
+$couponCode = (string) ($pricing['code'] ?? '');
+$couponLabel = (string) ($pricing['label'] ?? '');
+$couponPercentLabel = (string) ($pricing['percent_label'] ?? '');
 $returnUrl = (string) ($checkout['return_url'] ?? 'index.php?page=cartelera');
 $canConfirm = ($checkout['can_confirm'] ?? false) === true;
 $confirmFields = is_array($checkout['confirm_fields'] ?? null) ? $checkout['confirm_fields'] : ['type' => $checkoutType];
+$couponFields = is_array($checkout['coupon_fields'] ?? null) ? $checkout['coupon_fields'] : $confirmFields;
 $reservation = is_array($checkout['reservation'] ?? null) ? $checkout['reservation'] : null;
 $showtimeLabels = is_array($checkout['showtime_labels'] ?? null) ? $checkout['showtime_labels'] : ['datetime' => '', 'date' => '', 'time' => ''];
 $cartSummary = is_array($checkout['cart_summary'] ?? null) ? $checkout['cart_summary'] : ['items' => [], 'total_label' => reservation_format_money(0) . ' demo'];
@@ -202,10 +211,20 @@ $receiptItems = $lastReceipt !== null && is_array($lastReceipt['items'] ?? null)
                     <?php endif; ?>
                 <?php endif; ?>
 
-                <div class="checkout-total-row">
-                    <span>Total demo</span>
-                    <strong><?= e($totalLabel) ?></strong>
-                </div>
+                <dl class="checkout-amount-list" aria-label="Totales del checkout">
+                    <div>
+                        <dt>Subtotal</dt>
+                        <dd><?= e($subtotalLabel) ?></dd>
+                    </div>
+                    <div>
+                        <dt>Descuento demo</dt>
+                        <dd><?= e($discountLabel) ?></dd>
+                    </div>
+                    <div>
+                        <dt>Total final</dt>
+                        <dd><?= e($totalFinalLabel) ?></dd>
+                    </div>
+                </dl>
             </section>
 
             <aside class="checkout-payment-panel" aria-labelledby="checkout-payment-title">
@@ -228,6 +247,42 @@ $receiptItems = $lastReceipt !== null && is_array($lastReceipt['items'] ?? null)
                         <dd>No se solicitan ni almacenan datos de pago.</dd>
                     </div>
                 </dl>
+
+                <section class="checkout-coupon-panel" aria-labelledby="checkout-coupon-title">
+                    <div class="checkout-coupon-heading">
+                        <p class="eyebrow">Cupon demo</p>
+                        <h3 id="checkout-coupon-title">Descuento</h3>
+                    </div>
+
+                    <?php if ($couponApplied): ?>
+                        <div class="checkout-coupon-applied">
+                            <div>
+                                <span>Cupon aplicado</span>
+                                <strong><?= e($couponCode) ?></strong>
+                                <p><?= e(trim($couponLabel . ' ' . $couponPercentLabel)) ?></p>
+                            </div>
+                            <form class="checkout-coupon-remove-form" action="index.php?action=coupon_remove" method="post">
+                                <?= csrf_token_field() ?>
+                                <?php foreach ($couponFields as $fieldName => $fieldValue): ?>
+                                    <input type="hidden" name="<?= e($fieldName) ?>" value="<?= e($fieldValue) ?>">
+                                <?php endforeach; ?>
+                                <button type="submit">Quitar</button>
+                            </form>
+                        </div>
+                    <?php endif; ?>
+
+                    <form class="checkout-coupon-form" action="index.php?action=coupon_apply" method="post">
+                        <?= csrf_token_field() ?>
+                        <?php foreach ($couponFields as $fieldName => $fieldValue): ?>
+                            <input type="hidden" name="<?= e($fieldName) ?>" value="<?= e($fieldValue) ?>">
+                        <?php endforeach; ?>
+                        <label for="coupon-code">Codigo de cupon</label>
+                        <div>
+                            <input id="coupon-code" name="coupon_code" type="text" maxlength="24" autocomplete="off" placeholder="CINE10">
+                            <button type="submit">Aplicar</button>
+                        </div>
+                    </form>
+                </section>
 
                 <p class="checkout-payment-note"><?= e($paymentHelp) ?></p>
 
