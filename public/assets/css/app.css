@@ -4339,6 +4339,11 @@ p {
     align-items: end;
 }
 
+.admin-payment-filter {
+    grid-template-columns: minmax(150px, 0.72fr) minmax(170px, 0.82fr) minmax(145px, 0.68fr) minmax(145px, 0.68fr) minmax(260px, 1.3fr) 112px 112px;
+    align-items: end;
+}
+
 .admin-form label,
 .admin-form-status,
 .admin-row label {
@@ -4519,6 +4524,11 @@ p {
     min-width: 1828px;
 }
 
+.admin-payment-row {
+    grid-template-columns: 72px minmax(180px, 1.1fr) minmax(150px, 0.86fr) minmax(210px, 1fr) 118px 150px 118px 104px 136px 136px 240px;
+    min-width: 1618px;
+}
+
 .admin-list-head {
     padding: 0 12px;
     color: rgba(255, 255, 255, 0.62);
@@ -4629,6 +4639,10 @@ p {
 .admin-actions button,
 .admin-actions .admin-action-link {
     width: 100%;
+}
+
+.admin-payment-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .error-screen {
@@ -5047,21 +5061,24 @@ p {
     .admin-showtime-create,
     .admin-concession-product-create,
     .admin-showtime-filter,
-    .admin-reservation-filter {
+    .admin-reservation-filter,
+    .admin-payment-filter {
         grid-template-columns: 1fr;
     }
 
     .admin-room-list .admin-list-head,
     .admin-movie-list .admin-list-head,
     .admin-showtime-list .admin-list-head,
-    .admin-concession-product-list .admin-list-head {
+    .admin-concession-product-list .admin-list-head,
+    .admin-payment-list .admin-list-head {
         display: none;
     }
 
     .admin-room-row,
     .admin-movie-row,
     .admin-showtime-row,
-    .admin-concession-product-row {
+    .admin-concession-product-row,
+    .admin-payment-row {
         grid-template-columns: 1fr;
         min-width: 0;
     }
