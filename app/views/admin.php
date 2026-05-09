@@ -698,16 +698,21 @@ if ($nextShowtime !== null) {
                 <div class="admin-section-heading">
                     <div>
                         <p class="eyebrow">Confiteria / Productos</p>
-                        <h2 id="admin-concessions-title"><?= $adminMode === 'create' ? 'Nuevo producto' : ($adminMode === 'edit' ? 'Editar producto' : 'Gestion de productos demo') ?></h2>
+                        <h2 id="admin-concessions-title"><?= !$concessionProductsTableReady ? 'Configuracion requerida' : ($adminMode === 'create' ? 'Nuevo producto' : ($adminMode === 'edit' ? 'Editar producto' : 'Gestion de productos demo')) ?></h2>
                     </div>
-                    <?php if ($adminMode === 'list'): ?>
+                    <?php if ($concessionProductsTableReady && $adminMode === 'list'): ?>
                         <a class="admin-section-action" href="<?= e(admin_section_url('concessions', 'create')) ?>">Nuevo producto</a>
-                    <?php else: ?>
+                    <?php elseif ($concessionProductsTableReady): ?>
                         <a class="admin-section-action admin-section-action-secondary" href="<?= e(admin_section_url('concessions')) ?>">Volver a Confiteria</a>
                     <?php endif; ?>
                 </div>
 
-                <?php if ($adminMode === 'create'): ?>
+                <?php if (!$concessionProductsTableReady): ?>
+                    <div class="admin-empty">
+                        <h3>Seccion no instalada</h3>
+                        <p>Para habilitar esta sección en una base existente, ejecuta database/upgrade_concession_products.sql o reimporta database/schema.sql y database/seed.sql.</p>
+                    </div>
+                <?php elseif ($adminMode === 'create'): ?>
                     <form class="admin-form admin-concession-product-create" method="post" action="index.php?action=create_concession_product">
                         <?= csrf_token_field() ?>
                         <label>

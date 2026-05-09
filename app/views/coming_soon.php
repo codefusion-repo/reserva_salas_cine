@@ -8,6 +8,7 @@ $notes = is_array($comingSoon['notes'] ?? null) ? $comingSoon['notes'] : [];
 $catalogItems = is_array($comingSoon['catalog'] ?? null) ? $comingSoon['catalog'] : [];
 $showCatalog = ($comingSoon['showCatalog'] ?? false) === true || $catalogItems !== [];
 $catalogLoadError = ($comingSoon['catalogLoadError'] ?? false) === true;
+$catalogSetupRequired = ($comingSoon['catalogSetupRequired'] ?? false) === true;
 ?>
 <!doctype html>
 <html lang="es">
@@ -77,7 +78,12 @@ $catalogLoadError = ($comingSoon['catalogLoadError'] ?? false) === true;
                     <p>Compra funcional aún no disponible. No hay carrito funcional ni pago real.</p>
                 </div>
 
-                <?php if ($catalogLoadError): ?>
+                <?php if ($catalogSetupRequired): ?>
+                    <div class="confiteria-catalog-state">
+                        <h3>Catálogo en preparación</h3>
+                        <p>Los productos demo aún no están instalados en esta base de datos.</p>
+                    </div>
+                <?php elseif ($catalogLoadError): ?>
                     <div class="confiteria-catalog-state">
                         <h3>No se pudo cargar el catálogo</h3>
                         <p>Intenta nuevamente mas tarde.</p>

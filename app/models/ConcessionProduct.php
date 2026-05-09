@@ -3,8 +3,32 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../helpers/database.php';
 
+function concession_products_table_exists(): bool
+{
+    try {
+        $row = db_fetch_one(
+            'SELECT COUNT(*) AS table_exists
+             FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = :table_name
+             LIMIT 1',
+            ['table_name' => 'concession_products']
+        );
+
+        return (int) ($row['table_exists'] ?? 0) > 0;
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+
+        return false;
+    }
+}
+
 function concession_products_active_all(): array
 {
+    if (!concession_products_table_exists()) {
+        return [];
+    }
+
     return db_fetch_all(
         'SELECT id, name, description, price_amount, icon, badge, is_active, sort_order
          FROM concession_products
@@ -16,6 +40,10 @@ function concession_products_active_all(): array
 
 function concession_products_all(): array
 {
+    if (!concession_products_table_exists()) {
+        return [];
+    }
+
     return db_fetch_all(
         'SELECT id, name, description, price_amount, icon, badge, is_active, sort_order, created_at, updated_at
          FROM concession_products
@@ -25,6 +53,10 @@ function concession_products_all(): array
 
 function concession_product_find_by_id(int $productId): ?array
 {
+    if (!concession_products_table_exists()) {
+        return null;
+    }
+
     return db_fetch_one(
         'SELECT id, name, description, price_amount, icon, badge, is_active, sort_order, created_at, updated_at
          FROM concession_products
@@ -43,6 +75,10 @@ function concession_product_create(
     bool $isActive,
     int $sortOrder
 ): int {
+    if (!concession_products_table_exists()) {
+        return 0;
+    }
+
     db_execute(
         'INSERT INTO concession_products (name, description, price_amount, icon, badge, is_active, sort_order)
          VALUES (:name, :description, :price_amount, :icon, :badge, :is_active, :sort_order)',
@@ -70,6 +106,10 @@ function concession_product_update(
     bool $isActive,
     int $sortOrder
 ): bool {
+    if (!concession_products_table_exists()) {
+        return false;
+    }
+
     return db_execute(
         'UPDATE concession_products
          SET name = :name,
@@ -95,6 +135,10 @@ function concession_product_update(
 
 function concession_product_set_active(int $productId, bool $isActive): bool
 {
+    if (!concession_products_table_exists()) {
+        return false;
+    }
+
     return db_execute(
         'UPDATE concession_products
          SET is_active = :is_active

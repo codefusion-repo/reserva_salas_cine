@@ -12,6 +12,7 @@ require_once __DIR__ . '/../models/Reservation.php';
 require_once __DIR__ . '/../models/User.php';
 
 const AUTH_MIN_PASSWORD_LENGTH = 8;
+const CONCESSION_PRODUCTS_SETUP_MESSAGE = 'La tabla de productos de confitería no está instalada. Ejecuta database/upgrade_concession_products.sql o reimporta schema.sql y seed.sql en el entorno local.';
 
 function auth_mode_from_page(?string $page): string
 {
@@ -382,6 +383,7 @@ function render_coming_soon_page(string $page): void
             'catalog' => [],
             'showCatalog' => true,
             'catalogLoadError' => false,
+            'catalogSetupRequired' => false,
             'items' => [
                 ['icon' => '🍿', 'label' => 'Catálogo demo', 'copy' => 'Combos visibles solo como muestra para la experiencia de cine.'],
                 ['icon' => '🛒', 'label' => 'Sin carrito', 'copy' => 'No se agrega ningún producto ni se muta la sesión.'],
@@ -452,17 +454,21 @@ function render_coming_soon_page(string $page): void
 
     if ($page === 'confiteria') {
         try {
-            $comingSoon['catalog'] = array_map(
-                static fn (array $product): array => [
-                    'icon' => (string) ($product['icon'] ?? ''),
-                    'label' => (string) ($product['badge'] ?? ''),
-                    'name' => (string) ($product['name'] ?? ''),
-                    'description' => (string) ($product['description'] ?? ''),
-                    'price' => reservation_format_money((float) ($product['price_amount'] ?? 0)) . ' demo',
-                    'button' => 'Agregar pronto',
-                ],
-                concession_products_active_all()
-            );
+            if (!concession_products_table_exists()) {
+                $comingSoon['catalogSetupRequired'] = true;
+            } else {
+                $comingSoon['catalog'] = array_map(
+                    static fn (array $product): array => [
+                        'icon' => (string) ($product['icon'] ?? ''),
+                        'label' => (string) ($product['badge'] ?? ''),
+                        'name' => (string) ($product['name'] ?? ''),
+                        'description' => (string) ($product['description'] ?? ''),
+                        'price' => reservation_format_money((float) ($product['price_amount'] ?? 0)) . ' demo',
+                        'button' => 'Agregar pronto',
+                    ],
+                    concession_products_active_all()
+                );
+            }
         } catch (Throwable $exception) {
             error_log($exception->getMessage());
             $comingSoon['catalog'] = [];
@@ -798,6 +804,7 @@ function render_admin_panel(): void
     $activeMovies = [];
     $showtimes = [];
     $concessionProducts = [];
+    $concessionProductsTableReady = false;
     $adminShowtimeFilters = admin_showtime_filters_from_request($_GET);
     $adminReservationFilters = admin_reservation_filters_from_request($_GET);
     $adminReservations = [];
@@ -814,11 +821,23 @@ function render_admin_panel(): void
         $movies = admin_movies_all();
         $activeMovies = admin_movies_active_all();
         $showtimes = admin_showtimes_all($adminShowtimeFilters);
-        $concessionProducts = concession_products_all();
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
         http_response_code(500);
         $adminLoadError = true;
+    }
+
+    if (!$adminLoadError) {
+        $concessionProductsTableReady = concession_products_table_exists();
+
+        if ($concessionProductsTableReady) {
+            try {
+                $concessionProducts = concession_products_all();
+            } catch (Throwable $exception) {
+                error_log($exception->getMessage());
+                $concessionProducts = [];
+            }
+        }
     }
 
     if (!$adminLoadError) {
@@ -862,7 +881,10 @@ function render_admin_panel(): void
             } elseif ($adminSection === 'concessions') {
                 $productId = positive_int_from_request($_GET['product_id'] ?? null);
 
-                if ($productId === null) {
+                if (!$concessionProductsTableReady) {
+                    $adminModeError = 'La tabla de productos de confiteria no esta instalada.';
+                    $adminEditItem = null;
+                } elseif ($productId === null) {
                     $adminModeError = 'Selecciona un producto valido para editar.';
                 } else {
                     $adminEditItem = concession_product_find_by_id($productId);
@@ -1403,6 +1425,11 @@ function handle_concession_product_create(): void
     auth_require_admin_action();
     csrf_require_valid_post();
 
+    if (!concession_products_table_exists()) {
+        flash_set('error', CONCESSION_PRODUCTS_SETUP_MESSAGE);
+        redirect_to(admin_section_url('concessions'));
+    }
+
     [$payload, $errors] = admin_concession_product_payload_from_post();
 
     if ($errors !== []) {
@@ -1433,6 +1460,11 @@ function handle_concession_product_update(): void
 {
     auth_require_admin_action();
     csrf_require_valid_post();
+
+    if (!concession_products_table_exists()) {
+        flash_set('error', CONCESSION_PRODUCTS_SETUP_MESSAGE);
+        redirect_to(admin_section_url('concessions'));
+    }
 
     $productId = positive_int_from_request($_POST['product_id'] ?? null);
     [$payload, $errors] = admin_concession_product_payload_from_post();
@@ -1481,6 +1513,11 @@ function handle_concession_product_set_active(): void
 {
     auth_require_admin_action();
     csrf_require_valid_post();
+
+    if (!concession_products_table_exists()) {
+        flash_set('error', CONCESSION_PRODUCTS_SETUP_MESSAGE);
+        redirect_to(admin_section_url('concessions'));
+    }
 
     $productId = positive_int_from_request($_POST['product_id'] ?? null);
     $targetStatus = admin_target_status_from_post($_POST['target_status'] ?? null);
