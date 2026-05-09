@@ -5801,42 +5801,115 @@ p {
     }
 
     .cinema-topbar {
-        gap: 12px;
+        display: grid;
+        grid-template-columns: 76px minmax(0, 1fr);
+        gap: 8px 10px;
+        align-items: center;
+        min-height: 0;
+        padding: 10px 12px 12px;
     }
 
-    .cinema-nav {
-        gap: 8px;
-        justify-content: stretch;
+    .cinema-brand {
+        grid-column: 1;
+        grid-row: 1;
+        width: 76px;
+        height: 56px;
+        flex-basis: auto;
     }
 
-    .cinema-nav a,
-    .cinema-nav .nav-placeholder {
-        min-height: 42px;
-        flex: 1 1 calc(50% - 8px);
-        padding: 0 8px;
-        border: 1px solid rgba(255, 255, 255, 0.22);
-        border-radius: 5px;
-        background: rgba(255, 255, 255, 0.1);
-        line-height: 1.1;
-        text-align: center;
+    .brand-person {
+        top: 3px;
+        width: 32px;
+        height: 26px;
+        border-radius: 20px 20px 7px 7px;
     }
 
-    .cinema-nav a::after {
-        display: none;
+    .brand-person::before,
+    .brand-person::after {
+        bottom: 8px;
+        width: 8px;
+        height: 32px;
+        border-radius: 9px 9px 5px 5px;
     }
 
-    .user-badge-group,
-    .user-menu {
-        width: 100%;
+    .brand-person::before {
+        left: -11px;
+    }
+
+    .brand-person::after {
+        right: -11px;
+    }
+
+    .brand-film {
+        bottom: 4px;
+        height: 26px;
+        gap: 4px;
+        border-width: 3px;
+        background:
+            repeating-linear-gradient(90deg, #ffffff 0 3px, transparent 3px 7px) top / 100% 4px no-repeat,
+            repeating-linear-gradient(90deg, #ffffff 0 3px, transparent 3px 7px) bottom / 100% 4px no-repeat;
+        font-size: 0.82rem;
     }
 
     .user-badge-group {
-        align-items: stretch;
+        grid-column: 2;
+        grid-row: 1;
+        display: flex;
+        width: 100%;
+        min-width: 0;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        flex-direction: row;
+    }
+
+    .member-demo-badge {
+        min-height: 26px;
+        flex: 0 0 auto;
+        padding: 4px 7px;
+        font-size: 0.56rem;
+        line-height: 1;
+    }
+
+    .user-menu {
+        width: auto;
+        min-width: 0;
+        flex: 1 1 auto;
     }
 
     .user-pill {
         width: 100%;
+        min-height: 42px;
         justify-content: space-between;
+        gap: 6px;
+        padding: 0 8px;
+        border-radius: 5px;
+        font-size: 0.72rem;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        flex-basis: 32px;
+    }
+
+    .user-avatar::before {
+        top: 7px;
+        width: 11px;
+        height: 11px;
+    }
+
+    .user-avatar::after {
+        bottom: 6px;
+        width: 19px;
+        height: 11px;
+        border-radius: 18px 18px 6px 6px;
+    }
+
+    .user-caret {
+        border-top-width: 8px;
+        border-right-width: 8px;
+        border-left-width: 8px;
     }
 
     .user-pill span:not(.user-avatar):not(.user-caret) {
@@ -5847,10 +5920,57 @@ p {
     }
 
     .user-dropdown {
-        right: auto;
-        left: 0;
+        position: static;
         width: 100%;
         min-width: 0;
+        margin-top: 6px;
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        box-shadow: none;
+    }
+
+    .user-dropdown a {
+        min-height: 34px;
+        font-size: 0.72rem;
+        line-height: 1.1;
+    }
+
+    .user-menu:hover .user-dropdown,
+    .user-menu:focus-within .user-dropdown {
+        gap: 6px;
+    }
+
+    .cinema-nav {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        width: 100%;
+        gap: 6px;
+        align-items: center;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding: 2px 0;
+        flex-wrap: nowrap;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .cinema-nav a,
+    .cinema-nav .nav-placeholder {
+        min-height: 32px;
+        flex: 0 0 auto;
+        padding: 0 8px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.1);
+        font-size: 0.68rem;
+        font-weight: 800;
+        line-height: 1;
+        text-align: center;
+    }
+
+    .cinema-nav a::after {
+        display: none;
     }
 
     .app-shell {
@@ -6446,6 +6566,58 @@ p {
     .cartelera-title {
         margin-bottom: 26px;
         font-size: 2rem;
+    }
+
+    .cinema-topbar {
+        grid-template-columns: 68px minmax(0, 1fr);
+        gap: 6px 8px;
+        padding: 8px 10px 10px;
+    }
+
+    .cinema-brand {
+        width: 68px;
+        height: 50px;
+    }
+
+    .brand-person {
+        width: 30px;
+        height: 24px;
+    }
+
+    .brand-film {
+        height: 24px;
+        font-size: 0.76rem;
+    }
+
+    .member-demo-badge {
+        padding-right: 6px;
+        padding-left: 6px;
+        font-size: 0.54rem;
+    }
+
+    .user-pill {
+        min-height: 40px;
+        font-size: 0.68rem;
+    }
+
+    .user-avatar {
+        width: 30px;
+        height: 30px;
+        flex-basis: 30px;
+    }
+
+    .user-caret {
+        border-top-width: 7px;
+        border-right-width: 7px;
+        border-left-width: 7px;
+    }
+
+    .cinema-nav a,
+    .cinema-nav .nav-placeholder {
+        min-height: 30px;
+        padding-right: 7px;
+        padding-left: 7px;
+        font-size: 0.64rem;
     }
 
     .filter-heading,
