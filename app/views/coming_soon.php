@@ -5,6 +5,10 @@ $pageTitle = (string) ($comingSoon['title'] ?? 'Proximamente');
 $activeNav = (string) ($comingSoon['activeNav'] ?? '');
 $items = is_array($comingSoon['items'] ?? null) ? $comingSoon['items'] : [];
 $notes = is_array($comingSoon['notes'] ?? null) ? $comingSoon['notes'] : [];
+$heroActions = is_array($comingSoon['heroActions'] ?? null) ? $comingSoon['heroActions'] : [];
+$useBenefitsLayout = ($comingSoon['benefitsLayout'] ?? false) === true;
+$benefitsSectionId = trim((string) ($comingSoon['benefitsSectionId'] ?? ''));
+$sectionClass = $useBenefitsLayout ? 'coming-soon-grid coming-soon-benefits-grid' : 'coming-soon-grid';
 $catalogItems = is_array($comingSoon['catalog'] ?? null) ? $comingSoon['catalog'] : [];
 $showCatalog = ($comingSoon['showCatalog'] ?? false) === true || $catalogItems !== [];
 $catalogLoadError = ($comingSoon['catalogLoadError'] ?? false) === true;
@@ -58,8 +62,30 @@ $cartItems = is_array($cartSummary['items'] ?? null) ? $cartSummary['items'] : [
                 <?php endif; ?>
 
                 <div class="coming-soon-actions">
-                    <a class="movie-state-link" href="index.php?page=cartelera">Volver a cartelera</a>
-                    <a class="movie-state-link movie-state-link-secondary" href="index.php?page=my_reservations">Mis reservas</a>
+                    <?php if ($heroActions !== []): ?>
+                        <?php foreach ($heroActions as $action): ?>
+                            <?php
+                            $isLink = (string) ($action['type'] ?? 'link') === 'link';
+                            $label = trim((string) ($action['label'] ?? ''));
+                            $buttonClass = trim((string) ($action['class'] ?? ''));
+                            $isSecondary = str_contains($buttonClass, 'movie-state-link-secondary');
+                            $isDisabled = ($action['disabled'] ?? true) === true;
+                            ?>
+                            <?php if ($isLink): ?>
+                                <?php $href = trim((string) ($action['href'] ?? '#')); ?>
+                                <a class="movie-state-link<?= $isSecondary ? ' movie-state-link-secondary' : '' ?>" href="<?= e($href === '' ? '#' : $href) ?>">
+                                    <?= e($label !== '' ? $label : 'Acción') ?>
+                                </a>
+                            <?php else: ?>
+                                <button class="movie-state-link coming-soon-cta-button<?= $isSecondary ? ' movie-state-link-secondary' : '' ?>" type="button"<?= $isDisabled ? ' disabled' : '' ?> aria-disabled="<?= $isDisabled ? 'true' : 'false' ?>">
+                                    <?= e($label !== '' ? $label : 'Acción') ?>
+                                </button>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <a class="movie-state-link" href="index.php?page=cartelera">Volver a cartelera</a>
+                        <a class="movie-state-link movie-state-link-secondary" href="index.php?page=my_reservations">Mis reservas</a>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -207,9 +233,13 @@ $cartItems = is_array($cartSummary['items'] ?? null) ? $cartSummary['items'] : [
         <?php endif; ?>
 
         <?php if ($items !== []): ?>
-            <section class="coming-soon-grid" aria-label="Contenido futuro">
+            <section<?= $benefitsSectionId !== '' ? ' id="' . e($benefitsSectionId) . '"' : '' ?> class="<?= e($sectionClass) ?>" aria-label="Beneficios">
                 <?php foreach ($items as $item): ?>
+                    <?php $status = trim((string) ($item['status'] ?? '')); ?>
                     <article class="coming-soon-card">
+                        <?php if ($status !== ''): ?>
+                            <span class="coming-soon-card-status"><?= e($status) ?></span>
+                        <?php endif; ?>
                         <span class="coming-soon-card-icon" aria-hidden="true"><?= e($item['icon'] ?? '•') ?></span>
                         <h2><?= e($item['label'] ?? '') ?></h2>
                         <p><?= e($item['copy'] ?? '') ?></p>

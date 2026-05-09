@@ -4743,3 +4743,62 @@ p {
         color: #000000;
     }
 }
+
+.coming-soon-benefits-grid {
+    align-items: stretch;
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.coming-soon-card-status {
+    display: inline-flex;
+    align-self: flex-start;
+    margin-bottom: 8px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(223, 36, 68, 0.13);
+    color: #8f162f;
+    font-size: var(--font-xs);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.coming-soon-actions .coming-soon-cta-button {
+    appearance: none;
+    border-radius: 7px;
+    border: 0;
+    margin: 0;
+    padding: 12px 16px;
+    min-height: 44px;
+    min-width: 190px;
+    font: 800 var(--font-md) Arial, Helvetica, sans-serif;
+    text-transform: uppercase;
+    text-align: center;
+    cursor: not-allowed;
+    background: #b0b8c2;
+    color: #10202d;
+}
+
+.coming-soon-actions .coming-soon-cta-button.movie-state-link-secondary {
+    background: #f0f1f4;
+}
+
+.coming-soon-actions .coming-soon-cta-button[disabled] {
+    opacity: 0.88;
+}
+
+@media (max-width: 900px) {
+    .coming-soon-benefits-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .coming-soon-actions {
+        gap: 10px;
+    }
+
+    .coming-soon-actions .coming-soon-cta-button {
+        min-width: 100%;
+        justify-content: center;
+    }
+}
