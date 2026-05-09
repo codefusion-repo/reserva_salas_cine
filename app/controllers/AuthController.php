@@ -19,7 +19,7 @@ const CONCESSIONS_LAST_CHECKOUT_SESSION_KEY = 'last_concessions_checkout';
 const CONCESSIONS_CART_MAX_QUANTITY = 10;
 const CHECKOUT_ALLOWED_TYPES = ['reservation', 'concessions', 'membership'];
 const CHECKOUT_MEMBERSHIP_PLAN_LABEL = 'Socio Cine Demo';
-const CHECKOUT_MEMBERSHIP_DEMO_TOTAL = 0.0;
+const CHECKOUT_MEMBERSHIP_DEMO_TOTAL = 5990.0;
 
 function auth_mode_from_page(?string $page): string
 {
