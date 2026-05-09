@@ -2727,11 +2727,20 @@ p {
     background: rgba(179, 31, 59, 0.16);
 }
 
+.member-demo-state.is-active {
+    border-left-color: #2fb36d;
+    background: rgba(47, 179, 109, 0.16);
+}
+
 .member-demo-state-title {
     margin: 0 0 7px;
     color: #ffd3dc;
     font-size: var(--font-md);
     font-weight: 900;
+}
+
+.member-demo-state.is-active .member-demo-state-title {
+    color: #baf3d2;
 }
 
 .member-demo-state-copy {

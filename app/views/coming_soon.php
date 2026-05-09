@@ -29,8 +29,7 @@ $memberDemoStateCopy = trim((string) (
         ? ($memberDemo['stateActiveCopy'] ?? 'Tu sesión tiene membresía demo activa.')
         : ($memberDemo['stateInactiveCopy'] ?? 'Activa la membresía demo para ver el estado de socio en esta sesión.')
 ));
-$memberDemoBenefitLine = trim((string) ($memberDemo['benefitLine'] ?? 'Membresía demo sin pago real'));
-$memberDemoAcademicLine = trim((string) ($memberDemo['academicLine'] ?? 'Beneficios simulados para el proyecto académico'));
+$memberDemoStateNotes = is_array($memberDemo['stateNotes'] ?? null) ? array_values(array_filter($memberDemo['stateNotes'], static fn (mixed $note): bool => trim((string) $note) !== '')) : [];
 $memberDemoActivateAction = trim((string) ($memberDemo['activateAction'] ?? 'index.php?action=member_demo_activate'));
 $memberDemoDeactivateAction = trim((string) ($memberDemo['deactivateAction'] ?? 'index.php?action=member_demo_deactivate'));
 $memberDemoActivateLabel = trim((string) ($memberDemo['activateLabel'] ?? 'Activar membresía demo'));
@@ -93,8 +92,9 @@ $isMemberDemoPage = $memberDemo !== [];
                         <div class="member-demo-state<?= $memberDemoIsActive ? ' is-active' : '' ?>">
                             <p class="member-demo-state-title"><?= e($memberDemoIsActive ? $memberDemoStateActive : $memberDemoStateInactive) ?></p>
                             <p class="member-demo-state-copy"><?= e($memberDemoStateCopy) ?></p>
-                            <p class="member-demo-state-copy"><?= e($memberDemoBenefitLine) ?></p>
-                            <p class="member-demo-state-copy"><?= e($memberDemoAcademicLine) ?></p>
+                            <?php foreach ($memberDemoStateNotes as $memberDemoStateNote): ?>
+                                <p class="member-demo-state-copy"><?= e((string) $memberDemoStateNote) ?></p>
+                            <?php endforeach; ?>
                         </div>
 
                         <?php if ($memberDemoIsActive): ?>

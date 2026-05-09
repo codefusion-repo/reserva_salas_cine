@@ -517,7 +517,7 @@ function render_coming_soon_page(string $page): void
             'headline' => 'HAZTE SOCIO DEMO',
             'panelKicker' => 'Demo en sesión',
             'panelHeadline' => 'Activa tu membresía demo',
-            'lead' => 'Activa una membresía demo para probar beneficios simulados dentro de tu sesión.',
+            'lead' => 'Activa una membresía demo para probar el estado de socio durante esta sesión.',
             'support' => '',
             'accent' => 'Estado de sesión',
             'accentCopy' => 'La membresía demo vive solo en tu sesión actual.',
@@ -607,6 +607,10 @@ function render_coming_soon_page(string $page): void
     $comingSoon = $pages[$page];
 
     if ($page === 'socios') {
+        $comingSoon['lead'] = $memberDemoActive
+            ? 'Tu membresía demo está activa en esta sesión.'
+            : 'Activa una membresía demo para probar el estado de socio durante esta sesión.';
+        $comingSoon['notes'] = [];
         $comingSoon['panelHeadline'] = $memberDemoActive
             ? 'Membresía demo activa'
             : 'Activa tu membresía demo';
@@ -614,10 +618,13 @@ function render_coming_soon_page(string $page): void
             'isActive' => $memberDemoActive,
             'stateActiveLabel' => 'Socio Cine Demo activo',
             'stateInactiveLabel' => 'Sin membresía demo',
-            'stateActiveCopy' => 'Tu sesión tiene membresía demo activa.',
-            'stateInactiveCopy' => 'Activa la membresía demo para ver el estado de socio en esta sesión.',
-            'benefitLine' => 'Membresía demo sin pago real.',
-            'academicLine' => 'Beneficios simulados para el proyecto académico.',
+            'stateActiveCopy' => 'Ya puedes ver tu estado de socio demo mientras mantengas la sesión iniciada.',
+            'stateInactiveCopy' => 'Activa la membresía demo para habilitar el estado de socio en esta sesión.',
+            'stateNotes' => [
+                $memberDemoActive
+                    ? 'Estado demo activo solo en esta sesión. No aplica descuentos reales.'
+                    : 'Demo académica sin pago real ni persistencia en base de datos.',
+            ],
             'activateAction' => 'index.php?action=member_demo_activate',
             'deactivateAction' => 'index.php?action=member_demo_deactivate',
             'activateLabel' => 'ACTIVAR MEMBRESÍA DEMO',
