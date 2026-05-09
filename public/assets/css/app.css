@@ -3340,8 +3340,8 @@ p {
 }
 
 .admin-concession-product-row {
-    grid-template-columns: minmax(180px, 1fr) minmax(270px, 1.35fr) minmax(110px, 0.48fr) minmax(82px, 0.34fr) minmax(122px, 0.55fr) minmax(82px, 0.34fr) 108px 220px;
-    min-width: 1280px;
+    grid-template-columns: minmax(180px, 1fr) minmax(270px, 1.35fr) minmax(110px, 0.48fr) minmax(82px, 0.34fr) minmax(122px, 0.55fr) minmax(82px, 0.34fr) 108px 300px;
+    min-width: 1360px;
 }
 
 .admin-reservation-row {

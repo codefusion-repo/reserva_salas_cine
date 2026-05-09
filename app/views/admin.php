@@ -845,6 +845,17 @@ if ($nextShowtime !== null) {
                                             <?= e($targetLabel) ?>
                                         </button>
                                     </form>
+                                    <form method="post" action="index.php?action=delete_concession_product">
+                                        <?= csrf_token_field() ?>
+                                        <input type="hidden" name="product_id" value="<?= e($product['id'] ?? '') ?>">
+                                        <button
+                                            class="admin-danger admin-delete"
+                                            type="submit"
+                                            data-confirm-action="¿Eliminar este producto de confitería? Esta acción no se puede deshacer."
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         <?php endforeach; ?>

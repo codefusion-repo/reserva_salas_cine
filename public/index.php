@@ -118,6 +118,11 @@ if ($action === 'set_concession_product_active' && $_SERVER['REQUEST_METHOD'] ==
     exit;
 }
 
+if ($action === 'delete_concession_product' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_concession_product_delete();
+    exit;
+}
+
 if ($page === null) {
     $page = auth_check() ? 'dashboard' : 'login';
 }

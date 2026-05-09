@@ -1561,6 +1561,38 @@ function handle_concession_product_set_active(): void
     redirect_to(admin_section_url('concessions'));
 }
 
+function handle_concession_product_delete(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    if (!concession_products_table_exists()) {
+        flash_set('error', CONCESSION_PRODUCTS_SETUP_MESSAGE);
+        redirect_to(admin_section_url('concessions'));
+    }
+
+    $productId = positive_int_from_request($_POST['product_id'] ?? null);
+
+    if ($productId === null) {
+        flash_set('error', 'Selecciona un producto valido para eliminar.');
+        redirect_to(admin_section_url('concessions'));
+    }
+
+    try {
+        if (concession_product_find_by_id((int) $productId) === null) {
+            flash_set('error', 'El producto seleccionado no existe.');
+        } else {
+            concession_product_delete((int) $productId);
+            flash_set('success', 'Producto de confiteria eliminado correctamente.');
+        }
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo eliminar el producto de confiteria en este momento.');
+    }
+
+    redirect_to(admin_section_url('concessions'));
+}
+
 function admin_room_payload_from_post(): array
 {
     $name = trim((string) ($_POST['name'] ?? ''));

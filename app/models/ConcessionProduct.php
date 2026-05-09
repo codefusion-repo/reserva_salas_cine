@@ -149,3 +149,16 @@ function concession_product_set_active(int $productId, bool $isActive): bool
         ]
     );
 }
+
+function concession_product_delete(int $productId): bool
+{
+    if (!concession_products_table_exists()) {
+        return false;
+    }
+
+    return db_execute(
+        'DELETE FROM concession_products
+         WHERE id = :id',
+        ['id' => $productId]
+    );
+}
