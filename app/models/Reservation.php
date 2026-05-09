@@ -191,6 +191,63 @@ function reservation_user_all(int $userId): array
     );
 }
 
+function reservation_user_profile_summary(int $userId): array
+{
+    if ($userId <= 0) {
+        return [
+            'active_count' => 0,
+            'cancelled_count' => 0,
+        ];
+    }
+
+    $row = db_fetch_one(
+        'SELECT
+            COALESCE(SUM(CASE WHEN status IN (:status_pending, :status_confirmed) THEN 1 ELSE 0 END), 0) AS active_count,
+            COALESCE(SUM(CASE WHEN status = :status_cancelled THEN 1 ELSE 0 END), 0) AS cancelled_count
+         FROM reservations
+         WHERE user_id = :user_id',
+        [
+            'status_pending' => 'pending',
+            'status_confirmed' => 'confirmed',
+            'status_cancelled' => 'cancelled',
+            'user_id' => $userId,
+        ]
+    );
+
+    return [
+        'active_count' => (int) ($row['active_count'] ?? 0),
+        'cancelled_count' => (int) ($row['cancelled_count'] ?? 0),
+    ];
+}
+
+function reservation_latest_ticket_for_user(int $userId): ?array
+{
+    if ($userId <= 0) {
+        return null;
+    }
+
+    return db_fetch_one(
+        'SELECT
+            r.id,
+            r.status,
+            r.created_at,
+            m.title AS movie_title,
+            s.starts_at
+         FROM reservations r
+         INNER JOIN showtimes s ON s.id = r.showtime_id
+         INNER JOIN movies m ON m.id = s.movie_id
+         WHERE r.user_id = :user_id
+           AND r.status IN (:status_confirmed, :status_cancelled)
+         ORDER BY r.created_at DESC, r.id DESC
+         LIMIT 1',
+        [
+            'user_id' => $userId,
+            'status_confirmed' => 'confirmed',
+            'status_cancelled' => 'cancelled',
+        ]
+    );
+}
+
 function reservation_find_for_user(int $reservationId, int $userId): ?array
 {
     $reservation = db_fetch_one(

@@ -134,6 +134,15 @@ function payment_reservation_code(array $payment): string
     return $reservationId > 0 ? reservation_visual_code($reservationId) : '';
 }
 
+function profile_role_label(string $role): string
+{
+    return match ($role) {
+        'admin' => 'Administrador',
+        'user' => 'Usuario',
+        default => 'Sin rol',
+    };
+}
+
 function payment_invoice_filename(array $payment): string
 {
     $referenceCode = preg_replace('/[^A-Za-z0-9_-]/', '-', (string) ($payment['reference_code'] ?? ''));
@@ -860,6 +869,60 @@ function render_my_payments(): void
     }
 
     require __DIR__ . '/../views/my_payments.php';
+}
+
+function render_profile(): void
+{
+    auth_require_login();
+
+    $user = current_user();
+    $profileUser = $user ?? [];
+    $userId = (int) ($profileUser['id'] ?? 0);
+    $messages = flash_get();
+    $reservationSummary = null;
+    $latestTicket = null;
+    $paymentCount = null;
+    $profileUserLoadError = false;
+    $reservationSummaryLoadError = false;
+    $latestTicketLoadError = false;
+    $paymentSummaryLoadError = false;
+
+    try {
+        $freshUser = user_find_by_id($userId);
+
+        if ($freshUser !== null) {
+            $profileUser = $freshUser;
+        }
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        $profileUserLoadError = true;
+    }
+
+    try {
+        $reservationSummary = reservation_user_profile_summary($userId);
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        $reservationSummaryLoadError = true;
+    }
+
+    try {
+        $latestTicket = reservation_latest_ticket_for_user($userId);
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        $latestTicketLoadError = true;
+    }
+
+    try {
+        $paymentCount = payment_simulated_count_for_user($userId);
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        $paymentSummaryLoadError = true;
+    }
+
+    $memberDemoActive = is_member_demo_active();
+    $profileRoleLabel = profile_role_label((string) ($profileUser['role'] ?? ''));
+
+    require __DIR__ . '/../views/profile.php';
 }
 
 function render_payment_detail(): void

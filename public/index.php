@@ -228,6 +228,10 @@ switch ($page) {
         render_my_payments();
         break;
 
+    case 'profile':
+        render_profile();
+        break;
+
     case 'payment_detail':
         render_payment_detail();
         break;
