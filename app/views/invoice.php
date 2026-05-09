@@ -66,7 +66,7 @@ if ($accountEmail === '') {
             </a>
             <div>
                 <p class="eyebrow"><?= e($invoiceHeadingEyebrow) ?></p>
-                <h1><?= e($referenceCode !== '' ? $referenceCode : 'Pago demo') ?></h1>
+                <h1><?= e($referenceCode !== '' ? $referenceCode : 'Pago') ?></h1>
                 <p>Vista imprimible y descarga simple en TXT.</p>
             </div>
         </div>
@@ -77,17 +77,17 @@ if ($accountEmail === '') {
                     <span class="ticket-brand-mark" aria-hidden="true"></span>
                     <div>
                         <span>ES Cine</span>
-                        <strong>Comprobante simulado</strong>
+                        <strong>Comprobante de prueba</strong>
                     </div>
                 </div>
                 <div class="ticket-code">
                     <span>Referencia</span>
-                    <strong><?= e($referenceCode !== '' ? $referenceCode : 'Pago demo') ?></strong>
+                    <strong><?= e($referenceCode !== '' ? $referenceCode : 'Pago') ?></strong>
                 </div>
             </div>
 
             <div class="invoice-warning">
-                <strong>Comprobante simulado.</strong>
+                <strong>Comprobante de prueba.</strong>
                 <span>No válido como factura/boleta legal.</span>
                 <span>No hubo cobro real.</span>
             </div>
@@ -183,7 +183,7 @@ if ($accountEmail === '') {
                     <dd><?= e(reservation_format_money((float) ($payment['discount_amount'] ?? 0))) ?></dd>
                 </div>
                 <div>
-                    <dt>Total demo</dt>
+                    <dt>Total</dt>
                     <dd><?= e(reservation_format_money((float) ($payment['total_amount'] ?? 0))) ?></dd>
                 </div>
             </dl>

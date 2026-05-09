@@ -24,7 +24,7 @@ function render_admin_denied_page(): void
     $messages = [
         [
             'type' => 'error',
-            'message' => 'Acceso denegado. Esta vista requiere rol administrador.',
+            'message' => 'Acceso denegado. Necesitas una cuenta administradora.',
         ],
     ];
 

@@ -15,8 +15,8 @@ require_once __DIR__ . '/../models/Movie.php';
 require_once __DIR__ . '/../models/Payment.php';
 require_once __DIR__ . '/../models/Reservation.php';
 
-const CONCESSION_PRODUCTS_SETUP_MESSAGE = 'La tabla de productos de confitería no está instalada. Ejecuta database/upgrade_concession_products.sql o reimporta schema.sql y seed.sql en el entorno local.';
-const COUPONS_SETUP_MESSAGE = 'La tabla de cupones demo no esta instalada. Reimporta database/schema.sql y database/seed.sql en el entorno local.';
+const CONCESSION_PRODUCTS_SETUP_MESSAGE = 'La configuracion de confiteria no esta disponible en este entorno.';
+const COUPONS_SETUP_MESSAGE = 'La configuracion de cupones no esta disponible en este entorno.';
 
 function render_admin_panel(): void
 {
@@ -173,7 +173,7 @@ function render_admin_panel(): void
                 $productId = positive_int_from_request($_GET['product_id'] ?? null);
 
                 if (!$concessionProductsTableReady) {
-                    $adminModeError = 'La tabla de productos de confiteria no esta instalada.';
+                    $adminModeError = 'La configuracion de confiteria no esta disponible.';
                     $adminEditItem = null;
                 } elseif ($productId === null) {
                     $adminModeError = 'Selecciona un producto valido para editar.';
@@ -185,7 +185,7 @@ function render_admin_panel(): void
                 $couponId = positive_int_from_request($_GET['coupon_id'] ?? null);
 
                 if (!$couponsTableReady) {
-                    $adminModeError = 'La tabla de cupones demo no esta instalada.';
+                    $adminModeError = 'La configuracion de cupones no esta disponible.';
                     $adminEditItem = null;
                 } elseif ($couponId === null) {
                     $adminModeError = 'Selecciona un cupon valido para editar.';
@@ -1126,10 +1126,10 @@ function handle_admin_coupon_create(): void
             $payload['starts_at'],
             $payload['ends_at']
         );
-        flash_set('success', 'Cupon demo creado correctamente.');
+        flash_set('success', 'Cupon creado correctamente.');
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
-        flash_set('error', 'No se pudo crear el cupon demo. Revisa que el codigo no este duplicado.');
+        flash_set('error', 'No se pudo crear el cupon. Revisa que el codigo no este duplicado.');
     }
 
     redirect_to(admin_section_url('coupons'));
@@ -1192,10 +1192,10 @@ function handle_admin_coupon_update(): void
             $payload['starts_at'],
             $payload['ends_at']
         );
-        flash_set('success', 'Cupon demo actualizado correctamente.');
+        flash_set('success', 'Cupon actualizado correctamente.');
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
-        flash_set('error', 'No se pudo actualizar el cupon demo en este momento.');
+        flash_set('error', 'No se pudo actualizar el cupon en este momento.');
     }
 
     redirect_to(admin_section_url('coupons'));
@@ -1243,7 +1243,7 @@ function handle_admin_coupon_set_active(): void
         coupon_set_active((int) $couponId, $targetStatus);
         flash_set(
             'success',
-            $targetStatus ? 'Cupon demo activado correctamente.' : 'Cupon demo desactivado correctamente.'
+            $targetStatus ? 'Cupon activado correctamente.' : 'Cupon desactivado correctamente.'
         );
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
@@ -1646,7 +1646,7 @@ function admin_coupon_payload_from_post(): array
     }
 
     if ($checkoutType === null) {
-        $errors[] = 'Selecciona un tipo de checkout valido para el cupon.';
+        $errors[] = 'Selecciona un tipo de pago valido para el cupon.';
     }
 
     if ($discountType === null) {

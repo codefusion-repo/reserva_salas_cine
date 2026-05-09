@@ -7,7 +7,7 @@ require_once __DIR__ . '/../models/Reservation.php';
 require_once __DIR__ . '/../models/UserMembership.php';
 
 const CHECKOUT_ALLOWED_TYPES = ['reservation', 'concessions', 'membership'];
-const CHECKOUT_MEMBERSHIP_PLAN_LABEL = 'Socio Cine Demo';
+const CHECKOUT_MEMBERSHIP_PLAN_LABEL = 'Socio Cine';
 const CHECKOUT_MEMBERSHIP_DEMO_TOTAL = 5990.0;
 
 function checkout_type_from_request(mixed $value): ?string
@@ -30,7 +30,7 @@ function checkout_url(string $type, array $params = []): string
 
 function checkout_demo_money_label(float $amount): string
 {
-    return reservation_format_money($amount) . ' demo';
+    return reservation_format_money($amount);
 }
 
 function checkout_coupon_percent_label(float $percent): string
@@ -112,7 +112,7 @@ function checkout_coupon_apply_context(string $type, int $userId, ?int $reservat
         if ((string) ($reservation['status'] ?? '') !== 'pending') {
             return [
                 'ok' => false,
-                'message' => 'Solo las reservas pendientes pueden usar cupon en checkout.',
+                'message' => 'Solo las reservas pendientes pueden usar cupon en este pago.',
                 'redirect_url' => checkout_coupon_redirect_url('reservation', $reservationId),
             ];
         }
@@ -129,7 +129,7 @@ function checkout_coupon_apply_context(string $type, int $userId, ?int $reservat
             if (!concession_products_table_exists()) {
                 return [
                     'ok' => false,
-                    'message' => 'Los productos demo de confiteria no estan disponibles.',
+                    'message' => 'La confiteria no esta disponible en este momento.',
                     'redirect_url' => checkout_coupon_redirect_url('concessions'),
                 ];
             }
@@ -164,7 +164,7 @@ function checkout_coupon_apply_context(string $type, int $userId, ?int $reservat
         if (member_demo_active_for_user_id($userId)) {
             return [
                 'ok' => false,
-                'message' => 'La membresia demo ya esta activa; no se puede aplicar cupon.',
+                'message' => 'Tu membresia ya esta activa; no se puede aplicar cupon.',
                 'redirect_url' => checkout_coupon_redirect_url('membership'),
             ];
         }
@@ -178,7 +178,7 @@ function checkout_coupon_apply_context(string $type, int $userId, ?int $reservat
 
     return [
         'ok' => false,
-        'message' => 'El tipo de checkout no es valido.',
+        'message' => 'La opcion de pago no es valida.',
         'redirect_url' => 'index.php?page=dashboard',
     ];
 }

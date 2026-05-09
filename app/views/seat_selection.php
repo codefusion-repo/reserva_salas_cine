@@ -64,7 +64,7 @@ if ($hasReservationConfirmation) {
     $confirmationEyebrow = $confirmationStatus === 'pending' ? 'Reserva pendiente' : 'Reserva creada';
     $confirmationHeading = $confirmationStatus === 'pending' ? 'Reserva pendiente' : 'Reserva confirmada';
     $confirmationLead = $confirmationStatus === 'pending'
-        ? 'Guardamos tu reserva pendiente. Confirma el pago simulado para completarla.'
+        ? 'Guardamos tu reserva pendiente. Confirma para completarla.'
         : 'Guardamos tu reserva. Puedes revisarla desde tu perfil de reservas.';
     $pageTitle = $confirmationHeading;
     $confirmationSeatSummary = $confirmedSeatLabels !== [] ? implode(', ', $confirmedSeatLabels) : 'Sin butacas';
@@ -165,7 +165,7 @@ if ($hasReservationConfirmation) {
 
                 <div class="reservation-confirmation-actions" aria-label="Acciones de reserva">
                     <?php if ((string) ($reservationConfirmation['status'] ?? '') === 'pending'): ?>
-                        <a class="reservation-confirmation-action reservation-confirmation-action-primary" href="index.php?page=checkout&amp;type=reservation&amp;reservation_id=<?= e($reservationConfirmation['id'] ?? '') ?>">Ir a checkout simulado</a>
+                        <a class="reservation-confirmation-action reservation-confirmation-action-primary" href="index.php?page=checkout&amp;type=reservation&amp;reservation_id=<?= e($reservationConfirmation['id'] ?? '') ?>">Confirmar reserva</a>
                     <?php else: ?>
                         <a class="reservation-confirmation-action reservation-confirmation-action-primary" href="index.php?page=ticket&amp;reservation_id=<?= e($reservationConfirmation['id'] ?? '') ?>">Ver ticket</a>
                     <?php endif; ?>

@@ -18,7 +18,7 @@ function payment_checkout_type_label(string $type): string
 function payment_status_label(string $status): string
 {
     return match ($status) {
-        PAYMENT_STATUS_SIMULATED_PAID => 'Pagado simulado',
+        PAYMENT_STATUS_SIMULATED_PAID => 'Confirmado',
         default => 'Sin estado',
     };
 }
@@ -31,7 +31,7 @@ function payment_status_css_class(string $status): string
 function payment_method_label(string $method): string
 {
     return match ($method) {
-        PAYMENT_METHOD_SIMULATED => 'Simulado',
+        PAYMENT_METHOD_SIMULATED => 'Sin cobro real',
         default => 'No informado',
     };
 }
@@ -84,7 +84,7 @@ function payment_invoice_filename(array $payment): string
         $referenceCode = 'pago-' . (int) ($payment['id'] ?? 0);
     }
 
-    return 'comprobante-demo-' . $referenceCode . '.txt';
+    return 'comprobante-' . $referenceCode . '.txt';
 }
 
 function payment_plain_text_value(mixed $value): string
@@ -121,9 +121,9 @@ function payment_invoice_text(array $payment, array $items, array $user): string
     $showtimeLabel = reservation_datetime_label($payment['starts_at'] ?? '');
 
     $lines = [
-        'ES Cine - Comprobante simulado',
+        'ES Cine - Comprobante de prueba',
         '',
-        'Comprobante simulado.',
+        'Comprobante de prueba.',
         'No válido como factura/boleta legal.',
         'No hubo cobro real.',
         '',
@@ -171,7 +171,7 @@ function payment_invoice_text(array $payment, array $items, array $user): string
     $lines[] = '';
     $lines[] = 'Subtotal: ' . reservation_format_money((float) ($payment['subtotal_amount'] ?? 0));
     $lines[] = 'Descuento: ' . reservation_format_money((float) ($payment['discount_amount'] ?? 0));
-    $lines[] = 'Total demo: ' . reservation_format_money((float) ($payment['total_amount'] ?? 0));
+    $lines[] = 'Total: ' . reservation_format_money((float) ($payment['total_amount'] ?? 0));
 
     return implode(PHP_EOL, $lines) . PHP_EOL;
 }

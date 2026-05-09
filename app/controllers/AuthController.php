@@ -49,7 +49,7 @@ function handle_login(): void
         $user = user_find_by_email($email);
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
-        render_auth_page('login', ['No se pudo iniciar sesion en este momento.'], ['email' => $email]);
+        render_auth_page('login', ['No se pudo ingresar en este momento.'], ['email' => $email]);
         return;
     }
 
@@ -59,7 +59,7 @@ function handle_login(): void
     }
 
     auth_login(user_public_payload($user));
-    flash_set('success', 'Sesion iniciada correctamente.');
+    flash_set('success', 'Ingreso correcto.');
     redirect_to('index.php?page=dashboard');
 }
 
@@ -114,7 +114,7 @@ function handle_register(): void
     }
 
     if ($user === null) {
-        render_auth_page('register', ['No se pudo iniciar la sesion nueva.'], ['name' => $name, 'email' => $email]);
+        render_auth_page('register', ['No se pudo abrir la cuenta nueva.'], ['name' => $name, 'email' => $email]);
         return;
     }
 
@@ -126,6 +126,6 @@ function handle_register(): void
 function handle_logout(): void
 {
     auth_logout();
-    flash_set('success', 'Sesion cerrada correctamente.');
+    flash_set('success', 'Salida correcta.');
     redirect_to('index.php?page=login');
 }

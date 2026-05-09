@@ -139,7 +139,7 @@ function handle_reservation_create(): void
         return;
     }
 
-    flash_set('success', 'Reserva pendiente creada. Confirma el pago simulado para completarla.');
+    flash_set('success', 'Reserva pendiente creada. Confirma para completarla.');
     redirect_to(checkout_url('reservation', ['reservation_id' => (int) $result['reservation_id']]));
 }
 

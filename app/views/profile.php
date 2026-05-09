@@ -61,11 +61,11 @@ $memberDemoStatusLabel = trim((string) ($memberDemoStatusLabel ?? ($memberDemoAc
                     </div>
                 </dl>
                 <?php if ($profileUserLoadError): ?>
-                    <p class="profile-safe-note">Se muestran los datos de la sesion actual.</p>
+                    <p class="profile-safe-note">Algunos datos no se pudieron actualizar en este momento.</p>
                 <?php endif; ?>
             </div>
             <div class="profile-member-state<?= $memberDemoActive ? ' is-active' : '' ?>">
-                <span><?= e($memberDemoActive ? 'Socio demo activo' : $memberDemoStatusLabel) ?></span>
+                <span><?= e($memberDemoActive ? 'Socio Cine activo' : $memberDemoStatusLabel) ?></span>
                 <a href="index.php?page=socios">Socios</a>
             </div>
         </section>
@@ -90,7 +90,7 @@ $memberDemoStatusLabel = trim((string) ($memberDemoStatusLabel ?? ($memberDemoAc
             <article class="profile-stat-card">
                 <span class="profile-stat-icon" aria-hidden="true">💳</span>
                 <div>
-                    <h2>Pagos simulados</h2>
+                    <h2>Pagos</h2>
                     <p><?= $paymentSummaryLoadError ? 'No disponible' : e((string) ($paymentCount ?? 0)) ?></p>
                 </div>
             </article>
@@ -98,7 +98,7 @@ $memberDemoStatusLabel = trim((string) ($memberDemoStatusLabel ?? ($memberDemoAc
             <article class="profile-stat-card">
                 <span class="profile-stat-icon" aria-hidden="true">⭐</span>
                 <div>
-                    <h2>Membresia demo</h2>
+                    <h2>Membresia</h2>
                     <p><?= e($memberDemoStatusLabel) ?></p>
                 </div>
             </article>
@@ -119,12 +119,12 @@ $memberDemoStatusLabel = trim((string) ($memberDemoStatusLabel ?? ($memberDemoAc
                 <a class="profile-link-card" href="index.php?page=my_payments">
                     <span aria-hidden="true">💳</span>
                     <strong>Mis pagos</strong>
-                    <small>Comprobantes simulados</small>
+                    <small>Comprobantes y detalles</small>
                 </a>
                 <a class="profile-link-card" href="index.php?page=socios">
                     <span aria-hidden="true">⭐</span>
                     <strong>Socios</strong>
-                    <small>Estado de membresia demo</small>
+                    <small>Estado de membresia</small>
                 </a>
                 <a class="profile-link-card" href="index.php?page=cartelera">
                     <span aria-hidden="true">🎬</span>

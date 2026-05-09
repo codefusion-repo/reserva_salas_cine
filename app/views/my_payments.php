@@ -66,7 +66,7 @@ declare(strict_types=1);
                         <div class="payment-card-main">
                             <header class="payment-card-header">
                                 <div>
-                                    <span class="payment-reference"><?= e($referenceCode !== '' ? $referenceCode : 'Pago demo') ?></span>
+                                    <span class="payment-reference"><?= e($referenceCode !== '' ? $referenceCode : 'Pago') ?></span>
                                     <h2><?= e($summaryLabel) ?></h2>
                                 </div>
                                 <span class="reservation-status-badge status-<?= e($statusClass) ?>"><?= e($statusLabel) ?></span>

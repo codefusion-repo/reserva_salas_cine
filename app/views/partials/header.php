@@ -90,7 +90,7 @@ if ($isAuthenticated) {
     <?php if ($isAuthenticated): ?>
         <div class="user-badge-group">
             <?php if ($isMemberDemo): ?>
-                <span class="member-demo-badge" aria-label="Socio Cine Demo activo">Socio demo</span>
+                <span class="member-demo-badge" aria-label="Socio Cine activo">Socio Cine</span>
             <?php endif; ?>
 
             <div class="user-menu">

@@ -123,7 +123,7 @@ declare(strict_types=1);
 
                         <div class="reservation-actions">
                             <?php if ($status === 'pending'): ?>
-                                <a class="reservation-ticket-link" href="index.php?page=checkout&amp;type=reservation&amp;reservation_id=<?= e($reservation['id'] ?? '') ?>">Completar pago simulado</a>
+                                <a class="reservation-ticket-link" href="index.php?page=checkout&amp;type=reservation&amp;reservation_id=<?= e($reservation['id'] ?? '') ?>">Completar reserva</a>
                             <?php else: ?>
                                 <a class="reservation-ticket-link" href="index.php?page=ticket&amp;reservation_id=<?= e($reservation['id'] ?? '') ?>">Ver ticket</a>
                             <?php endif; ?>
