@@ -41,6 +41,20 @@ a {
     text-decoration: none;
 }
 
+img,
+svg,
+video,
+canvas {
+    max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+    max-width: 100%;
+}
+
 h1,
 h2,
 h3,
@@ -1425,7 +1439,7 @@ p {
     font-size: var(--font-2xl);
 }
 
-.ticket-actions {
+.ticket-area .ticket-actions {
     display: grid;
     grid-template-columns: minmax(200px, 1fr) minmax(200px, 1fr) minmax(166px, 0.78fr);
     gap: 24px;
@@ -2573,7 +2587,8 @@ p {
     text-transform: uppercase;
 }
 
-.ticket-actions {
+.ticket-screen .ticket-actions,
+.invoice-screen .ticket-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 14px;
@@ -5251,6 +5266,34 @@ p {
     outline: 0;
 }
 
+.auth-tab,
+.auth-submit,
+.inline-action,
+.movie-state-link,
+.movie-continue,
+.seat-submit,
+.reservation-confirmation-action,
+.reservation-ticket-link,
+.reservation-cancel,
+.ticket-action,
+.checkout-confirm-button,
+.checkout-secondary-link,
+.confiteria-card-button,
+.confiteria-checkout-link,
+.confiteria-cart-clear,
+.confiteria-checkout-disabled,
+.member-demo-action,
+.admin-section-action,
+.admin-action-link,
+.admin-form button,
+.admin-actions button,
+.admin-filter-reset,
+.error-action {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
 @media (max-width: 980px) {
     .cinema-topbar {
         min-height: 118px;
@@ -5405,7 +5448,7 @@ p {
         padding-right: 0;
     }
 
-    .ticket-actions {
+    .ticket-area .ticket-actions {
         grid-template-columns: 1fr;
     }
 
@@ -5565,6 +5608,7 @@ p {
     .admin-showtime-list .admin-list-head,
     .admin-concession-product-list .admin-list-head,
     .admin-coupon-list .admin-list-head,
+    .admin-reservation-list .admin-list-head,
     .admin-payment-list .admin-list-head {
         display: none;
     }
@@ -5574,6 +5618,7 @@ p {
     .admin-showtime-row,
     .admin-concession-product-row,
     .admin-coupon-row,
+    .admin-reservation-row,
     .admin-payment-row {
         grid-template-columns: 1fr;
         min-width: 0;
@@ -5753,6 +5798,187 @@ p {
     .topnav a,
     .topnav .nav-placeholder {
         flex: 1 1 auto;
+    }
+
+    .cinema-topbar {
+        position: relative;
+        z-index: 10;
+        display: grid;
+        grid-template-columns: 76px minmax(0, 1fr);
+        gap: 8px 10px;
+        align-items: start;
+        min-height: 0;
+        padding: 10px 12px 12px;
+    }
+
+    .cinema-brand {
+        grid-column: 1;
+        grid-row: 1;
+        width: 76px;
+        height: 56px;
+        flex-basis: auto;
+    }
+
+    .brand-person {
+        top: 3px;
+        width: 32px;
+        height: 26px;
+        border-radius: 20px 20px 7px 7px;
+    }
+
+    .brand-person::before,
+    .brand-person::after {
+        bottom: 8px;
+        width: 8px;
+        height: 32px;
+        border-radius: 9px 9px 5px 5px;
+    }
+
+    .brand-person::before {
+        left: -11px;
+    }
+
+    .brand-person::after {
+        right: -11px;
+    }
+
+    .brand-film {
+        bottom: 4px;
+        height: 26px;
+        gap: 4px;
+        border-width: 3px;
+        background:
+            repeating-linear-gradient(90deg, #ffffff 0 3px, transparent 3px 7px) top / 100% 4px no-repeat,
+            repeating-linear-gradient(90deg, #ffffff 0 3px, transparent 3px 7px) bottom / 100% 4px no-repeat;
+        font-size: 0.82rem;
+    }
+
+    .user-badge-group {
+        grid-column: 2;
+        grid-row: 1;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        width: 100%;
+        min-width: 0;
+        align-items: start;
+        gap: 6px;
+    }
+
+    .member-demo-badge {
+        grid-column: 1;
+        grid-row: 1;
+        min-height: 26px;
+        align-self: center;
+        padding: 4px 7px;
+        font-size: 0.56rem;
+        line-height: 1;
+    }
+
+    .user-menu {
+        position: relative;
+        grid-column: 2;
+        grid-row: 1;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .user-pill {
+        width: 100%;
+        min-width: 0;
+        min-height: 42px;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 0 8px;
+        border-radius: 5px;
+        font-size: 0.72rem;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        flex-basis: 32px;
+    }
+
+    .user-avatar::before {
+        top: 7px;
+        width: 11px;
+        height: 11px;
+    }
+
+    .user-avatar::after {
+        bottom: 6px;
+        width: 19px;
+        height: 11px;
+        border-radius: 18px 18px 6px 6px;
+    }
+
+    .user-caret {
+        border-top-width: 8px;
+        border-right-width: 8px;
+        border-left-width: 8px;
+    }
+
+    .user-pill span:not(.user-avatar):not(.user-caret) {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .user-dropdown {
+        position: absolute;
+        z-index: 30;
+        top: calc(100% + 8px);
+        right: 0;
+        left: auto;
+        width: min(280px, calc(100vw - 24px));
+        min-width: 0;
+        margin-top: 0;
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+    }
+
+    .user-dropdown a {
+        min-height: 34px;
+        font-size: 0.72rem;
+        line-height: 1.1;
+    }
+
+    .user-menu:hover .user-dropdown,
+    .user-menu:focus-within .user-dropdown {
+        gap: 6px;
+    }
+
+    .cinema-nav {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-row: 2;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        width: 100%;
+        gap: 6px;
+        overflow: visible;
+        padding: 0;
+    }
+
+    .cinema-nav a,
+    .cinema-nav .nav-placeholder {
+        min-height: 32px;
+        min-width: 0;
+        width: 100%;
+        padding: 0 8px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.1);
+        font-size: 0.68rem;
+        font-weight: 800;
+        line-height: 1;
+        text-align: center;
+    }
+
+    .cinema-nav a::after {
+        display: none;
     }
 
     .app-shell {
@@ -6154,15 +6380,15 @@ p {
 
     .seat-row,
     .seat-number-row {
-        grid-template-columns: 18px max-content 18px;
+        grid-template-columns: 18px minmax(0, 1fr) 18px;
         gap: 6px;
     }
 
     .seat-row-seats,
     .seat-number-row div {
-        grid-template-columns: repeat(var(--seat-columns), minmax(20px, 1fr));
+        grid-template-columns: repeat(var(--seat-columns), minmax(18px, 1fr));
         gap: 4px;
-        width: min(100%, 330px);
+        width: min(100%, 292px);
     }
 
     .seat-cell,
@@ -6293,7 +6519,8 @@ p {
     .ticket-details,
     .invoice-details,
     .invoice-item-row,
-    .ticket-actions {
+    .ticket-screen .ticket-actions,
+    .invoice-screen .ticket-actions {
         grid-template-columns: 1fr;
     }
 
@@ -6301,7 +6528,8 @@ p {
         justify-self: start;
     }
 
-    .ticket-actions {
+    .ticket-screen .ticket-actions,
+    .invoice-screen .ticket-actions {
         display: grid;
     }
 
@@ -6309,6 +6537,157 @@ p {
         width: 100%;
         min-height: 52px;
         font-size: 0.92rem;
+    }
+}
+
+@media (min-width: 761px) and (max-width: 980px) {
+    .admin-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .movie-grid,
+    .upcoming-grid {
+        justify-content: stretch;
+    }
+
+    .seat-board-layout {
+        justify-content: stretch;
+    }
+}
+
+@media (max-width: 420px) {
+    .cartelera-shell,
+    .movie-detail-shell,
+    .seat-selection-shell,
+    .reservations-shell,
+    .ticket-shell,
+    .checkout-shell,
+    .payments-shell,
+    .invoice-shell,
+    .profile-shell,
+    .coming-soon-shell,
+    .admin-shell,
+    .error-shell {
+        width: min(100% - 24px, 920px);
+    }
+
+    .cartelera-title {
+        margin-bottom: 26px;
+        font-size: 2rem;
+    }
+
+    .cinema-topbar {
+        grid-template-columns: 68px minmax(0, 1fr);
+        gap: 6px 8px;
+        padding: 8px 10px 10px;
+    }
+
+    .cinema-brand {
+        width: 68px;
+        height: 50px;
+    }
+
+    .brand-person {
+        width: 30px;
+        height: 24px;
+    }
+
+    .brand-film {
+        height: 24px;
+        font-size: 0.76rem;
+    }
+
+    .member-demo-badge {
+        padding-right: 6px;
+        padding-left: 6px;
+        font-size: 0.54rem;
+    }
+
+    .user-pill {
+        min-height: 40px;
+        font-size: 0.68rem;
+    }
+
+    .user-avatar {
+        width: 30px;
+        height: 30px;
+        flex-basis: 30px;
+    }
+
+    .user-caret {
+        border-top-width: 7px;
+        border-right-width: 7px;
+        border-left-width: 7px;
+    }
+
+    .cinema-nav a,
+    .cinema-nav .nav-placeholder {
+        min-height: 30px;
+        padding-right: 7px;
+        padding-left: 7px;
+        font-size: 0.6rem;
+    }
+
+    .filter-heading,
+    .filter-group,
+    .filter-actions,
+    .filter-toggle-secondary {
+        padding-right: 18px;
+        padding-left: 18px;
+    }
+
+    .filter-heading {
+        min-height: 72px;
+    }
+
+    .movie-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        justify-content: stretch;
+    }
+
+    .movie-card {
+        grid-template-rows: auto minmax(70px, auto);
+    }
+
+    .upcoming-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .seat-row,
+    .seat-number-row {
+        grid-template-columns: 15px minmax(0, 1fr) 15px;
+        gap: 4px;
+    }
+
+    .seat-row-seats,
+    .seat-number-row div {
+        width: 100%;
+        gap: 3px;
+    }
+
+    .seat-row-label,
+    .seat-number-row span {
+        font-size: 0.68rem;
+    }
+
+    .ticket-card {
+        grid-template-columns: 1fr;
+    }
+
+    .ticket-stepper {
+        min-height: 48px;
+    }
+
+    .admin-subnav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-subnav-link {
+        width: 100%;
+        padding: 0 10px;
+        text-align: center;
     }
 }
 
