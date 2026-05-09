@@ -24,6 +24,11 @@ if ($isAuthenticated) {
         'href' => 'index.php?page=my_reservations',
     ];
     $navItems[] = [
+        'key' => 'my_payments',
+        'label' => 'Mis pagos',
+        'href' => 'index.php?page=my_payments',
+    ];
+    $navItems[] = [
         'key' => 'confiteria',
         'label' => 'Confiteria',
         'href' => 'index.php?page=confiteria',
@@ -87,6 +92,7 @@ if ($isAuthenticated) {
                 <div class="user-dropdown">
                     <span><?= e($headerUser['email'] ?? '') ?></span>
                     <a href="index.php?page=my_reservations">Mis reservas</a>
+                    <a href="index.php?page=my_payments">Mis pagos</a>
                     <a href="index.php?action=logout">Cerrar sesion</a>
                 </div>
             </div>

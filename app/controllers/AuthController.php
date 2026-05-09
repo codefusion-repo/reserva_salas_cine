@@ -49,6 +49,169 @@ function render_not_found_page(string $heading, string $copy, array $messages = 
     render_error_page($heading, $copy, 404, $messages);
 }
 
+function payment_checkout_type_label(string $type): string
+{
+    return match ($type) {
+        'reservation' => 'Reserva',
+        'concessions' => 'Confiteria',
+        'membership' => 'Membresia',
+        default => 'Pago',
+    };
+}
+
+function payment_status_label(string $status): string
+{
+    return match ($status) {
+        PAYMENT_STATUS_SIMULATED_PAID => 'Pagado simulado',
+        default => 'Sin estado',
+    };
+}
+
+function payment_status_css_class(string $status): string
+{
+    return $status === PAYMENT_STATUS_SIMULATED_PAID ? 'confirmed' : 'unknown';
+}
+
+function payment_method_label(string $method): string
+{
+    return match ($method) {
+        PAYMENT_METHOD_SIMULATED => 'Simulado',
+        default => 'No informado',
+    };
+}
+
+function payment_paid_at_label(array $payment): string
+{
+    $paidAtLabel = reservation_datetime_label($payment['paid_at'] ?? '');
+
+    if ($paidAtLabel !== '') {
+        return $paidAtLabel;
+    }
+
+    return reservation_datetime_label($payment['created_at'] ?? '');
+}
+
+function payment_summary_label(array $payment): string
+{
+    $checkoutType = (string) ($payment['checkout_type'] ?? '');
+    $movieTitle = trim((string) ($payment['movie_title'] ?? ''));
+
+    if ($checkoutType === 'reservation' && $movieTitle !== '') {
+        return $movieTitle;
+    }
+
+    if ($checkoutType === 'membership') {
+        return CHECKOUT_MEMBERSHIP_PLAN_LABEL;
+    }
+
+    return payment_checkout_type_label($checkoutType);
+}
+
+function payment_reservation_code(array $payment): string
+{
+    if ((string) ($payment['checkout_type'] ?? '') !== 'reservation' || ($payment['reservation_status'] ?? null) === null) {
+        return '';
+    }
+
+    $reservationId = (int) ($payment['reservation_id'] ?? 0);
+
+    return $reservationId > 0 ? reservation_visual_code($reservationId) : '';
+}
+
+function payment_invoice_filename(array $payment): string
+{
+    $referenceCode = preg_replace('/[^A-Za-z0-9_-]/', '-', (string) ($payment['reference_code'] ?? ''));
+    $referenceCode = trim((string) $referenceCode, '-_');
+
+    if ($referenceCode === '') {
+        $referenceCode = 'pago-' . (int) ($payment['id'] ?? 0);
+    }
+
+    return 'comprobante-demo-' . $referenceCode . '.txt';
+}
+
+function payment_plain_text_value(mixed $value): string
+{
+    $normalized = preg_replace('/[ \t\r\n]+/', ' ', trim((string) $value));
+
+    return $normalized === null ? '' : $normalized;
+}
+
+function payment_invoice_text(array $payment, array $items, array $user): string
+{
+    $accountLabel = payment_plain_text_value($user['name'] ?? '');
+
+    if ($accountLabel === '') {
+        $accountLabel = 'Usuario';
+    }
+
+    $reservationCode = payment_reservation_code($payment);
+    $movieTitle = payment_plain_text_value($payment['movie_title'] ?? '');
+    $roomLabel = trim(
+        payment_plain_text_value($payment['room_name'] ?? '') . ' - ' . payment_plain_text_value($payment['room_location'] ?? ''),
+        ' -'
+    );
+    $formatLabel = trim(
+        payment_plain_text_value($payment['format_label'] ?? '') . ' - ' . payment_plain_text_value($payment['language_label'] ?? ''),
+        ' -'
+    );
+    $showtimeLabel = reservation_datetime_label($payment['starts_at'] ?? '');
+
+    $lines = [
+        'ES Cine - Comprobante simulado',
+        '',
+        'Comprobante simulado.',
+        'No válido como factura/boleta legal.',
+        'No hubo cobro real.',
+        '',
+        'Referencia: ' . payment_plain_text_value($payment['reference_code'] ?? ''),
+        'Tipo: ' . payment_checkout_type_label((string) ($payment['checkout_type'] ?? '')),
+        'Estado: ' . payment_status_label((string) ($payment['status'] ?? '')),
+        'Metodo: ' . payment_method_label((string) ($payment['payment_method'] ?? '')),
+        'Fecha: ' . payment_paid_at_label($payment),
+        'Usuario: ' . $accountLabel,
+    ];
+
+    if ($reservationCode !== '') {
+        $lines[] = 'Reserva: ' . $reservationCode;
+    }
+
+    if ($movieTitle !== '') {
+        $lines[] = 'Pelicula: ' . $movieTitle;
+    }
+
+    if ($showtimeLabel !== '') {
+        $lines[] = 'Funcion: ' . $showtimeLabel;
+    }
+
+    if ($roomLabel !== '') {
+        $lines[] = 'Sala: ' . $roomLabel;
+    }
+
+    if ($formatLabel !== '') {
+        $lines[] = 'Formato: ' . $formatLabel;
+    }
+
+    $lines[] = '';
+    $lines[] = 'Items:';
+
+    foreach ($items as $item) {
+        $quantity = max(0, (int) ($item['quantity'] ?? 0));
+        $label = payment_plain_text_value($item['item_label'] ?? 'Item');
+        $unitAmount = reservation_format_money((float) ($item['unit_amount'] ?? 0));
+        $totalAmount = reservation_format_money((float) ($item['total_amount'] ?? 0));
+
+        $lines[] = '- ' . $quantity . ' x ' . $label . ' | Unitario ' . $unitAmount . ' | Total ' . $totalAmount;
+    }
+
+    $lines[] = '';
+    $lines[] = 'Subtotal: ' . reservation_format_money((float) ($payment['subtotal_amount'] ?? 0));
+    $lines[] = 'Descuento: ' . reservation_format_money((float) ($payment['discount_amount'] ?? 0));
+    $lines[] = 'Total demo: ' . reservation_format_money((float) ($payment['total_amount'] ?? 0));
+
+    return implode(PHP_EOL, $lines) . PHP_EOL;
+}
+
 function checkout_type_from_request(mixed $value): ?string
 {
     if (!is_scalar($value)) {
@@ -497,6 +660,157 @@ function render_my_reservations(): void
     }
 
     require __DIR__ . '/../views/my_reservations.php';
+}
+
+function render_my_payments(): void
+{
+    auth_require_login();
+
+    $user = current_user();
+    $messages = flash_get();
+    $payments = [];
+    $paymentLoadError = false;
+
+    try {
+        $payments = payment_user_all((int) ($user['id'] ?? 0));
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        http_response_code(500);
+        $paymentLoadError = true;
+    }
+
+    require __DIR__ . '/../views/my_payments.php';
+}
+
+function render_payment_detail(): void
+{
+    auth_require_login();
+
+    $user = current_user();
+    $paymentId = positive_int_from_request($_GET['payment_id'] ?? null);
+
+    if ($paymentId === null) {
+        render_not_found_page(
+            'Pago no encontrado',
+            'El pago solicitado no existe o no pertenece a tu cuenta.'
+        );
+        return;
+    }
+
+    try {
+        $payment = payment_find_for_user($paymentId, (int) ($user['id'] ?? 0));
+
+        if ($payment === null) {
+            render_not_found_page(
+                'Pago no encontrado',
+                'El pago solicitado no existe o no pertenece a tu cuenta.'
+            );
+            return;
+        }
+
+        $paymentItems = payment_items_for_payment($paymentId);
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+
+        render_error_page(
+            'No se pudo cargar el pago',
+            'Intenta nuevamente mas tarde.',
+            500
+        );
+        return;
+    }
+
+    $messages = flash_get();
+
+    require __DIR__ . '/../views/payment_detail.php';
+}
+
+function render_invoice(): void
+{
+    auth_require_login();
+
+    $user = current_user();
+    $paymentId = positive_int_from_request($_GET['payment_id'] ?? null);
+
+    if ($paymentId === null) {
+        render_not_found_page(
+            'Comprobante no encontrado',
+            'El pago solicitado no existe o no pertenece a tu cuenta.'
+        );
+        return;
+    }
+
+    try {
+        $payment = payment_find_for_user($paymentId, (int) ($user['id'] ?? 0));
+
+        if ($payment === null) {
+            render_not_found_page(
+                'Comprobante no encontrado',
+                'El pago solicitado no existe o no pertenece a tu cuenta.'
+            );
+            return;
+        }
+
+        $paymentItems = payment_items_for_payment($paymentId);
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+
+        render_error_page(
+            'No se pudo cargar el comprobante',
+            'Intenta nuevamente mas tarde.',
+            500
+        );
+        return;
+    }
+
+    $messages = flash_get();
+
+    require __DIR__ . '/../views/invoice.php';
+}
+
+function handle_invoice_download(): void
+{
+    auth_require_login();
+
+    $user = current_user();
+    $paymentId = positive_int_from_request($_GET['payment_id'] ?? null);
+
+    if ($paymentId === null) {
+        render_not_found_page(
+            'Comprobante no encontrado',
+            'El pago solicitado no existe o no pertenece a tu cuenta.'
+        );
+        return;
+    }
+
+    try {
+        $payment = payment_find_for_user($paymentId, (int) ($user['id'] ?? 0));
+
+        if ($payment === null) {
+            render_not_found_page(
+                'Comprobante no encontrado',
+                'El pago solicitado no existe o no pertenece a tu cuenta.'
+            );
+            return;
+        }
+
+        $paymentItems = payment_items_for_payment($paymentId);
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+
+        render_error_page(
+            'No se pudo descargar el comprobante',
+            'Intenta nuevamente mas tarde.',
+            500
+        );
+        return;
+    }
+
+    header('Content-Type: text/plain; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="' . payment_invoice_filename($payment) . '"');
+    header('X-Content-Type-Options: nosniff');
+
+    echo payment_invoice_text($payment, $paymentItems, $user ?? []);
 }
 
 function render_reservation_ticket(): void
