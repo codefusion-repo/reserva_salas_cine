@@ -5,6 +5,7 @@ $pageTitle = (string) ($comingSoon['title'] ?? 'Proximamente');
 $activeNav = (string) ($comingSoon['activeNav'] ?? '');
 $items = is_array($comingSoon['items'] ?? null) ? $comingSoon['items'] : [];
 $notes = is_array($comingSoon['notes'] ?? null) ? $comingSoon['notes'] : [];
+$catalogItems = is_array($comingSoon['catalog'] ?? null) ? $comingSoon['catalog'] : [];
 ?>
 <!doctype html>
 <html lang="es">
@@ -63,6 +64,39 @@ $notes = is_array($comingSoon['notes'] ?? null) ? $comingSoon['notes'] : [];
                 <p><?= e($comingSoon['accentCopy'] ?? '') ?></p>
             </div>
         </section>
+
+        <?php if ($catalogItems !== []): ?>
+            <section class="confiteria-catalog" aria-labelledby="confiteria-catalog-title">
+                <div class="confiteria-catalog-heading">
+                    <div>
+                        <p class="eyebrow">Catálogo demo / visual</p>
+                        <h2 id="confiteria-catalog-title">Combos de confitería</h2>
+                    </div>
+                    <p>Compra funcional aún no disponible. No hay carrito funcional ni pago real.</p>
+                </div>
+
+                <div class="confiteria-catalog-grid">
+                    <?php foreach ($catalogItems as $catalogItem): ?>
+                        <article class="confiteria-card">
+                            <div class="confiteria-card-visual">
+                                <?php if (($catalogItem['label'] ?? '') !== ''): ?>
+                                    <span class="confiteria-card-label"><?= e($catalogItem['label']) ?></span>
+                                <?php endif; ?>
+                                <span class="confiteria-card-icon" aria-hidden="true"><?= e($catalogItem['icon'] ?? '🍿') ?></span>
+                            </div>
+                            <div class="confiteria-card-copy">
+                                <h3><?= e($catalogItem['name'] ?? '') ?></h3>
+                                <p><?= e($catalogItem['description'] ?? '') ?></p>
+                                <strong><?= e($catalogItem['price'] ?? '') ?></strong>
+                                <button class="confiteria-card-button" type="button" disabled>
+                                    <?= e($catalogItem['button'] ?? 'Próximamente') ?>
+                                </button>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        <?php endif; ?>
 
         <?php if ($items !== []): ?>
             <section class="coming-soon-grid" aria-label="Contenido futuro">
