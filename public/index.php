@@ -13,6 +13,16 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+if ($action === 'member_demo_activate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_member_demo_activate();
+    exit;
+}
+
+if ($action === 'member_demo_deactivate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_member_demo_deactivate();
+    exit;
+}
+
 if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     handle_register();
     exit;

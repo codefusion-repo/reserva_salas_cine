@@ -15,6 +15,17 @@ $catalogLoadError = ($comingSoon['catalogLoadError'] ?? false) === true;
 $catalogSetupRequired = ($comingSoon['catalogSetupRequired'] ?? false) === true;
 $cartSummary = is_array($cartSummary ?? null) ? $cartSummary : ['items' => [], 'total_label' => '$0 demo', 'is_empty' => true];
 $cartItems = is_array($cartSummary['items'] ?? null) ? $cartSummary['items'] : [];
+$memberDemo = is_array($comingSoon['memberDemo'] ?? null) ? $comingSoon['memberDemo'] : [];
+$memberDemoIsActive = (bool) ($memberDemo['isActive'] ?? false);
+$memberDemoStateActive = trim((string) ($memberDemo['stateActiveLabel'] ?? 'Socio Cine Demo activo'));
+$memberDemoStateInactive = trim((string) ($memberDemo['stateInactiveLabel'] ?? 'Sin membresía demo'));
+$memberDemoBenefitLine = trim((string) ($memberDemo['benefitLine'] ?? 'Membresía demo sin pago real'));
+$memberDemoAcademicLine = trim((string) ($memberDemo['academicLine'] ?? 'Beneficios simulados para el proyecto académico'));
+$memberDemoActivateAction = trim((string) ($memberDemo['activateAction'] ?? 'index.php?action=member_demo_activate'));
+$memberDemoDeactivateAction = trim((string) ($memberDemo['deactivateAction'] ?? 'index.php?action=member_demo_deactivate'));
+$memberDemoActivateLabel = trim((string) ($memberDemo['activateLabel'] ?? 'Activar membresía demo'));
+$memberDemoDeactivateLabel = trim((string) ($memberDemo['deactivateLabel'] ?? 'Desactivar membresía demo'));
+$isMemberDemoPage = $memberDemo !== [];
 ?>
 <!doctype html>
 <html lang="es">
@@ -62,6 +73,30 @@ $cartItems = is_array($cartSummary['items'] ?? null) ? $cartSummary['items'] : [
                 <?php endif; ?>
 
                 <div class="coming-soon-actions">
+                    <?php if ($isMemberDemoPage): ?>
+                        <div class="member-demo-state<?= $memberDemoIsActive ? ' is-active' : '' ?>">
+                            <p class="member-demo-state-title"><?= e($memberDemoIsActive ? $memberDemoStateActive : $memberDemoStateInactive) ?></p>
+                            <p class="member-demo-state-copy"><?= e($memberDemoBenefitLine) ?></p>
+                            <p class="member-demo-state-copy"><?= e($memberDemoAcademicLine) ?></p>
+                        </div>
+
+                        <?php if ($memberDemoIsActive): ?>
+                            <form action="<?= e($memberDemoDeactivateAction) ?>" method="post" class="member-demo-form">
+                                <?= csrf_token_field() ?>
+                                <button class="coming-soon-cta-button movie-state-link-secondary" type="submit">
+                                    <?= e($memberDemoDeactivateLabel) ?>
+                                </button>
+                            </form>
+                        <?php else: ?>
+                            <form action="<?= e($memberDemoActivateAction) ?>" method="post" class="member-demo-form">
+                                <?= csrf_token_field() ?>
+                                <button class="coming-soon-cta-button" type="submit">
+                                    <?= e($memberDemoActivateLabel) ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
                     <?php if ($heroActions !== []): ?>
                         <?php foreach ($heroActions as $action): ?>
                             <?php

@@ -516,9 +516,9 @@ function render_coming_soon_page(string $page): void
             'eyebrow' => 'Landing demo',
             'headline' => 'Hazte socio',
             'lead' => 'Descubre una muestra visual de los beneficios esperados para tu membresía.',
-            'support' => 'La activación de membresía no está disponible todavía.',
+            'support' => 'Membresía demo sin pago real.',
             'accent' => 'Vista previa',
-            'accentCopy' => 'Estos beneficios son de muestra y no guardan estado real de socio.',
+            'accentCopy' => 'Beneficios simulados para el proyecto académico.',
             'items' => [
                 [
                     'icon' => '🏷️',
@@ -558,13 +558,13 @@ function render_coming_soon_page(string $page): void
                 ],
             ],
             'heroActions' => [
-                ['type' => 'button', 'label' => 'Activación próximamente', 'disabled' => true],
                 ['type' => 'link', 'label' => 'Conoce beneficios', 'href' => '#socios-beneficios', 'class' => 'movie-state-link-secondary'],
             ],
             'benefitsLayout' => true,
             'benefitsSectionId' => 'socios-beneficios',
             'notes' => [
-                'No existe activación de membresía real ni demo funcional.',
+                'Membresía demo sin pago real.',
+                'Beneficios simulados para el proyecto académico.',
                 'No hay pagos, cupones, descuentos activos ni persistencia en base de datos.',
             ],
         ],
@@ -600,7 +600,23 @@ function render_coming_soon_page(string $page): void
     }
 
     $user = current_user();
+    $memberDemoActive = is_member_demo_active();
     $comingSoon = $pages[$page];
+
+    if ($page === 'socios') {
+        $comingSoon['memberDemo'] = [
+            'isActive' => $memberDemoActive,
+            'stateActiveLabel' => 'Socio Cine Demo activo',
+            'stateInactiveLabel' => 'Sin membresía demo',
+            'benefitLine' => 'Membresía demo sin pago real',
+            'academicLine' => 'Beneficios simulados para el proyecto académico',
+            'activateAction' => 'index.php?action=member_demo_activate',
+            'deactivateAction' => 'index.php?action=member_demo_deactivate',
+            'activateLabel' => 'Activar membresía demo',
+            'deactivateLabel' => 'Desactivar membresía demo',
+        ];
+    }
+
     $cartSummary = [
         'items' => [],
         'total' => 0.0,
@@ -644,6 +660,36 @@ function render_coming_soon_page(string $page): void
     $messages = flash_get();
 
     require __DIR__ . '/../views/coming_soon.php';
+}
+
+function handle_member_demo_activate(): void
+{
+    auth_require_login();
+    csrf_require_valid_post();
+
+    if (is_member_demo_active() === true) {
+        flash_set('info', 'La membresía demo ya está activa.');
+        redirect_to('index.php?page=socios');
+    }
+
+    set_member_demo_active(true);
+    flash_set('success', 'Membresía demo activada correctamente.');
+    redirect_to('index.php?page=socios');
+}
+
+function handle_member_demo_deactivate(): void
+{
+    auth_require_login();
+    csrf_require_valid_post();
+
+    if (is_member_demo_active() === false) {
+        flash_set('info', 'La membresía demo ya está desactivada.');
+        redirect_to('index.php?page=socios');
+    }
+
+    set_member_demo_active(false);
+    flash_set('success', 'Membresía demo desactivada correctamente.');
+    redirect_to('index.php?page=socios');
 }
 
 function handle_concession_add(): void

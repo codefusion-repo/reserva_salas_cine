@@ -7,6 +7,7 @@ $isAuthenticated = $headerUser !== null;
 $isAdmin = $isAuthenticated && ($headerUser['role'] ?? '') === 'admin';
 $headerName = $isAuthenticated ? (string) ($headerUser['name'] ?? 'Usuario') : 'Usuario';
 $headerFirstName = trim(explode(' ', $headerName)[0] ?? $headerName);
+$isMemberDemo = $isAuthenticated ? is_member_demo_active() : false;
 
 $navItems = [
     [
@@ -72,16 +73,22 @@ if ($isAuthenticated) {
     </nav>
 
     <?php if ($isAuthenticated): ?>
-        <div class="user-menu">
-            <button class="user-pill" type="button" aria-haspopup="true">
-                <span class="user-avatar" aria-hidden="true"></span>
-                <span>Hola, <?= e($headerFirstName !== '' ? $headerFirstName : 'Usuario') ?>!</span>
-                <span class="user-caret" aria-hidden="true"></span>
-            </button>
-            <div class="user-dropdown">
-                <span><?= e($headerUser['email'] ?? '') ?></span>
-                <a href="index.php?page=my_reservations">Mis reservas</a>
-                <a href="index.php?action=logout">Cerrar sesion</a>
+        <div class="user-badge-group">
+            <?php if ($isMemberDemo): ?>
+                <span class="member-demo-badge" aria-label="Socio Cine Demo activo">Socio demo</span>
+            <?php endif; ?>
+
+            <div class="user-menu">
+                <button class="user-pill" type="button" aria-haspopup="true">
+                    <span class="user-avatar" aria-hidden="true"></span>
+                    <span>Hola, <?= e($headerFirstName !== '' ? $headerFirstName : 'Usuario') ?>!</span>
+                    <span class="user-caret" aria-hidden="true"></span>
+                </button>
+                <div class="user-dropdown">
+                    <span><?= e($headerUser['email'] ?? '') ?></span>
+                    <a href="index.php?page=my_reservations">Mis reservas</a>
+                    <a href="index.php?action=logout">Cerrar sesion</a>
+                </div>
             </div>
         </div>
     <?php endif; ?>
