@@ -516,9 +516,9 @@ function render_coming_soon_page(string $page): void
             'eyebrow' => 'MEMBRESÍA DEMO',
             'headline' => 'HAZTE SOCIO DEMO',
             'panelKicker' => 'Demo en sesión',
-            'panelHeadline' => 'Activa tu estado socio demo',
+            'panelHeadline' => 'Activa tu membresía demo',
             'lead' => 'Activa una membresía demo para probar beneficios simulados dentro de tu sesión.',
-            'support' => 'Sin pago real, sin persistencia en base de datos y sin cambios en precios de reservas.',
+            'support' => '',
             'accent' => 'Estado de sesión',
             'accentCopy' => 'La membresía demo vive solo en tu sesión actual.',
             'featureIcon' => 'DEMO',
@@ -607,6 +607,9 @@ function render_coming_soon_page(string $page): void
     $comingSoon = $pages[$page];
 
     if ($page === 'socios') {
+        $comingSoon['panelHeadline'] = $memberDemoActive
+            ? 'Membresía demo activa'
+            : 'Activa tu membresía demo';
         $comingSoon['memberDemo'] = [
             'isActive' => $memberDemoActive,
             'stateActiveLabel' => 'Socio Cine Demo activo',

@@ -6,6 +6,8 @@ $activeNav = (string) ($comingSoon['activeNav'] ?? '');
 $items = is_array($comingSoon['items'] ?? null) ? $comingSoon['items'] : [];
 $notes = is_array($comingSoon['notes'] ?? null) ? $comingSoon['notes'] : [];
 $heroActions = is_array($comingSoon['heroActions'] ?? null) ? $comingSoon['heroActions'] : [];
+$leadText = trim((string) ($comingSoon['lead'] ?? ''));
+$supportText = trim((string) ($comingSoon['support'] ?? ''));
 $panelKicker = trim((string) ($comingSoon['panelKicker'] ?? 'Próximamente...'));
 $panelHeadline = trim((string) ($comingSoon['panelHeadline'] ?? 'Solo en cines...'));
 $featureIcon = trim((string) ($comingSoon['featureIcon'] ?? '🚧'));
@@ -71,8 +73,12 @@ $isMemberDemoPage = $memberDemo !== [];
                     <p class="coming-soon-kicker" aria-hidden="true"><?= e($panelKicker) ?></p>
                 <?php endif; ?>
                 <h2 id="coming-soon-title"><?= e($panelHeadline !== '' ? $panelHeadline : ($comingSoon['headline'] ?? $pageTitle)) ?></h2>
-                <p><?= e($comingSoon['lead'] ?? '') ?></p>
-                <p><?= e($comingSoon['support'] ?? '') ?></p>
+                <?php if ($leadText !== ''): ?>
+                    <p><?= e($leadText) ?></p>
+                <?php endif; ?>
+                <?php if ($supportText !== ''): ?>
+                    <p><?= e($supportText) ?></p>
+                <?php endif; ?>
 
                 <?php if ($notes !== []): ?>
                     <ul class="coming-soon-notes">
