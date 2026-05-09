@@ -8,6 +8,7 @@ require_once __DIR__ . '/../helpers/security.php';
 require_once __DIR__ . '/../models/Admin.php';
 require_once __DIR__ . '/../models/ConcessionProduct.php';
 require_once __DIR__ . '/../models/Movie.php';
+require_once __DIR__ . '/../models/Payment.php';
 require_once __DIR__ . '/../models/Reservation.php';
 require_once __DIR__ . '/../models/User.php';
 
@@ -186,7 +187,7 @@ function concession_checkout_last_receipt(): ?array
     return is_array($receipt) ? $receipt : null;
 }
 
-function concession_checkout_save_receipt(array $cartSummary): array
+function concession_checkout_save_receipt(array $cartSummary, ?string $referenceCode = null): array
 {
     app_session_start();
 
@@ -206,7 +207,9 @@ function concession_checkout_save_receipt(array $cartSummary): array
     }
 
     $receipt = [
-        'code' => 'CONF-' . date('Ymd-His') . '-' . random_int(100, 999),
+        'code' => $referenceCode !== null && $referenceCode !== ''
+            ? $referenceCode
+            : 'CONF-' . date('Ymd-His') . '-' . random_int(100, 999),
         'created_at' => date('Y-m-d H:i:s'),
         'items' => $items,
         'total_label' => (string) ($cartSummary['total_label'] ?? reservation_format_money(0) . ' demo'),
@@ -688,7 +691,7 @@ function render_checkout_page(): void
                 'benefits' => [
                     'Estado de socio visible durante la sesion actual.',
                     'Beneficios academicos simulados sin descuentos reales.',
-                    'Sin persistencia en base de datos y sin cambios en usuarios.',
+                    'Sin persistencia de membresia y sin cambios en usuarios.',
                 ],
             ],
         ]);
@@ -762,7 +765,40 @@ function handle_checkout_confirm(): void
             redirect_to(checkout_url('concessions'));
         }
 
-        concession_checkout_save_receipt($cartSummary);
+        $paymentItems = [];
+
+        foreach (($cartSummary['items'] ?? []) as $cartItem) {
+            if (!is_array($cartItem)) {
+                continue;
+            }
+
+            $paymentItems[] = [
+                'item_type' => 'concession',
+                'item_label' => (string) ($cartItem['name'] ?? 'Producto confiteria'),
+                'quantity' => (int) ($cartItem['quantity'] ?? 0),
+                'unit_amount' => (float) ($cartItem['unit_price'] ?? 0),
+                'total_amount' => (float) ($cartItem['subtotal'] ?? 0),
+            ];
+        }
+
+        $totalAmount = (float) ($cartSummary['total'] ?? 0);
+        $paymentResult = payment_create_simulated(
+            (int) ($user['id'] ?? 0),
+            'concessions',
+            null,
+            $paymentItems,
+            $totalAmount,
+            0.0,
+            $totalAmount
+        );
+
+        if (($paymentResult['ok'] ?? false) !== true) {
+            flash_set('error', (string) ($paymentResult['message'] ?? 'No se pudo confirmar el pago simulado.'));
+            redirect_to(checkout_url('concessions'));
+        }
+
+        $payment = is_array($paymentResult['payment'] ?? null) ? $paymentResult['payment'] : [];
+        concession_checkout_save_receipt($cartSummary, (string) ($payment['reference_code'] ?? ''));
         concession_cart_save([]);
         flash_set('success', 'Checkout de confiteria confirmado con pago simulado.');
         redirect_to(checkout_url('concessions', ['result' => 'success']));
@@ -772,6 +808,29 @@ function handle_checkout_confirm(): void
         if (is_member_demo_active()) {
             flash_set('info', 'La membresia demo ya esta activa.');
             redirect_to('index.php?page=socios');
+        }
+
+        $paymentResult = payment_create_simulated(
+            (int) ($user['id'] ?? 0),
+            'membership',
+            null,
+            [
+                [
+                    'item_type' => 'membership',
+                    'item_label' => CHECKOUT_MEMBERSHIP_PLAN_LABEL,
+                    'quantity' => 1,
+                    'unit_amount' => CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
+                    'total_amount' => CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
+                ],
+            ],
+            CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
+            0.0,
+            CHECKOUT_MEMBERSHIP_DEMO_TOTAL
+        );
+
+        if (($paymentResult['ok'] ?? false) !== true) {
+            flash_set('error', (string) ($paymentResult['message'] ?? 'No se pudo activar la membresia demo.'));
+            redirect_to(checkout_url('membership'));
         }
 
         set_member_demo_active(true);
@@ -924,7 +983,7 @@ function render_coming_soon_page(string $page): void
             'stateNotes' => [
                 $memberDemoActive
                     ? 'Estado demo activo solo en esta sesión. No aplica descuentos reales.'
-                    : 'Demo académica sin pago real ni persistencia en base de datos.',
+                    : 'Demo académica sin pago real ni persistencia de membresía.',
             ],
             'activateAction' => checkout_url('membership'),
             'activateMethod' => 'get',

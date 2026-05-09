@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../helpers/database.php';
+require_once __DIR__ . '/Payment.php';
 
 const RESERVATION_ACTIVE_STATUSES = ['pending', 'confirmed'];
 const RESERVATION_SEATS_PER_ROW = 10;
@@ -415,7 +416,7 @@ function reservation_confirm_pending_for_user(int $reservationId, int $userId): 
         $pdo->beginTransaction();
 
         $reservationStatement = $pdo->prepare(
-            'SELECT id, status
+            'SELECT id, user_id, status, total_amount
              FROM reservations
              WHERE id = :id
                AND user_id = :user_id
@@ -466,6 +467,55 @@ function reservation_confirm_pending_for_user(int $reservationId, int $userId): 
             ];
         }
 
+        $paymentStatement = $pdo->prepare(
+            'SELECT id, reference_code
+             FROM payments
+             WHERE reservation_id = :reservation_id
+             LIMIT 1
+             FOR UPDATE'
+        );
+        $paymentStatement->execute(['reservation_id' => $reservationId]);
+        $existingPayment = $paymentStatement->fetch();
+
+        if ($existingPayment !== false) {
+            $pdo->rollBack();
+
+            return [
+                'ok' => false,
+                'message' => 'La reserva ya tiene un pago simulado registrado.',
+            ];
+        }
+
+        $seatStatement = $pdo->prepare(
+            'SELECT seat_row, seat_number
+             FROM reservation_seats
+             WHERE reservation_id = :reservation_id
+             ORDER BY seat_row ASC, seat_number ASC'
+        );
+        $seatStatement->execute(['reservation_id' => $reservationId]);
+        $seats = $seatStatement->fetchAll();
+        $seatCount = max(1, count($seats));
+        $totalAmount = (float) ($reservation['total_amount'] ?? 0);
+
+        $payment = payment_insert_simulated_paid(
+            $pdo,
+            $userId,
+            'reservation',
+            $reservationId,
+            [
+                [
+                    'item_type' => 'ticket',
+                    'item_label' => 'Entradas reserva ' . reservation_visual_code($reservationId),
+                    'quantity' => $seatCount,
+                    'unit_amount' => $totalAmount / $seatCount,
+                    'total_amount' => $totalAmount,
+                ],
+            ],
+            $totalAmount,
+            0.0,
+            $totalAmount
+        );
+
         $updateStatement = $pdo->prepare(
             'UPDATE reservations
              SET status = :confirmed_status
@@ -493,7 +543,8 @@ function reservation_confirm_pending_for_user(int $reservationId, int $userId): 
 
         return [
             'ok' => true,
-            'message' => 'Reserva confirmada con pago simulado.',
+            'message' => 'Reserva confirmada con pago simulado. Referencia ' . $payment['reference_code'] . '.',
+            'payment' => $payment,
         ];
     } catch (Throwable $exception) {
         if ($pdo->inTransaction()) {
