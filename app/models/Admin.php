@@ -184,6 +184,26 @@ function admin_room_deactivate(int $roomId): bool
     return admin_room_set_active($roomId, false);
 }
 
+function admin_room_has_showtimes(int $roomId): bool
+{
+    return db_fetch_one(
+        'SELECT id
+         FROM showtimes
+         WHERE room_id = :room_id
+         LIMIT 1',
+        ['room_id' => $roomId]
+    ) !== null;
+}
+
+function admin_room_delete(int $roomId): bool
+{
+    return db_execute(
+        'DELETE FROM rooms
+         WHERE id = :id',
+        ['id' => $roomId]
+    );
+}
+
 function admin_movies_all(): array
 {
     return db_fetch_all(
@@ -299,6 +319,26 @@ function admin_movie_set_active(int $movieId, bool $isActive): bool
             'id' => $movieId,
             'is_active' => $isActive ? 1 : 0,
         ]
+    );
+}
+
+function admin_movie_has_showtimes(int $movieId): bool
+{
+    return db_fetch_one(
+        'SELECT id
+         FROM showtimes
+         WHERE movie_id = :movie_id
+         LIMIT 1',
+        ['movie_id' => $movieId]
+    ) !== null;
+}
+
+function admin_movie_delete(int $movieId): bool
+{
+    return db_execute(
+        'DELETE FROM movies
+         WHERE id = :id',
+        ['id' => $movieId]
     );
 }
 
@@ -465,6 +505,26 @@ function admin_showtime_set_active(int $showtimeId, bool $isActive): bool
             'id' => $showtimeId,
             'is_active' => $isActive ? 1 : 0,
         ]
+    );
+}
+
+function admin_showtime_has_reservations(int $showtimeId): bool
+{
+    return db_fetch_one(
+        'SELECT id
+         FROM reservations
+         WHERE showtime_id = :showtime_id
+         LIMIT 1',
+        ['showtime_id' => $showtimeId]
+    ) !== null;
+}
+
+function admin_showtime_delete(int $showtimeId): bool
+{
+    return db_execute(
+        'DELETE FROM showtimes
+         WHERE id = :id',
+        ['id' => $showtimeId]
     );
 }
 
