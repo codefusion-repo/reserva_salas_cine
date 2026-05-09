@@ -86,6 +86,31 @@ function payment_insert_simulated_paid(
         throw new InvalidArgumentException('El pago requiere al menos un item.');
     }
 
+    $normalizedSubtotalAmount = payment_amount_from_value($subtotalAmount);
+    $normalizedDiscountAmount = payment_amount_from_value($discountAmount);
+    $normalizedTotalAmount = payment_amount_from_value($totalAmount);
+    $itemsTotalCents = 0;
+
+    foreach ($normalizedItems as $item) {
+        $itemsTotalCents += payment_amount_to_cents((float) $item['total_amount']);
+    }
+
+    $subtotalCents = payment_amount_to_cents($normalizedSubtotalAmount);
+    $discountCents = payment_amount_to_cents($normalizedDiscountAmount);
+    $totalCents = payment_amount_to_cents($normalizedTotalAmount);
+
+    if ($itemsTotalCents !== $subtotalCents) {
+        throw new InvalidArgumentException('El subtotal del pago no coincide con sus items.');
+    }
+
+    if ($discountCents > $subtotalCents) {
+        throw new InvalidArgumentException('El descuento no puede superar el subtotal.');
+    }
+
+    if (($subtotalCents - $discountCents) !== $totalCents) {
+        throw new InvalidArgumentException('El total del pago no coincide con subtotal menos descuento.');
+    }
+
     $referenceCode = payment_reference_code($checkoutType);
 
     $paymentStatement = $pdo->prepare(
@@ -122,9 +147,9 @@ function payment_insert_simulated_paid(
         'reservation_id' => $reservationId,
         'reference_code' => $referenceCode,
         'status' => PAYMENT_STATUS_SIMULATED_PAID,
-        'subtotal_amount' => payment_amount_to_db($subtotalAmount),
-        'discount_amount' => payment_amount_to_db($discountAmount),
-        'total_amount' => payment_amount_to_db($totalAmount),
+        'subtotal_amount' => payment_amount_to_db($normalizedSubtotalAmount),
+        'discount_amount' => payment_amount_to_db($normalizedDiscountAmount),
+        'total_amount' => payment_amount_to_db($normalizedTotalAmount),
         'currency' => PAYMENT_CURRENCY_CLP,
         'payment_method' => PAYMENT_METHOD_SIMULATED,
     ]);
@@ -251,4 +276,13 @@ function payment_amount_to_db(float $amount): string
     }
 
     return number_format($amount, 2, '.', '');
+}
+
+function payment_amount_to_cents(float $amount): int
+{
+    if ($amount < 0) {
+        throw new InvalidArgumentException('Monto de pago negativo no permitido.');
+    }
+
+    return (int) round($amount * 100);
 }

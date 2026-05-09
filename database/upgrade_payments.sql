@@ -3,10 +3,10 @@
 -- Este script es idempotente, demo-only, y solo instala pagos simulados.
 -- No modifica usuarios, peliculas, salas, funciones, reservas existentes, productos,
 -- membresias, pasarelas, datos de tarjeta, facturas, historial de usuario ni UI admin.
+-- Ejecutar contra la base activa, por ejemplo:
+-- mysql -u root reserva_salas_cine < database/upgrade_payments.sql
 
 SET NAMES utf8mb4;
-
-USE reserva_salas_cine;
 
 CREATE TABLE IF NOT EXISTS payments (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
