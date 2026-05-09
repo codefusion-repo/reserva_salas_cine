@@ -994,6 +994,35 @@ function handle_room_set_active(): void
     redirect_to(admin_section_url('rooms'));
 }
 
+function handle_room_delete(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    $roomId = positive_int_from_request($_POST['room_id'] ?? null);
+
+    if ($roomId === null) {
+        flash_set('error', 'Selecciona una sala valida para eliminar.');
+        redirect_to(admin_section_url('rooms'));
+    }
+
+    try {
+        if (admin_room_find_by_id((int) $roomId) === null) {
+            flash_set('error', 'La sala seleccionada no existe.');
+        } elseif (admin_room_has_showtimes((int) $roomId)) {
+            flash_set('error', 'No se puede eliminar esta sala porque tiene funciones asociadas. Puedes desactivarla.');
+        } else {
+            admin_room_delete((int) $roomId);
+            flash_set('success', 'Sala eliminada correctamente.');
+        }
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo eliminar la sala en este momento.');
+    }
+
+    redirect_to(admin_section_url('rooms'));
+}
+
 function handle_movie_create(): void
 {
     auth_require_admin_action();
@@ -1099,6 +1128,35 @@ function handle_movie_set_active(): void
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
         flash_set('error', 'No se pudo cambiar el estado de la pelicula.');
+    }
+
+    redirect_to(admin_section_url('movies'));
+}
+
+function handle_movie_delete(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    $movieId = positive_int_from_request($_POST['movie_id'] ?? null);
+
+    if ($movieId === null) {
+        flash_set('error', 'Selecciona una pelicula valida para eliminar.');
+        redirect_to(admin_section_url('movies'));
+    }
+
+    try {
+        if (admin_movie_find_by_id((int) $movieId) === null) {
+            flash_set('error', 'La pelicula seleccionada no existe.');
+        } elseif (admin_movie_has_showtimes((int) $movieId)) {
+            flash_set('error', 'No se puede eliminar esta película porque tiene funciones asociadas. Puedes desactivarla.');
+        } else {
+            admin_movie_delete((int) $movieId);
+            flash_set('success', 'Película eliminada correctamente.');
+        }
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo eliminar la pelicula en este momento.');
     }
 
     redirect_to(admin_section_url('movies'));
@@ -1266,6 +1324,35 @@ function handle_showtime_deactivate(): void
 {
     $_POST['target_status'] = '0';
     handle_showtime_set_active();
+}
+
+function handle_showtime_delete(): void
+{
+    auth_require_admin_action();
+    csrf_require_valid_post();
+
+    $showtimeId = positive_int_from_request($_POST['showtime_id'] ?? null);
+
+    if ($showtimeId === null) {
+        flash_set('error', 'Selecciona una funcion valida para eliminar.');
+        redirect_to(admin_section_url('showtimes'));
+    }
+
+    try {
+        if (admin_showtime_find_by_id((int) $showtimeId) === null) {
+            flash_set('error', 'La funcion seleccionada no existe.');
+        } elseif (admin_showtime_has_reservations((int) $showtimeId)) {
+            flash_set('error', 'No se puede eliminar esta función porque tiene reservas asociadas. Puedes desactivarla.');
+        } else {
+            admin_showtime_delete((int) $showtimeId);
+            flash_set('success', 'Función eliminada correctamente.');
+        }
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo eliminar la funcion en este momento.');
+    }
+
+    redirect_to(admin_section_url('showtimes'));
 }
 
 function admin_room_payload_from_post(): array

@@ -225,6 +225,17 @@ if ($nextShowtime !== null) {
                                             <?= e($targetLabel) ?>
                                         </button>
                                     </form>
+                                    <form method="post" action="index.php?action=delete_room">
+                                        <?= csrf_token_field() ?>
+                                        <input type="hidden" name="room_id" value="<?= e($room['id'] ?? '') ?>">
+                                        <button
+                                            class="admin-danger admin-delete"
+                                            type="submit"
+                                            data-confirm-action="¿Eliminar esta sala? Esta acción no se puede deshacer."
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -379,6 +390,17 @@ if ($nextShowtime !== null) {
                                             data-confirm-action="<?= e($targetLabel) ?> esta pelicula?"
                                         >
                                             <?= e($targetLabel) ?>
+                                        </button>
+                                    </form>
+                                    <form method="post" action="index.php?action=delete_movie">
+                                        <?= csrf_token_field() ?>
+                                        <input type="hidden" name="movie_id" value="<?= e($movie['id'] ?? '') ?>">
+                                        <button
+                                            class="admin-danger admin-delete"
+                                            type="submit"
+                                            data-confirm-action="¿Eliminar esta película? Esta acción no se puede deshacer."
+                                        >
+                                            Eliminar
                                         </button>
                                     </form>
                                 </div>
@@ -582,6 +604,17 @@ if ($nextShowtime !== null) {
                                             data-confirm-action="<?= e($targetLabel) ?> esta funcion?"
                                         >
                                             <?= e($targetLabel) ?>
+                                        </button>
+                                    </form>
+                                    <form method="post" action="index.php?action=delete_showtime">
+                                        <?= csrf_token_field() ?>
+                                        <input type="hidden" name="showtime_id" value="<?= e($showtime['id'] ?? '') ?>">
+                                        <button
+                                            class="admin-danger admin-delete"
+                                            type="submit"
+                                            data-confirm-action="¿Eliminar esta función? Esta acción no se puede deshacer."
+                                        >
+                                            Eliminar
                                         </button>
                                     </form>
                                 </div>

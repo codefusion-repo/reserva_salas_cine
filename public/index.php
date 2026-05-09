@@ -48,6 +48,11 @@ if ($action === 'set_room_active' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+if ($action === 'delete_room' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_room_delete();
+    exit;
+}
+
 if ($action === 'deactivate_room' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     handle_room_deactivate();
     exit;
@@ -68,6 +73,11 @@ if ($action === 'set_movie_active' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+if ($action === 'delete_movie' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_movie_delete();
+    exit;
+}
+
 if ($action === 'create_showtime' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     handle_showtime_create();
     exit;
@@ -80,6 +90,11 @@ if ($action === 'update_showtime' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if ($action === 'set_showtime_active' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     handle_showtime_set_active();
+    exit;
+}
+
+if ($action === 'delete_showtime' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_showtime_delete();
     exit;
 }
 
