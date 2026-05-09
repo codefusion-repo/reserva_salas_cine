@@ -303,6 +303,129 @@ function payment_items_for_payment(int $paymentId): array
     );
 }
 
+function payment_admin_all(array $filters = []): array
+{
+    [$whereSql, $params] = payment_admin_filter_sql($filters);
+    $sql = payment_admin_select_sql();
+
+    if ($whereSql !== '') {
+        $sql .= ' WHERE ' . $whereSql;
+    }
+
+    $sql .= ' ORDER BY COALESCE(p.paid_at, p.created_at) DESC, p.id DESC';
+
+    return db_fetch_all($sql, $params);
+}
+
+function payment_find_for_admin(int $paymentId): ?array
+{
+    if ($paymentId <= 0) {
+        return null;
+    }
+
+    return db_fetch_one(
+        payment_admin_select_sql() . ' WHERE p.id = :id LIMIT 1',
+        ['id' => $paymentId]
+    );
+}
+
+function payment_admin_select_sql(): string
+{
+    return "SELECT
+            p.id,
+            p.user_id,
+            u.name AS user_name,
+            u.email AS user_email,
+            p.checkout_type,
+            p.reservation_id,
+            p.reference_code,
+            p.status,
+            p.subtotal_amount,
+            p.discount_amount,
+            p.total_amount,
+            p.currency,
+            p.payment_method,
+            p.paid_at,
+            p.created_at,
+            r.status AS reservation_status,
+            m.title AS movie_title,
+            rm.name AS room_name,
+            rm.location AS room_location,
+            s.starts_at,
+            s.ends_at,
+            s.format_label,
+            s.language_label
+         FROM payments p
+         INNER JOIN users u ON u.id = p.user_id
+         LEFT JOIN reservations r
+            ON r.id = p.reservation_id
+           AND r.user_id = p.user_id
+         LEFT JOIN showtimes s ON s.id = r.showtime_id
+         LEFT JOIN movies m ON m.id = s.movie_id
+         LEFT JOIN rooms rm ON rm.id = s.room_id";
+}
+
+function payment_admin_filter_sql(array $filters): array
+{
+    $conditions = [];
+    $params = [];
+    $checkoutType = (string) ($filters['checkout_type'] ?? '');
+
+    if (in_array($checkoutType, PAYMENT_ALLOWED_CHECKOUT_TYPES, true)) {
+        $conditions[] = 'p.checkout_type = :checkout_type';
+        $params['checkout_type'] = $checkoutType;
+    }
+
+    $status = (string) ($filters['status'] ?? '');
+
+    if ($status === PAYMENT_STATUS_SIMULATED_PAID) {
+        $conditions[] = 'p.status = :status';
+        $params['status'] = $status;
+    }
+
+    $dateFrom = (string) ($filters['date_from'] ?? '');
+
+    if ($dateFrom !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) === 1) {
+        $conditions[] = 'COALESCE(p.paid_at, p.created_at) >= :date_from_start';
+        $params['date_from_start'] = $dateFrom . ' 00:00:00';
+    }
+
+    $dateTo = (string) ($filters['date_to'] ?? '');
+
+    if ($dateTo !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) === 1) {
+        try {
+            $dateToNext = (new DateTimeImmutable($dateTo))->modify('+1 day')->format('Y-m-d');
+            $conditions[] = 'COALESCE(p.paid_at, p.created_at) < :date_to_next_day';
+            $params['date_to_next_day'] = $dateToNext . ' 00:00:00';
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+        }
+    }
+
+    $search = trim((string) ($filters['q'] ?? ''));
+
+    if ($search !== '') {
+        $likeSearch = '%' . $search . '%';
+        $conditions[] = '(u.name LIKE :q_user_name
+            OR u.email LIKE :q_user_email
+            OR p.reference_code LIKE :q_reference
+            OR CAST(p.id AS CHAR) LIKE :q_payment_id
+            OR CAST(p.user_id AS CHAR) LIKE :q_user_id
+            OR CONCAT(\'RSC-\', LPAD(COALESCE(p.reservation_id, 0), 6, \'0\')) LIKE :q_reservation_code)';
+        $params['q_user_name'] = $likeSearch;
+        $params['q_user_email'] = $likeSearch;
+        $params['q_reference'] = $likeSearch;
+        $params['q_payment_id'] = $likeSearch;
+        $params['q_user_id'] = $likeSearch;
+        $params['q_reservation_code'] = $likeSearch;
+    }
+
+    return [
+        implode(' AND ', $conditions),
+        $params,
+    ];
+}
+
 function payment_normalize_items(array $items): array
 {
     $normalized = [];

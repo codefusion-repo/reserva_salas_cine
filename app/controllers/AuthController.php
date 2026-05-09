@@ -49,6 +49,19 @@ function render_not_found_page(string $heading, string $copy, array $messages = 
     render_error_page($heading, $copy, 404, $messages);
 }
 
+function render_admin_denied_page(): void
+{
+    $user = current_user();
+    $messages = [
+        [
+            'type' => 'error',
+            'message' => 'Acceso denegado. Esta vista requiere rol administrador.',
+        ],
+    ];
+
+    require __DIR__ . '/../views/admin_denied.php';
+}
+
 function payment_checkout_type_label(string $type): string
 {
     return match ($type) {
@@ -1760,15 +1773,7 @@ function movie_spanish_month(DateTimeImmutable $date): string
 function render_admin_panel(): void
 {
     if (!auth_require_admin()) {
-        $user = current_user();
-        $messages = [
-            [
-                'type' => 'error',
-                'message' => 'Acceso denegado. Esta vista requiere rol administrador.',
-            ],
-        ];
-
-        require __DIR__ . '/../views/admin_denied.php';
+        render_admin_denied_page();
         return;
     }
 
@@ -1806,6 +1811,11 @@ function render_admin_panel(): void
             'key' => 'concessions',
             'label' => 'Confiteria',
             'url' => admin_section_url('concessions'),
+        ],
+        [
+            'key' => 'payments',
+            'label' => 'Pagos',
+            'url' => 'index.php?page=admin_payments',
         ],
         [
             'key' => 'reservations',
@@ -1914,6 +1924,197 @@ function render_admin_panel(): void
     }
 
     require __DIR__ . '/../views/admin.php';
+}
+
+function render_admin_payments(): void
+{
+    if (!auth_require_admin()) {
+        render_admin_denied_page();
+        return;
+    }
+
+    $user = current_user();
+    $messages = flash_get();
+    $adminPaymentFilters = admin_payment_filters_from_request($_GET);
+    $adminPayments = [];
+    $adminPaymentSummary = [
+        'count' => 0,
+        'total_amount' => 0.0,
+        'latest_date' => '',
+    ];
+    $adminPaymentLoadError = false;
+
+    try {
+        $adminPayments = payment_admin_all($adminPaymentFilters);
+        $adminPaymentSummary['count'] = count($adminPayments);
+
+        foreach ($adminPayments as $payment) {
+            $adminPaymentSummary['total_amount'] += (float) ($payment['total_amount'] ?? 0);
+
+            if ($adminPaymentSummary['latest_date'] === '') {
+                $adminPaymentSummary['latest_date'] = (string) (($payment['paid_at'] ?? '') ?: ($payment['created_at'] ?? ''));
+            }
+        }
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        http_response_code(500);
+        $adminPaymentLoadError = true;
+    }
+
+    require __DIR__ . '/../views/admin_payments.php';
+}
+
+function render_admin_payment_detail(): void
+{
+    if (!auth_require_admin()) {
+        render_admin_denied_page();
+        return;
+    }
+
+    $paymentId = positive_int_from_request($_GET['payment_id'] ?? null);
+
+    if ($paymentId === null) {
+        render_not_found_page(
+            'Pago no encontrado',
+            'Selecciona un pago valido para revisar.'
+        );
+        return;
+    }
+
+    try {
+        $payment = payment_find_for_admin($paymentId);
+
+        if ($payment === null) {
+            render_not_found_page(
+                'Pago no encontrado',
+                'El pago solicitado no existe.'
+            );
+            return;
+        }
+
+        $paymentItems = payment_items_for_payment($paymentId);
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+
+        render_error_page(
+            'No se pudo cargar el pago',
+            'Intenta nuevamente mas tarde.',
+            500
+        );
+        return;
+    }
+
+    $user = current_user();
+    $messages = flash_get();
+
+    require __DIR__ . '/../views/admin_payment_detail.php';
+}
+
+function render_admin_invoice(): void
+{
+    if (!auth_require_admin()) {
+        render_admin_denied_page();
+        return;
+    }
+
+    $paymentId = positive_int_from_request($_GET['payment_id'] ?? null);
+
+    if ($paymentId === null) {
+        render_not_found_page(
+            'Comprobante no encontrado',
+            'Selecciona un pago valido para abrir el comprobante.'
+        );
+        return;
+    }
+
+    try {
+        $payment = payment_find_for_admin($paymentId);
+
+        if ($payment === null) {
+            render_not_found_page(
+                'Comprobante no encontrado',
+                'El pago solicitado no existe.'
+            );
+            return;
+        }
+
+        $paymentItems = payment_items_for_payment($paymentId);
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+
+        render_error_page(
+            'No se pudo cargar el comprobante',
+            'Intenta nuevamente mas tarde.',
+            500
+        );
+        return;
+    }
+
+    $user = current_user();
+    $messages = flash_get();
+    $invoiceUser = admin_payment_invoice_user($payment);
+    $invoiceActiveNav = 'admin';
+    $invoiceBackUrl = 'index.php?page=admin_payment_detail&payment_id=' . (int) $paymentId;
+    $invoiceDownloadUrl = 'index.php?action=admin_invoice_download&payment_id=' . (int) $paymentId;
+    $invoiceBackLabel = 'Volver al detalle admin';
+    $invoiceHeadingEyebrow = 'Comprobante admin';
+
+    require __DIR__ . '/../views/invoice.php';
+}
+
+function handle_admin_invoice_download(): void
+{
+    if (!auth_require_admin()) {
+        render_admin_denied_page();
+        return;
+    }
+
+    $paymentId = positive_int_from_request($_GET['payment_id'] ?? null);
+
+    if ($paymentId === null) {
+        render_not_found_page(
+            'Comprobante no encontrado',
+            'Selecciona un pago valido para descargar el comprobante.'
+        );
+        return;
+    }
+
+    try {
+        $payment = payment_find_for_admin($paymentId);
+
+        if ($payment === null) {
+            render_not_found_page(
+                'Comprobante no encontrado',
+                'El pago solicitado no existe.'
+            );
+            return;
+        }
+
+        $paymentItems = payment_items_for_payment($paymentId);
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+
+        render_error_page(
+            'No se pudo descargar el comprobante',
+            'Intenta nuevamente mas tarde.',
+            500
+        );
+        return;
+    }
+
+    header('Content-Type: text/plain; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="' . payment_invoice_filename($payment) . '"');
+    header('X-Content-Type-Options: nosniff');
+
+    echo payment_invoice_text($payment, $paymentItems, admin_payment_invoice_user($payment));
+}
+
+function admin_payment_invoice_user(array $payment): array
+{
+    return [
+        'name' => (string) ($payment['user_name'] ?? ''),
+        'email' => (string) ($payment['user_email'] ?? ''),
+    ];
 }
 
 function handle_room_create(): void
@@ -2653,6 +2854,39 @@ function admin_reservation_filters_from_request(array $request): array
     return [
         'status' => $status,
         'q' => movie_filter_value_from_request($request['q'] ?? '', 80),
+    ];
+}
+
+function admin_payment_filters_from_request(array $request): array
+{
+    $checkoutType = '';
+    $checkoutTypeValue = '';
+
+    if (is_scalar($request['checkout_type'] ?? null)) {
+        $checkoutTypeValue = strtolower(trim((string) $request['checkout_type']));
+    }
+
+    if (in_array($checkoutTypeValue, PAYMENT_ALLOWED_CHECKOUT_TYPES, true)) {
+        $checkoutType = $checkoutTypeValue;
+    }
+
+    $status = '';
+    $statusValue = '';
+
+    if (is_scalar($request['status'] ?? null)) {
+        $statusValue = strtolower(trim((string) $request['status']));
+    }
+
+    if ($statusValue === PAYMENT_STATUS_SIMULATED_PAID) {
+        $status = $statusValue;
+    }
+
+    return [
+        'checkout_type' => $checkoutType,
+        'status' => $status,
+        'q' => movie_filter_value_from_request($request['q'] ?? '', 100),
+        'date_from' => admin_date_filter_from_request($request['date_from'] ?? null),
+        'date_to' => admin_date_filter_from_request($request['date_to'] ?? null),
     ];
 }
 

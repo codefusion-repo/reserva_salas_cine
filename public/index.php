@@ -38,6 +38,11 @@ if ($action === 'invoice_download') {
     exit;
 }
 
+if ($action === 'admin_invoice_download') {
+    handle_admin_invoice_download();
+    exit;
+}
+
 if ($action === 'create_reservation' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     handle_reservation_create();
     exit;
@@ -204,6 +209,18 @@ switch ($page) {
 
     case 'invoice':
         render_invoice();
+        break;
+
+    case 'admin_payments':
+        render_admin_payments();
+        break;
+
+    case 'admin_payment_detail':
+        render_admin_payment_detail();
+        break;
+
+    case 'admin_invoice':
+        render_admin_invoice();
         break;
 
     case 'ticket':

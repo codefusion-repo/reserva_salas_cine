@@ -10,8 +10,14 @@ $statusLabel = payment_status_label($status);
 $paidAtLabel = payment_paid_at_label($payment);
 $reservationCode = payment_reservation_code($payment);
 $summaryLabel = payment_summary_label($payment);
-$accountLabel = trim((string) ($user['name'] ?? ''));
-$accountEmail = trim((string) ($user['email'] ?? ''));
+$accountUser = is_array($invoiceUser ?? null) ? $invoiceUser : (is_array($user ?? null) ? $user : []);
+$invoiceActiveNav = isset($invoiceActiveNav) ? (string) $invoiceActiveNav : 'my_payments';
+$invoiceBackUrl = isset($invoiceBackUrl) ? (string) $invoiceBackUrl : 'index.php?page=payment_detail&payment_id=' . $paymentId;
+$invoiceDownloadUrl = isset($invoiceDownloadUrl) ? (string) $invoiceDownloadUrl : 'index.php?action=invoice_download&payment_id=' . $paymentId;
+$invoiceBackLabel = isset($invoiceBackLabel) ? (string) $invoiceBackLabel : 'Volver al detalle de pago';
+$invoiceHeadingEyebrow = isset($invoiceHeadingEyebrow) ? (string) $invoiceHeadingEyebrow : 'Comprobante';
+$accountLabel = trim((string) ($accountUser['name'] ?? ''));
+$accountEmail = trim((string) ($accountUser['email'] ?? ''));
 $movieTitle = trim((string) ($payment['movie_title'] ?? ''));
 $roomLabel = trim(
     (string) ($payment['room_name'] ?? '') . ' - ' . (string) ($payment['room_location'] ?? ''),
@@ -41,7 +47,7 @@ if ($accountEmail === '') {
 </head>
 <body class="app-screen invoice-screen">
     <?php
-    $activeNav = 'my_payments';
+    $activeNav = $invoiceActiveNav;
     require __DIR__ . '/partials/header.php';
     ?>
 
@@ -55,11 +61,11 @@ if ($accountEmail === '') {
         <?php endif; ?>
 
         <div class="invoice-heading no-print">
-            <a class="movie-back" href="index.php?page=payment_detail&amp;payment_id=<?= e($paymentId) ?>" aria-label="Volver al detalle de pago">
+            <a class="movie-back" href="<?= e($invoiceBackUrl) ?>" aria-label="<?= e($invoiceBackLabel) ?>">
                 <span aria-hidden="true"></span>
             </a>
             <div>
-                <p class="eyebrow">Comprobante</p>
+                <p class="eyebrow"><?= e($invoiceHeadingEyebrow) ?></p>
                 <h1><?= e($referenceCode !== '' ? $referenceCode : 'Pago demo') ?></h1>
                 <p>Vista imprimible y descarga simple en TXT.</p>
             </div>
@@ -185,8 +191,8 @@ if ($accountEmail === '') {
 
         <div class="ticket-actions invoice-actions no-print" aria-label="Acciones del comprobante">
             <button class="ticket-action ticket-action-primary" type="button" data-print-ticket>Imprimir comprobante</button>
-            <a class="ticket-action ticket-action-secondary" href="index.php?action=invoice_download&amp;payment_id=<?= e($paymentId) ?>">Descargar TXT</a>
-            <a class="ticket-action ticket-action-secondary" href="index.php?page=payment_detail&amp;payment_id=<?= e($paymentId) ?>">Volver al detalle</a>
+            <a class="ticket-action ticket-action-secondary" href="<?= e($invoiceDownloadUrl) ?>">Descargar TXT</a>
+            <a class="ticket-action ticket-action-secondary" href="<?= e($invoiceBackUrl) ?>">Volver al detalle</a>
         </div>
     </main>
 
