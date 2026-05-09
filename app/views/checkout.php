@@ -30,6 +30,7 @@ $catalogSetupRequired = ($checkout['catalog_setup_required'] ?? false) === true;
 $lastReceipt = is_array($checkout['last_receipt'] ?? null) ? $checkout['last_receipt'] : null;
 $membershipPlan = is_array($checkout['membership_plan'] ?? null) ? $checkout['membership_plan'] : [];
 $memberDemoActive = ($checkout['member_demo_active'] ?? false) === true;
+$memberDemoStatusLabel = trim((string) ($checkout['member_demo_status_label'] ?? ($memberDemoActive ? 'Activa' : 'Pendiente')));
 $paymentStateLabel = $canConfirm ? 'Listo para confirmar' : 'No disponible';
 $confirmButtonLabel = match ($checkoutType) {
     'reservation' => 'Confirmar reserva',
@@ -40,7 +41,7 @@ $confirmButtonLabel = match ($checkoutType) {
 $paymentHelp = match ($checkoutType) {
     'reservation' => 'La reserva pasara de pendiente a confirmada al completar este paso.',
     'concessions' => 'Se generara un comprobante demo en sesion y el carrito quedara vacio.',
-    'membership' => 'La membresia demo quedara activa solo en esta sesion.',
+    'membership' => 'La membresia demo quedara persistida en tu cuenta.',
     default => 'Confirma el checkout simulado para continuar.',
 };
 $reservationSeatLabels = [];
@@ -194,11 +195,11 @@ $receiptItems = $lastReceipt !== null && is_array($lastReceipt['items'] ?? null)
                 <?php elseif ($checkoutType === 'membership'): ?>
                     <div class="checkout-membership-plan">
                         <h3><?= e($membershipPlan['name'] ?? CHECKOUT_MEMBERSHIP_PLAN_LABEL) ?></h3>
-                        <p>Activacion demo para probar el estado de socio durante la sesion actual.</p>
+                        <p>Activacion demo para probar el estado de socio persistido.</p>
                         <?php if ($memberDemoActive): ?>
-                            <span class="reservation-status-badge status-confirmed">Activo</span>
+                            <span class="reservation-status-badge status-confirmed"><?= e($memberDemoStatusLabel) ?></span>
                         <?php else: ?>
-                            <span class="reservation-status-badge status-pending">Pendiente</span>
+                            <span class="reservation-status-badge status-pending"><?= e($memberDemoStatusLabel) ?></span>
                         <?php endif; ?>
                     </div>
 

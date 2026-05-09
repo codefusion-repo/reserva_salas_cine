@@ -9,6 +9,7 @@ $latestTicketId = is_array($latestTicket) ? (int) ($latestTicket['id'] ?? 0) : 0
 $latestTicketCode = $latestTicketId > 0 ? reservation_visual_code($latestTicketId) : '';
 $latestTicketMovie = is_array($latestTicket) ? trim((string) ($latestTicket['movie_title'] ?? '')) : '';
 $latestTicketDate = is_array($latestTicket) ? reservation_datetime_label($latestTicket['starts_at'] ?? '') : '';
+$memberDemoStatusLabel = trim((string) ($memberDemoStatusLabel ?? ($memberDemoActive ? 'Activa' : 'Inactiva')));
 ?>
 <!doctype html>
 <html lang="es">
@@ -64,7 +65,7 @@ $latestTicketDate = is_array($latestTicket) ? reservation_datetime_label($latest
                 <?php endif; ?>
             </div>
             <div class="profile-member-state<?= $memberDemoActive ? ' is-active' : '' ?>">
-                <span><?= $memberDemoActive ? 'Socio demo activo' : 'Sin membresia demo' ?></span>
+                <span><?= e($memberDemoActive ? 'Socio demo activo' : $memberDemoStatusLabel) ?></span>
                 <a href="index.php?page=socios">Socios</a>
             </div>
         </section>
@@ -98,7 +99,7 @@ $latestTicketDate = is_array($latestTicket) ? reservation_datetime_label($latest
                 <span class="profile-stat-icon" aria-hidden="true">⭐</span>
                 <div>
                     <h2>Membresia demo</h2>
-                    <p><?= $memberDemoActive ? 'Activa' : 'Inactiva' ?></p>
+                    <p><?= e($memberDemoStatusLabel) ?></p>
                 </div>
             </article>
         </section>

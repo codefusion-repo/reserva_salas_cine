@@ -171,6 +171,29 @@ CREATE TABLE IF NOT EXISTS payments (
     KEY idx_payments_status_paid_at (status, paid_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS user_memberships (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
+    plan_code VARCHAR(40) NOT NULL,
+    status ENUM('active', 'cancelled', 'expired') NOT NULL DEFAULT 'active',
+    payment_id INT UNSIGNED DEFAULT NULL,
+    activated_at DATETIME NOT NULL,
+    expires_at DATETIME DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_memberships_user
+        FOREIGN KEY (user_id) REFERENCES users (id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_user_memberships_payment
+        FOREIGN KEY (payment_id) REFERENCES payments (id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    UNIQUE KEY uq_user_memberships_user_plan (user_id, plan_code),
+    KEY idx_user_memberships_status (status),
+    KEY idx_user_memberships_payment (payment_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS payment_items (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     payment_id INT UNSIGNED NOT NULL,

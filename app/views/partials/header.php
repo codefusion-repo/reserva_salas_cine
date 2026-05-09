@@ -7,7 +7,17 @@ $isAuthenticated = $headerUser !== null;
 $isAdmin = $isAuthenticated && ($headerUser['role'] ?? '') === 'admin';
 $headerName = $isAuthenticated ? (string) ($headerUser['name'] ?? 'Usuario') : 'Usuario';
 $headerFirstName = trim(explode(' ', $headerName)[0] ?? $headerName);
-$isMemberDemo = $isAuthenticated ? is_member_demo_active() : false;
+$isMemberDemo = false;
+
+if ($isAuthenticated) {
+    if (isset($memberDemoActive)) {
+        $isMemberDemo = (bool) $memberDemoActive;
+    } elseif (function_exists('member_demo_active_for_user_id')) {
+        $isMemberDemo = member_demo_active_for_user_id((int) ($headerUser['id'] ?? 0));
+    } else {
+        $isMemberDemo = is_member_demo_active();
+    }
+}
 
 $navItems = [
     [
