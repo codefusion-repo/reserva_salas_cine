@@ -6,7 +6,9 @@ $activeNav = (string) ($comingSoon['activeNav'] ?? '');
 $items = is_array($comingSoon['items'] ?? null) ? $comingSoon['items'] : [];
 $notes = is_array($comingSoon['notes'] ?? null) ? $comingSoon['notes'] : [];
 $heroActions = is_array($comingSoon['heroActions'] ?? null) ? $comingSoon['heroActions'] : [];
-$benefitsSectionId = (string) ($comingSoon['benefitsSectionId'] ?? 'socios-beneficios');
+$useBenefitsLayout = ($comingSoon['benefitsLayout'] ?? false) === true;
+$benefitsSectionId = trim((string) ($comingSoon['benefitsSectionId'] ?? ''));
+$sectionClass = $useBenefitsLayout ? 'coming-soon-grid coming-soon-benefits-grid' : 'coming-soon-grid';
 $catalogItems = is_array($comingSoon['catalog'] ?? null) ? $comingSoon['catalog'] : [];
 $showCatalog = ($comingSoon['showCatalog'] ?? false) === true || $catalogItems !== [];
 $catalogLoadError = ($comingSoon['catalogLoadError'] ?? false) === true;
@@ -231,7 +233,7 @@ $cartItems = is_array($cartSummary['items'] ?? null) ? $cartSummary['items'] : [
         <?php endif; ?>
 
         <?php if ($items !== []): ?>
-            <section id="<?= e($benefitsSectionId) ?>" class="coming-soon-grid coming-soon-benefits-grid" aria-label="Beneficios">
+            <section<?= $benefitsSectionId !== '' ? ' id="' . e($benefitsSectionId) . '"' : '' ?> class="<?= e($sectionClass) ?>" aria-label="Beneficios">
                 <?php foreach ($items as $item): ?>
                     <?php $status = trim((string) ($item['status'] ?? '')); ?>
                     <article class="coming-soon-card">

@@ -561,6 +561,7 @@ function render_coming_soon_page(string $page): void
                 ['type' => 'button', 'label' => 'Activación próximamente', 'disabled' => true],
                 ['type' => 'link', 'label' => 'Conoce beneficios', 'href' => '#socios-beneficios', 'class' => 'movie-state-link-secondary'],
             ],
+            'benefitsLayout' => true,
             'benefitsSectionId' => 'socios-beneficios',
             'notes' => [
                 'No existe activación de membresía real ni demo funcional.',
