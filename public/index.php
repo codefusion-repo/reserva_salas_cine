@@ -123,6 +123,26 @@ if ($action === 'delete_concession_product' && $_SERVER['REQUEST_METHOD'] === 'P
     exit;
 }
 
+if ($action === 'concession_add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_concession_add();
+    exit;
+}
+
+if ($action === 'concession_update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_concession_update();
+    exit;
+}
+
+if ($action === 'concession_remove' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_concession_remove();
+    exit;
+}
+
+if ($action === 'concession_clear' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_concession_clear();
+    exit;
+}
+
 if ($page === null) {
     $page = auth_check() ? 'dashboard' : 'login';
 }
