@@ -66,6 +66,25 @@ function concession_product_find_by_id(int $productId): ?array
     );
 }
 
+function concession_product_find_active_by_id(int $productId): ?array
+{
+    if (!concession_products_table_exists()) {
+        return null;
+    }
+
+    return db_fetch_one(
+        'SELECT id, name, description, price_amount, icon, badge, is_active, sort_order
+         FROM concession_products
+         WHERE id = :id
+           AND is_active = :is_active
+         LIMIT 1',
+        [
+            'id' => $productId,
+            'is_active' => 1,
+        ]
+    );
+}
+
 function concession_product_create(
     string $name,
     string $description,

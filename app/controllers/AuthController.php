@@ -13,6 +13,8 @@ require_once __DIR__ . '/../models/User.php';
 
 const AUTH_MIN_PASSWORD_LENGTH = 8;
 const CONCESSION_PRODUCTS_SETUP_MESSAGE = 'La tabla de productos de confitería no está instalada. Ejecuta database/upgrade_concession_products.sql o reimporta schema.sql y seed.sql en el entorno local.';
+const CONCESSIONS_CART_SESSION_KEY = 'concessions_cart';
+const CONCESSIONS_CART_MAX_QUANTITY = 10;
 
 function auth_mode_from_page(?string $page): string
 {
@@ -40,6 +42,117 @@ function render_error_page(string $heading, string $copy, int $statusCode = 404,
 function render_not_found_page(string $heading, string $copy, array $messages = []): void
 {
     render_error_page($heading, $copy, 404, $messages);
+}
+
+function concession_cart_redirect(): void
+{
+    redirect_to('index.php?page=confiteria');
+}
+
+function concession_cart_quantity_from_request(mixed $value): ?int
+{
+    $quantity = positive_int_from_request($value);
+
+    if ($quantity === null || $quantity > CONCESSIONS_CART_MAX_QUANTITY) {
+        return null;
+    }
+
+    return $quantity;
+}
+
+function concession_cart_get(): array
+{
+    app_session_start();
+
+    $storedCart = $_SESSION[CONCESSIONS_CART_SESSION_KEY] ?? [];
+    $cart = [];
+    $changed = !is_array($storedCart);
+
+    if (is_array($storedCart)) {
+        foreach ($storedCart as $productId => $quantity) {
+            $normalizedProductId = positive_int_from_request($productId);
+            $normalizedQuantity = positive_int_from_request($quantity);
+
+            if ($normalizedProductId === null || $normalizedQuantity === null) {
+                $changed = true;
+                continue;
+            }
+
+            if ($normalizedQuantity > CONCESSIONS_CART_MAX_QUANTITY) {
+                $normalizedQuantity = CONCESSIONS_CART_MAX_QUANTITY;
+                $changed = true;
+            }
+
+            $cart[$normalizedProductId] = $normalizedQuantity;
+        }
+    }
+
+    if ($changed) {
+        concession_cart_save($cart);
+    }
+
+    return $cart;
+}
+
+function concession_cart_save(array $cart): void
+{
+    app_session_start();
+
+    ksort($cart);
+    $_SESSION[CONCESSIONS_CART_SESSION_KEY] = $cart;
+}
+
+function concession_cart_summary_from_products(array $products): array
+{
+    $productsById = [];
+
+    foreach ($products as $product) {
+        $productId = (int) ($product['id'] ?? 0);
+
+        if ($productId > 0) {
+            $productsById[$productId] = $product;
+        }
+    }
+
+    $cart = concession_cart_get();
+    $items = [];
+    $total = 0.0;
+    $pruned = false;
+
+    foreach ($cart as $productId => $quantity) {
+        if (!isset($productsById[$productId])) {
+            unset($cart[$productId]);
+            $pruned = true;
+            continue;
+        }
+
+        $product = $productsById[$productId];
+        $unitPrice = (float) ($product['price_amount'] ?? 0);
+        $subtotal = $unitPrice * $quantity;
+        $total += $subtotal;
+
+        $items[] = [
+            'product_id' => $productId,
+            'name' => (string) ($product['name'] ?? ''),
+            'quantity' => $quantity,
+            'unit_price' => $unitPrice,
+            'unit_price_label' => reservation_format_money($unitPrice) . ' demo',
+            'subtotal' => $subtotal,
+            'subtotal_label' => reservation_format_money($subtotal) . ' demo',
+        ];
+    }
+
+    if ($pruned) {
+        concession_cart_save($cart);
+    }
+
+    return [
+        'items' => $items,
+        'total' => $total,
+        'total_label' => reservation_format_money($total) . ' demo',
+        'is_empty' => $items === [],
+        'pruned' => $pruned,
+    ];
 }
 
 function movie_filter_value_from_request(mixed $value, int $maxLength = 80): string
@@ -374,27 +487,27 @@ function render_coming_soon_page(string $page): void
         'confiteria' => [
             'activeNav' => 'confiteria',
             'title' => 'Confiteria',
-            'eyebrow' => 'Proximamente',
+            'eyebrow' => 'Confiteria demo',
             'headline' => 'Confiteria',
-            'lead' => 'Catálogo demo / visual de combos para acompañar tu función.',
-            'support' => 'La compra funcional aún no está disponible: no hay carrito funcional, no hay pago real y ningún botón procesa pedidos.',
-            'accent' => 'Demo visual',
-            'accentCopy' => 'Los productos activos se muestran como referencia de una etapa posterior, sin stock, carrito ni pedidos.',
+            'lead' => 'Catálogo demo de combos para acompañar tu función con carrito simple en sesión.',
+            'support' => 'La compra real no está disponible: no hay pago real, no hay checkout y no se crean pedidos.',
+            'accent' => 'Carrito demo',
+            'accentCopy' => 'El carrito guarda solo IDs y cantidades en sesión. Los precios se recalculan desde productos activos.',
             'catalog' => [],
             'showCatalog' => true,
             'catalogLoadError' => false,
             'catalogSetupRequired' => false,
             'items' => [
-                ['icon' => '🍿', 'label' => 'Catálogo demo', 'copy' => 'Combos visibles solo como muestra para la experiencia de cine.'],
-                ['icon' => '🛒', 'label' => 'Sin carrito', 'copy' => 'No se agrega ningún producto ni se muta la sesión.'],
-                ['icon' => '💳', 'label' => 'Sin pago real', 'copy' => 'No existe checkout, pago simulado ni pasarela.'],
+                ['icon' => '🍿', 'label' => 'Productos activos', 'copy' => 'El catálogo visible se lee desde concession_products.'],
+                ['icon' => '🛒', 'label' => 'Carrito en sesión', 'copy' => 'Solo guarda product_id y cantidad por item.'],
+                ['icon' => '💳', 'label' => 'Sin pago real', 'copy' => 'No existe pasarela, tarjeta ni checkout funcional.'],
                 ['icon' => '🧾', 'label' => 'Sin pedidos', 'copy' => 'No se crean compras, stock ni ordenes de confiteria.'],
             ],
             'notes' => [
-                'Compra funcional aún no disponible.',
-                'No hay carrito funcional.',
+                'Compra real no disponible.',
                 'No hay pago real.',
-                'Catálogo demo / visual sin stock, pedidos ni checkout.',
+                'Checkout se implementará después.',
+                'Sin stock, pedidos ni persistencia del carrito en base de datos.',
             ],
         ],
         'socios' => [
@@ -449,25 +562,39 @@ function render_coming_soon_page(string $page): void
     }
 
     $user = current_user();
-    $messages = flash_get();
     $comingSoon = $pages[$page];
+    $cartSummary = [
+        'items' => [],
+        'total' => 0.0,
+        'total_label' => reservation_format_money(0) . ' demo',
+        'is_empty' => true,
+        'pruned' => false,
+    ];
 
     if ($page === 'confiteria') {
         try {
             if (!concession_products_table_exists()) {
                 $comingSoon['catalogSetupRequired'] = true;
             } else {
+                $activeProducts = concession_products_active_all();
                 $comingSoon['catalog'] = array_map(
                     static fn (array $product): array => [
+                        'id' => (int) ($product['id'] ?? 0),
                         'icon' => (string) ($product['icon'] ?? ''),
                         'label' => (string) ($product['badge'] ?? ''),
                         'name' => (string) ($product['name'] ?? ''),
                         'description' => (string) ($product['description'] ?? ''),
+                        'price_amount' => (float) ($product['price_amount'] ?? 0),
                         'price' => reservation_format_money((float) ($product['price_amount'] ?? 0)) . ' demo',
-                        'button' => 'Agregar pronto',
+                        'button' => 'Agregar',
                     ],
-                    concession_products_active_all()
+                    $activeProducts
                 );
+                $cartSummary = concession_cart_summary_from_products($activeProducts);
+
+                if (($cartSummary['pruned'] ?? false) === true) {
+                    flash_set('info', 'Se quitaron del carrito productos que ya no están activos.');
+                }
             }
         } catch (Throwable $exception) {
             error_log($exception->getMessage());
@@ -476,7 +603,115 @@ function render_coming_soon_page(string $page): void
         }
     }
 
+    $messages = flash_get();
+
     require __DIR__ . '/../views/coming_soon.php';
+}
+
+function handle_concession_add(): void
+{
+    auth_require_login();
+    csrf_require_valid_post();
+
+    $productId = positive_int_from_request($_POST['product_id'] ?? null);
+    $quantity = concession_cart_quantity_from_request($_POST['quantity'] ?? 1);
+
+    if ($productId === null || $quantity === null) {
+        flash_set('error', 'Selecciona un producto y cantidad validos.');
+        concession_cart_redirect();
+    }
+
+    try {
+        $product = concession_product_find_active_by_id((int) $productId);
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo validar el producto en este momento.');
+        concession_cart_redirect();
+    }
+
+    if ($product === null) {
+        flash_set('error', 'El producto seleccionado no existe o no esta activo.');
+        concession_cart_redirect();
+    }
+
+    $cart = concession_cart_get();
+    $currentQuantity = (int) ($cart[(int) $productId] ?? 0);
+    $newQuantity = $currentQuantity + (int) $quantity;
+
+    if ($newQuantity > CONCESSIONS_CART_MAX_QUANTITY) {
+        $newQuantity = CONCESSIONS_CART_MAX_QUANTITY;
+        flash_set('info', 'La cantidad maxima por producto es ' . CONCESSIONS_CART_MAX_QUANTITY . '.');
+    } else {
+        flash_set('success', 'Producto agregado al carrito demo.');
+    }
+
+    $cart[(int) $productId] = $newQuantity;
+    concession_cart_save($cart);
+    concession_cart_redirect();
+}
+
+function handle_concession_update(): void
+{
+    auth_require_login();
+    csrf_require_valid_post();
+
+    $productId = positive_int_from_request($_POST['product_id'] ?? null);
+    $quantity = concession_cart_quantity_from_request($_POST['quantity'] ?? null);
+
+    if ($productId === null || $quantity === null) {
+        flash_set('error', 'Selecciona un producto y cantidad validos.');
+        concession_cart_redirect();
+    }
+
+    $cart = concession_cart_get();
+
+    try {
+        $product = concession_product_find_active_by_id((int) $productId);
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo validar el producto en este momento.');
+        concession_cart_redirect();
+    }
+
+    if ($product === null) {
+        unset($cart[(int) $productId]);
+        concession_cart_save($cart);
+        flash_set('error', 'El producto ya no esta activo y fue quitado del carrito.');
+        concession_cart_redirect();
+    }
+
+    $cart[(int) $productId] = (int) $quantity;
+    concession_cart_save($cart);
+    flash_set('success', 'Cantidad actualizada.');
+    concession_cart_redirect();
+}
+
+function handle_concession_remove(): void
+{
+    auth_require_login();
+    csrf_require_valid_post();
+
+    $productId = positive_int_from_request($_POST['product_id'] ?? null);
+
+    if ($productId === null) {
+        flash_set('error', 'Selecciona un producto valido para quitar.');
+        concession_cart_redirect();
+    }
+
+    $cart = concession_cart_get();
+    unset($cart[(int) $productId]);
+    concession_cart_save($cart);
+    flash_set('success', 'Producto quitado del carrito demo.');
+    concession_cart_redirect();
+}
+
+function handle_concession_clear(): void
+{
+    auth_require_login();
+    csrf_require_valid_post();
+    concession_cart_save([]);
+    flash_set('success', 'Carrito demo vaciado.');
+    concession_cart_redirect();
 }
 
 function handle_reservation_cancel(): void
