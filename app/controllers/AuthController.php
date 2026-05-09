@@ -13,6 +13,7 @@ require_once __DIR__ . '/../models/Movie.php';
 require_once __DIR__ . '/../models/Payment.php';
 require_once __DIR__ . '/../models/Reservation.php';
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/UserMembership.php';
 
 const AUTH_MIN_PASSWORD_LENGTH = 8;
 const CONCESSION_PRODUCTS_SETUP_MESSAGE = 'La tabla de productos de confitería no está instalada. Ejecuta database/upgrade_concession_products.sql o reimporta schema.sql y seed.sql en el entorno local.';
@@ -141,6 +142,155 @@ function profile_role_label(string $role): string
         'user' => 'Usuario',
         default => 'Sin rol',
     };
+}
+
+function member_demo_state_for_user_id(int $userId): array
+{
+    $state = [
+        'membership' => null,
+        'is_active' => false,
+        'load_error' => false,
+        'source' => 'db',
+    ];
+
+    if ($userId <= 0) {
+        return $state;
+    }
+
+    try {
+        $membership = user_membership_find_current($userId, USER_MEMBERSHIP_PLAN_DEMO);
+        $state['membership'] = $membership;
+        $state['is_active'] = user_membership_row_is_active($membership);
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        $state['load_error'] = true;
+        $state['source'] = 'session';
+        $state['is_active'] = is_member_demo_active();
+    }
+
+    return $state;
+}
+
+function member_demo_state_for_user(?array $user): array
+{
+    return member_demo_state_for_user_id((int) ($user['id'] ?? 0));
+}
+
+function member_demo_active_for_user_id(int $userId): bool
+{
+    $state = member_demo_state_for_user_id($userId);
+
+    return (bool) ($state['is_active'] ?? false);
+}
+
+function member_demo_status_label(array $state): string
+{
+    if (($state['is_active'] ?? false) === true) {
+        return ($state['source'] ?? 'db') === 'session' ? 'Activa en sesion' : 'Activa';
+    }
+
+    $membership = is_array($state['membership'] ?? null) ? $state['membership'] : null;
+    $status = (string) ($membership['status'] ?? '');
+
+    return match ($status) {
+        USER_MEMBERSHIP_STATUS_CANCELLED => 'Cancelada',
+        USER_MEMBERSHIP_STATUS_EXPIRED => 'Expirada',
+        USER_MEMBERSHIP_STATUS_ACTIVE => 'Expirada',
+        default => 'Inactiva',
+    };
+}
+
+function member_demo_status_copy(array $state): string
+{
+    if (($state['load_error'] ?? false) === true) {
+        return 'No se pudo leer la membresia persistida; se muestra el estado de sesion.';
+    }
+
+    if (($state['is_active'] ?? false) === true) {
+        return 'Membresia demo persistida en tu cuenta.';
+    }
+
+    $membership = is_array($state['membership'] ?? null) ? $state['membership'] : null;
+
+    if ($membership !== null) {
+        return 'Puedes reactivar la membresia demo desde Socios.';
+    }
+
+    return 'Sin membresia demo persistida.';
+}
+
+function checkout_membership_confirm_with_payment(int $userId, array $pricing): array
+{
+    if ($userId <= 0) {
+        return [
+            'ok' => false,
+            'message' => 'La membresia demo requiere un usuario valido.',
+        ];
+    }
+
+    $pdo = db();
+
+    try {
+        $pdo->beginTransaction();
+
+        $currentMembership = user_membership_find_current_for_update($pdo, $userId, USER_MEMBERSHIP_PLAN_DEMO);
+
+        if (user_membership_row_is_active($currentMembership)) {
+            $pdo->commit();
+
+            return [
+                'ok' => true,
+                'already_active' => true,
+                'membership' => $currentMembership,
+            ];
+        }
+
+        $payment = payment_insert_simulated_paid(
+            $pdo,
+            $userId,
+            'membership',
+            null,
+            [
+                [
+                    'item_type' => 'membership',
+                    'item_label' => CHECKOUT_MEMBERSHIP_PLAN_LABEL,
+                    'quantity' => 1,
+                    'unit_amount' => CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
+                    'total_amount' => CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
+                ],
+            ],
+            CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
+            (float) ($pricing['discount_amount'] ?? 0),
+            (float) ($pricing['total_amount'] ?? CHECKOUT_MEMBERSHIP_DEMO_TOTAL)
+        );
+
+        $activation = user_membership_activate(
+            $pdo,
+            $userId,
+            (int) ($payment['id'] ?? 0),
+            USER_MEMBERSHIP_PLAN_DEMO
+        );
+
+        $pdo->commit();
+
+        return [
+            'ok' => true,
+            'already_active' => ($activation['already_active'] ?? false) === true,
+            'payment' => $payment,
+            'membership' => $activation['membership'] ?? null,
+        ];
+    } catch (Throwable $exception) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        error_log($exception->getMessage());
+
+        return [
+            'ok' => false,
+            'message' => 'No se pudo activar la membresia demo en este momento.',
+        ];
+    }
 }
 
 function payment_invoice_filename(array $payment): string
@@ -395,7 +545,7 @@ function checkout_coupon_apply_context(string $type, int $userId, ?int $reservat
     }
 
     if ($type === 'membership') {
-        if (is_member_demo_active()) {
+        if (member_demo_active_for_user_id($userId)) {
             return [
                 'ok' => false,
                 'message' => 'La membresia demo ya esta activa; no se puede aplicar cupon.',
@@ -919,7 +1069,9 @@ function render_profile(): void
         $paymentSummaryLoadError = true;
     }
 
-    $memberDemoActive = is_member_demo_active();
+    $memberDemoState = member_demo_state_for_user($profileUser);
+    $memberDemoActive = (bool) ($memberDemoState['is_active'] ?? false);
+    $memberDemoStatusLabel = member_demo_status_label($memberDemoState);
     $profileRoleLabel = profile_role_label((string) ($profileUser['role'] ?? ''));
 
     require __DIR__ . '/../views/profile.php';
@@ -1233,26 +1385,30 @@ function render_checkout_page(): void
             'last_receipt' => concession_checkout_last_receipt(),
         ]);
     } elseif ($type === 'membership') {
-        $memberDemoActive = is_member_demo_active();
+        $memberDemoState = member_demo_state_for_user($user);
+        $memberDemoActive = (bool) ($memberDemoState['is_active'] ?? false);
 
         $checkout = array_replace($checkout, [
             'active_nav' => 'socios',
             'title' => 'Checkout socios',
             'heading' => 'Hazte socio demo',
-            'lead' => 'Activa una membresia demo en esta sesion con pago simulado academico.',
+            'lead' => $memberDemoActive
+                ? 'Tu membresia demo ya esta activa y persistida en tu cuenta.'
+                : 'Activa una membresia demo persistida con pago simulado academico.',
             'summary_title' => CHECKOUT_MEMBERSHIP_PLAN_LABEL,
             'subtotal_amount' => CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
             'total_label' => checkout_demo_money_label(CHECKOUT_MEMBERSHIP_DEMO_TOTAL),
             'can_confirm' => !$memberDemoActive,
             'return_url' => 'index.php?page=socios',
             'member_demo_active' => $memberDemoActive,
+            'member_demo_status_label' => member_demo_status_label($memberDemoState),
             'membership_plan' => [
                 'name' => CHECKOUT_MEMBERSHIP_PLAN_LABEL,
                 'total_label' => reservation_format_money(CHECKOUT_MEMBERSHIP_DEMO_TOTAL) . ' demo',
                 'benefits' => [
-                    'Estado de socio visible durante la sesion actual.',
+                    'Estado de socio persistido en tu cuenta.',
                     'Beneficios academicos simulados sin descuentos reales.',
-                    'Sin persistencia de membresia y sin cambios en usuarios.',
+                    'Sin pago real, pasarela ni datos sensibles.',
                 ],
             ],
         ]);
@@ -1457,30 +1613,17 @@ function handle_checkout_confirm(): void
     }
 
     if ($type === 'membership') {
-        if (is_member_demo_active()) {
+        $userId = (int) ($user['id'] ?? 0);
+
+        if (member_demo_active_for_user_id($userId)) {
+            set_member_demo_active(true);
             checkout_coupon_session_remove('membership');
             flash_set('info', 'La membresia demo ya esta activa.');
             redirect_to('index.php?page=socios');
         }
 
         $pricing = checkout_pricing_labels('membership', CHECKOUT_MEMBERSHIP_DEMO_TOTAL);
-        $paymentResult = payment_create_simulated(
-            (int) ($user['id'] ?? 0),
-            'membership',
-            null,
-            [
-                [
-                    'item_type' => 'membership',
-                    'item_label' => CHECKOUT_MEMBERSHIP_PLAN_LABEL,
-                    'quantity' => 1,
-                    'unit_amount' => CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
-                    'total_amount' => CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
-                ],
-            ],
-            CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
-            (float) ($pricing['discount_amount'] ?? 0),
-            (float) ($pricing['total_amount'] ?? CHECKOUT_MEMBERSHIP_DEMO_TOTAL)
-        );
+        $paymentResult = checkout_membership_confirm_with_payment($userId, $pricing);
 
         if (($paymentResult['ok'] ?? false) !== true) {
             flash_set('error', (string) ($paymentResult['message'] ?? 'No se pudo activar la membresia demo.'));
@@ -1489,6 +1632,12 @@ function handle_checkout_confirm(): void
 
         set_member_demo_active(true);
         checkout_coupon_session_remove('membership');
+
+        if (($paymentResult['already_active'] ?? false) === true) {
+            flash_set('info', 'La membresia demo ya esta activa.');
+            redirect_to('index.php?page=socios');
+        }
+
         flash_set('success', 'Membresia demo activada con pago simulado.');
         redirect_to('index.php?page=socios');
     }
@@ -1530,12 +1679,12 @@ function render_coming_soon_page(string $page): void
             'title' => 'Socios',
             'eyebrow' => 'MEMBRESÍA DEMO',
             'headline' => 'HAZTE SOCIO DEMO',
-            'panelKicker' => 'Demo en sesión',
+            'panelKicker' => 'Demo persistida',
             'panelHeadline' => 'Activa tu membresía demo',
-            'lead' => 'Activa una membresía demo para probar el estado de socio durante esta sesión.',
+            'lead' => 'Activa una membresía demo para probar el estado de socio en tu cuenta.',
             'support' => '',
-            'accent' => 'Estado de sesión',
-            'accentCopy' => 'La membresía demo vive solo en tu sesión actual.',
+            'accent' => 'Estado de cuenta',
+            'accentCopy' => 'La membresía demo se guarda por usuario.',
             'featureIcon' => 'DEMO',
             'items' => [
                 [
@@ -1546,9 +1695,9 @@ function render_coming_soon_page(string $page): void
                 ],
                 [
                     'icon' => '🎟️',
-                    'label' => 'Estado en sesión',
-                    'copy' => 'El estado de socio demo se conserva mientras mantengas la sesión activa.',
-                    'status' => 'Sesión',
+                    'label' => 'Estado persistido',
+                    'copy' => 'El estado de socio demo se conserva después de cerrar sesión.',
+                    'status' => 'Cuenta',
                 ],
                 [
                     'icon' => '⭐',
@@ -1583,7 +1732,7 @@ function render_coming_soon_page(string $page): void
             'notes' => [
                 'Membresía demo sin pago real.',
                 'Beneficios simulados para el proyecto académico.',
-                'No hay pagos, cupones, descuentos activos ni persistencia en base de datos.',
+                'No hay pago real, descuentos activos ni planes pagos reales.',
             ],
         ],
         'pago' => [
@@ -1618,13 +1767,14 @@ function render_coming_soon_page(string $page): void
     }
 
     $user = current_user();
-    $memberDemoActive = is_member_demo_active();
+    $memberDemoState = member_demo_state_for_user($user);
+    $memberDemoActive = (bool) ($memberDemoState['is_active'] ?? false);
     $comingSoon = $pages[$page];
 
     if ($page === 'socios') {
         $comingSoon['lead'] = $memberDemoActive
-            ? 'Tu membresía demo está activa en esta sesión.'
-            : 'Activa una membresía demo para probar el estado de socio durante esta sesión.';
+            ? 'Tu membresía demo está activa y persistida en tu cuenta.'
+            : 'Activa una membresía demo para probar el estado de socio persistido.';
         $comingSoon['notes'] = [];
         $comingSoon['panelHeadline'] = $memberDemoActive
             ? 'Membresía demo activa'
@@ -1632,13 +1782,13 @@ function render_coming_soon_page(string $page): void
         $comingSoon['memberDemo'] = [
             'isActive' => $memberDemoActive,
             'stateActiveLabel' => 'Socio Cine Demo activo',
-            'stateInactiveLabel' => 'Sin membresía demo',
-            'stateActiveCopy' => 'Ya puedes ver tu estado de socio demo mientras mantengas la sesión iniciada.',
-            'stateInactiveCopy' => 'Activa la membresía demo para habilitar el estado de socio en esta sesión.',
+            'stateInactiveLabel' => member_demo_status_label($memberDemoState),
+            'stateActiveCopy' => 'Ya puedes ver tu estado de socio demo incluso después de cerrar sesión.',
+            'stateInactiveCopy' => member_demo_status_copy($memberDemoState),
             'stateNotes' => [
                 $memberDemoActive
-                    ? 'Estado demo activo solo en esta sesión. No aplica descuentos reales.'
-                    : 'Demo académica sin pago real ni persistencia de membresía.',
+                    ? 'Estado demo persistido. No aplica descuentos reales.'
+                    : 'Demo académica sin pago real ni pasarela.',
             ],
             'activateAction' => checkout_url('membership'),
             'activateMethod' => 'get',
@@ -1698,12 +1848,18 @@ function handle_member_demo_activate(): void
     auth_require_login();
     csrf_require_valid_post();
 
-    if (is_member_demo_active() === true) {
+    $user = current_user();
+    $userId = (int) ($user['id'] ?? 0);
+    $memberDemoState = member_demo_state_for_user_id($userId);
+
+    if (($memberDemoState['is_active'] ?? false) === true) {
+        set_member_demo_active(true);
         flash_set('info', 'La membresía demo ya está activa.');
         redirect_to('index.php?page=socios');
     }
 
-    flash_set('info', 'Confirma la membresía demo desde el checkout simulado.');
+    set_member_demo_active(false);
+    flash_set('info', 'Completa el checkout simulado para activar la membresía demo persistida.');
     redirect_to(checkout_url('membership'));
 }
 
@@ -1712,13 +1868,31 @@ function handle_member_demo_deactivate(): void
     auth_require_login();
     csrf_require_valid_post();
 
-    if (is_member_demo_active() === false) {
+    $user = current_user();
+    $userId = (int) ($user['id'] ?? 0);
+    $memberDemoState = member_demo_state_for_user_id($userId);
+
+    if (($memberDemoState['is_active'] ?? false) === false) {
+        set_member_demo_active(false);
         flash_set('info', 'La membresía demo ya está desactivada.');
         redirect_to('index.php?page=socios');
     }
 
-    set_member_demo_active(false);
-    flash_set('success', 'Membresía demo desactivada correctamente.');
+    if (($memberDemoState['load_error'] ?? false) === true) {
+        set_member_demo_active(false);
+        flash_set('success', 'Membresía demo de sesión desactivada correctamente.');
+        redirect_to('index.php?page=socios');
+    }
+
+    try {
+        user_membership_cancel($userId, USER_MEMBERSHIP_PLAN_DEMO);
+        set_member_demo_active(false);
+        flash_set('success', 'Membresía demo desactivada correctamente.');
+    } catch (Throwable $exception) {
+        error_log($exception->getMessage());
+        flash_set('error', 'No se pudo desactivar la membresía demo en este momento.');
+    }
+
     redirect_to('index.php?page=socios');
 }
 
