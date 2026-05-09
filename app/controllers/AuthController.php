@@ -1850,14 +1850,16 @@ function handle_member_demo_activate(): void
 
     $user = current_user();
     $userId = (int) ($user['id'] ?? 0);
+    $memberDemoState = member_demo_state_for_user_id($userId);
 
-    if (member_demo_active_for_user_id($userId)) {
+    if (($memberDemoState['is_active'] ?? false) === true) {
         set_member_demo_active(true);
         flash_set('info', 'La membresía demo ya está activa.');
         redirect_to('index.php?page=socios');
     }
 
-    flash_set('info', 'Confirma la membresía demo desde el checkout simulado.');
+    set_member_demo_active(false);
+    flash_set('info', 'Completa el checkout simulado para activar la membresía demo persistida.');
     redirect_to(checkout_url('membership'));
 }
 
