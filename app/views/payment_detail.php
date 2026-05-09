@@ -50,7 +50,7 @@ $showtimeLabel = reservation_datetime_label($payment['starts_at'] ?? '');
             </a>
             <div>
                 <p class="eyebrow">Detalle de pago</p>
-                <h1><?= e($referenceCode !== '' ? $referenceCode : 'Pago demo') ?></h1>
+                <h1><?= e($referenceCode !== '' ? $referenceCode : 'Pago') ?></h1>
                 <p><?= e($summaryLabel) ?></p>
             </div>
         </div>
@@ -58,7 +58,7 @@ $showtimeLabel = reservation_datetime_label($payment['starts_at'] ?? '');
         <div class="payment-detail-layout">
             <section class="payment-detail-panel" aria-labelledby="payment-detail-title">
                 <div class="payment-section-heading">
-                    <p class="eyebrow">Pago simulado</p>
+                    <p class="eyebrow">Pago</p>
                     <h2 id="payment-detail-title">Datos del pago</h2>
                 </div>
 
@@ -119,7 +119,7 @@ $showtimeLabel = reservation_datetime_label($payment['starts_at'] ?? '');
             <aside class="payment-total-panel" aria-labelledby="payment-total-title">
                 <div class="payment-section-heading">
                     <p class="eyebrow">Resumen</p>
-                    <h2 id="payment-total-title">Monto demo</h2>
+                    <h2 id="payment-total-title">Monto</h2>
                 </div>
 
                 <dl class="payment-total-list">
@@ -132,13 +132,13 @@ $showtimeLabel = reservation_datetime_label($payment['starts_at'] ?? '');
                         <dd><?= e(reservation_format_money((float) ($payment['discount_amount'] ?? 0))) ?></dd>
                     </div>
                     <div>
-                        <dt>Total demo</dt>
+                        <dt>Total</dt>
                         <dd><?= e(reservation_format_money((float) ($payment['total_amount'] ?? 0))) ?></dd>
                     </div>
                 </dl>
 
                 <div class="payment-warning">
-                    <strong>Comprobante simulado.</strong>
+                    <strong>Comprobante de prueba.</strong>
                     <span>No válido como factura/boleta legal. No hubo cobro real.</span>
                 </div>
 
@@ -152,7 +152,7 @@ $showtimeLabel = reservation_datetime_label($payment['starts_at'] ?? '');
         <section class="payment-items-panel" aria-labelledby="payment-items-title">
             <div class="payment-section-heading">
                 <p class="eyebrow">Items</p>
-                <h2 id="payment-items-title">Detalle cobrado demo</h2>
+                <h2 id="payment-items-title">Detalle</h2>
             </div>
 
             <?php if ($paymentItems === []): ?>

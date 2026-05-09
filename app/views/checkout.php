@@ -3,15 +3,15 @@ declare(strict_types=1);
 
 $checkoutType = (string) ($checkout['type'] ?? '');
 $activeNav = (string) ($checkout['active_nav'] ?? '');
-$pageTitle = (string) ($checkout['title'] ?? 'Checkout simulado');
-$heading = (string) ($checkout['heading'] ?? 'Checkout simulado');
-$eyebrow = (string) ($checkout['eyebrow'] ?? 'Pago simulado academico');
+$pageTitle = (string) ($checkout['title'] ?? 'Confirmar pago');
+$heading = (string) ($checkout['heading'] ?? 'Confirma tu compra');
+$eyebrow = (string) ($checkout['eyebrow'] ?? 'Pago de prueba');
 $lead = (string) ($checkout['lead'] ?? '');
 $summaryTitle = (string) ($checkout['summary_title'] ?? 'Resumen');
-$totalLabel = (string) ($checkout['total_label'] ?? reservation_format_money(0) . ' demo');
+$totalLabel = (string) ($checkout['total_label'] ?? reservation_format_money(0));
 $pricing = is_array($checkout['pricing'] ?? null) ? $checkout['pricing'] : [];
-$subtotalLabel = (string) ($pricing['subtotal_label'] ?? reservation_format_money(0) . ' demo');
-$discountLabel = (string) ($pricing['discount_label'] ?? reservation_format_money(0) . ' demo');
+$subtotalLabel = (string) ($pricing['subtotal_label'] ?? reservation_format_money(0));
+$discountLabel = (string) ($pricing['discount_label'] ?? reservation_format_money(0));
 $totalFinalLabel = (string) ($pricing['total_label'] ?? $totalLabel);
 $couponApplied = ($pricing['applied'] ?? false) === true;
 $couponCode = (string) ($pricing['code'] ?? '');
@@ -23,7 +23,7 @@ $confirmFields = is_array($checkout['confirm_fields'] ?? null) ? $checkout['conf
 $couponFields = is_array($checkout['coupon_fields'] ?? null) ? $checkout['coupon_fields'] : $confirmFields;
 $reservation = is_array($checkout['reservation'] ?? null) ? $checkout['reservation'] : null;
 $showtimeLabels = is_array($checkout['showtime_labels'] ?? null) ? $checkout['showtime_labels'] : ['datetime' => '', 'date' => '', 'time' => ''];
-$cartSummary = is_array($checkout['cart_summary'] ?? null) ? $checkout['cart_summary'] : ['items' => [], 'total_label' => reservation_format_money(0) . ' demo'];
+$cartSummary = is_array($checkout['cart_summary'] ?? null) ? $checkout['cart_summary'] : ['items' => [], 'total_label' => reservation_format_money(0)];
 $cartItems = is_array($cartSummary['items'] ?? null) ? $cartSummary['items'] : [];
 $cartLoadError = ($checkout['cart_load_error'] ?? false) === true;
 $catalogSetupRequired = ($checkout['catalog_setup_required'] ?? false) === true;
@@ -35,14 +35,14 @@ $paymentStateLabel = $canConfirm ? 'Listo para confirmar' : 'No disponible';
 $confirmButtonLabel = match ($checkoutType) {
     'reservation' => 'Confirmar reserva',
     'concessions' => 'Confirmar confiteria',
-    'membership' => 'Activar socio demo',
+    'membership' => 'Activar membresia',
     default => 'Confirmar',
 };
 $paymentHelp = match ($checkoutType) {
-    'reservation' => 'La reserva pasara de pendiente a confirmada al completar este paso.',
-    'concessions' => 'Se generara un comprobante demo en sesion y el carrito quedara vacio.',
-    'membership' => 'La membresia demo quedara persistida en tu cuenta.',
-    default => 'Confirma el checkout simulado para continuar.',
+    'reservation' => 'Tu reserva quedara confirmada. Sin cobro real.',
+    'concessions' => 'Se generara un comprobante y el carrito quedara vacio. Sin cobro real.',
+    'membership' => 'Tu membresia quedara activa. Sin cobro real.',
+    default => 'Confirma para continuar. Sin cobro real.',
 };
 $reservationSeatLabels = [];
 
@@ -150,12 +150,12 @@ $receiptItems = $lastReceipt !== null && is_array($lastReceipt['items'] ?? null)
                     <?php elseif ($catalogSetupRequired): ?>
                         <div class="checkout-state">
                             <h3>Catalogo no disponible</h3>
-                            <p>Los productos demo de confiteria no estan instalados en esta base de datos.</p>
+                            <p>La confiteria no esta disponible en este momento.</p>
                         </div>
                     <?php elseif ($cartItems === []): ?>
                         <div class="checkout-state">
                             <h3>Carrito vacio</h3>
-                            <p>Agrega combos activos desde Confiteria para abrir un checkout con total demo.</p>
+                            <p>Agrega productos desde Confiteria para continuar.</p>
                         </div>
                     <?php else: ?>
                         <div class="checkout-item-list">
@@ -176,9 +176,9 @@ $receiptItems = $lastReceipt !== null && is_array($lastReceipt['items'] ?? null)
 
                     <?php if ($lastReceipt !== null): ?>
                         <section class="checkout-receipt" aria-labelledby="checkout-receipt-title">
-                            <p class="eyebrow">Ultimo checkout</p>
-                            <h3 id="checkout-receipt-title"><?= e($lastReceipt['code'] ?? 'Comprobante demo') ?></h3>
-                            <p>Comprobante demo guardado solo en esta sesion.</p>
+                            <p class="eyebrow">Ultima compra</p>
+                            <h3 id="checkout-receipt-title"><?= e($lastReceipt['code'] ?? 'Comprobante') ?></h3>
+                            <p>Tu compra esta lista.</p>
                             <?php if ($receiptItems !== []): ?>
                                 <ul>
                                     <?php foreach ($receiptItems as $receiptItem): ?>
@@ -189,13 +189,13 @@ $receiptItems = $lastReceipt !== null && is_array($lastReceipt['items'] ?? null)
                                     <?php endforeach; ?>
                                 </ul>
                             <?php endif; ?>
-                            <strong><?= e($lastReceipt['total_label'] ?? reservation_format_money(0) . ' demo') ?></strong>
+                            <strong><?= e($lastReceipt['total_label'] ?? reservation_format_money(0)) ?></strong>
                         </section>
                     <?php endif; ?>
                 <?php elseif ($checkoutType === 'membership'): ?>
                     <div class="checkout-membership-plan">
                         <h3><?= e($membershipPlan['name'] ?? CHECKOUT_MEMBERSHIP_PLAN_LABEL) ?></h3>
-                        <p>Activacion demo para probar el estado de socio persistido.</p>
+                        <p>Activa tu estado de socio. No habra cobro real.</p>
                         <?php if ($memberDemoActive): ?>
                             <span class="reservation-status-badge status-confirmed"><?= e($memberDemoStatusLabel) ?></span>
                         <?php else: ?>
@@ -212,13 +212,13 @@ $receiptItems = $lastReceipt !== null && is_array($lastReceipt['items'] ?? null)
                     <?php endif; ?>
                 <?php endif; ?>
 
-                <dl class="checkout-amount-list" aria-label="Totales del checkout">
+                <dl class="checkout-amount-list" aria-label="Totales del pago">
                     <div>
                         <dt>Subtotal</dt>
                         <dd><?= e($subtotalLabel) ?></dd>
                     </div>
                     <div>
-                        <dt>Descuento demo</dt>
+                        <dt>Descuento</dt>
                         <dd><?= e($discountLabel) ?></dd>
                     </div>
                     <div>
@@ -231,7 +231,7 @@ $receiptItems = $lastReceipt !== null && is_array($lastReceipt['items'] ?? null)
             <aside class="checkout-payment-panel" aria-labelledby="checkout-payment-title">
                 <div class="checkout-section-heading">
                     <p class="eyebrow">Metodo</p>
-                    <h2 id="checkout-payment-title">Pago simulado academico</h2>
+                    <h2 id="checkout-payment-title">Pago de prueba</h2>
                 </div>
 
                 <dl class="checkout-payment-details">
@@ -241,7 +241,7 @@ $receiptItems = $lastReceipt !== null && is_array($lastReceipt['items'] ?? null)
                     </div>
                     <div>
                         <dt>Modo</dt>
-                        <dd>Simulacion local sin pasarela</dd>
+                        <dd>Sin cobro real</dd>
                     </div>
                     <div>
                         <dt>Datos sensibles</dt>
@@ -251,7 +251,7 @@ $receiptItems = $lastReceipt !== null && is_array($lastReceipt['items'] ?? null)
 
                 <section class="checkout-coupon-panel" aria-labelledby="checkout-coupon-title">
                     <div class="checkout-coupon-heading">
-                        <p class="eyebrow">Cupon demo</p>
+                        <p class="eyebrow">Cupon</p>
                         <h3 id="checkout-coupon-title">Descuento</h3>
                     </div>
 

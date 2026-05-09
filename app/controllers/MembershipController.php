@@ -60,7 +60,7 @@ function member_demo_active_for_user_id(int $userId): bool
 function member_demo_status_label(array $state): string
 {
     if (($state['is_active'] ?? false) === true) {
-        return ($state['source'] ?? 'db') === 'session' ? 'Activa en sesion' : 'Activa';
+        return 'Activa';
     }
 
     $membership = is_array($state['membership'] ?? null) ? $state['membership'] : null;
@@ -77,20 +77,20 @@ function member_demo_status_label(array $state): string
 function member_demo_status_copy(array $state): string
 {
     if (($state['load_error'] ?? false) === true) {
-        return 'No se pudo leer la membresia persistida; se muestra el estado de sesion.';
+        return 'No se pudo actualizar el estado en este momento.';
     }
 
     if (($state['is_active'] ?? false) === true) {
-        return 'Membresia demo persistida en tu cuenta.';
+        return 'Tu membresia esta activa.';
     }
 
     $membership = is_array($state['membership'] ?? null) ? $state['membership'] : null;
 
     if ($membership !== null) {
-        return 'Puedes reactivar la membresia demo desde Socios.';
+        return 'Puedes reactivar la membresia desde Socios.';
     }
 
-    return 'Sin membresia demo persistida.';
+    return 'Sin membresia activa.';
 }
 
 function checkout_membership_confirm_with_payment(int $userId, array $pricing): array
@@ -98,7 +98,7 @@ function checkout_membership_confirm_with_payment(int $userId, array $pricing): 
     if ($userId <= 0) {
         return [
             'ok' => false,
-            'message' => 'La membresia demo requiere un usuario valido.',
+            'message' => 'La membresia requiere un usuario valido.',
         ];
     }
 
@@ -162,7 +162,7 @@ function checkout_membership_confirm_with_payment(int $userId, array $pricing): 
 
         return [
             'ok' => false,
-            'message' => 'No se pudo activar la membresia demo en este momento.',
+            'message' => 'No se pudo activar la membresia en este momento.',
         ];
     }
 }
@@ -236,12 +236,12 @@ function handle_member_demo_activate(): void
 
     if (($memberDemoState['is_active'] ?? false) === true) {
         set_member_demo_active(true);
-        flash_set('info', 'La membresía demo ya está activa.');
+        flash_set('info', 'Tu membresía ya está activa.');
         redirect_to('index.php?page=socios');
     }
 
     set_member_demo_active(false);
-    flash_set('info', 'Completa el checkout simulado para activar la membresía demo persistida.');
+    flash_set('info', 'Continúa para activar tu membresía.');
     redirect_to(checkout_url('membership'));
 }
 
@@ -256,23 +256,23 @@ function handle_member_demo_deactivate(): void
 
     if (($memberDemoState['is_active'] ?? false) === false) {
         set_member_demo_active(false);
-        flash_set('info', 'La membresía demo ya está desactivada.');
+        flash_set('info', 'Tu membresía ya está desactivada.');
         redirect_to('index.php?page=socios');
     }
 
     if (($memberDemoState['load_error'] ?? false) === true) {
         set_member_demo_active(false);
-        flash_set('success', 'Membresía demo de sesión desactivada correctamente.');
+        flash_set('success', 'Membresía desactivada correctamente.');
         redirect_to('index.php?page=socios');
     }
 
     try {
         user_membership_cancel($userId, USER_MEMBERSHIP_PLAN_DEMO);
         set_member_demo_active(false);
-        flash_set('success', 'Membresía demo desactivada correctamente.');
+        flash_set('success', 'Membresía desactivada correctamente.');
     } catch (Throwable $exception) {
         error_log($exception->getMessage());
-        flash_set('error', 'No se pudo desactivar la membresía demo en este momento.');
+        flash_set('error', 'No se pudo desactivar la membresía en este momento.');
     }
 
     redirect_to('index.php?page=socios');

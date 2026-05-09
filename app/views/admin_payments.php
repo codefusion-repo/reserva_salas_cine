@@ -35,8 +35,8 @@ $latestPaymentDate = reservation_datetime_label($adminPaymentSummary['latest_dat
 
         <section class="admin-heading">
             <p class="eyebrow">Rol administrador</p>
-            <h1>Pagos simulados</h1>
-            <p>Supervision de pagos academicos sin cobro real</p>
+            <h1>Pagos registrados</h1>
+            <p>Supervision de pagos sin cobro real</p>
         </section>
 
         <nav class="admin-subnav" aria-label="Secciones de administracion">
@@ -67,7 +67,7 @@ $latestPaymentDate = reservation_datetime_label($adminPaymentSummary['latest_dat
                 </article>
                 <article>
                     <span class="admin-summary-value-text"><?= e(reservation_format_money((float) ($adminPaymentSummary['total_amount'] ?? 0))) ?></span>
-                    <p>Total demo</p>
+                    <p>Total</p>
                     <strong>Suma de pagos visibles</strong>
                 </article>
                 <article>
@@ -133,7 +133,7 @@ $latestPaymentDate = reservation_datetime_label($adminPaymentSummary['latest_dat
                             name="q"
                             value="<?= e((string) ($adminPaymentFilters['q'] ?? '')) ?>"
                             maxlength="100"
-                            placeholder="Usuario, email, referencia o ID"
+                            placeholder="Usuario, email, referencia o numero"
                         >
                     </label>
                     <button type="submit">Filtrar</button>
@@ -144,12 +144,12 @@ $latestPaymentDate = reservation_datetime_label($adminPaymentSummary['latest_dat
 
                 <?php if ($adminPayments === []): ?>
                     <div class="admin-empty">
-                        <h3><?= $hasAdminPaymentFilters ? 'No hay pagos que coincidan con los filtros.' : 'Sin pagos simulados' ?></h3>
+                        <h3><?= $hasAdminPaymentFilters ? 'No hay pagos que coincidan con los filtros.' : 'Sin pagos registrados' ?></h3>
                     </div>
                 <?php else: ?>
                     <div class="admin-list admin-payment-list" role="list">
                         <div class="admin-list-head admin-payment-row" aria-hidden="true">
-                            <span>ID</span>
+                            <span>N°</span>
                             <span>Referencia</span>
                             <span>Usuario</span>
                             <span>Email</span>

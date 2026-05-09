@@ -104,9 +104,9 @@ function concession_cart_summary_from_products(array $products): array
             'name' => (string) ($product['name'] ?? ''),
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
-            'unit_price_label' => reservation_format_money($unitPrice) . ' demo',
+            'unit_price_label' => reservation_format_money($unitPrice),
             'subtotal' => $subtotal,
-            'subtotal_label' => reservation_format_money($subtotal) . ' demo',
+            'subtotal_label' => reservation_format_money($subtotal),
         ];
     }
 
@@ -117,7 +117,7 @@ function concession_cart_summary_from_products(array $products): array
     return [
         'items' => $items,
         'total' => $total,
-        'total_label' => reservation_format_money($total) . ' demo',
+        'total_label' => reservation_format_money($total),
         'is_empty' => $items === [],
         'pruned' => $pruned,
     ];
@@ -202,7 +202,7 @@ function handle_concession_add(): void
         $newQuantity = CONCESSIONS_CART_MAX_QUANTITY;
         flash_set('info', 'La cantidad maxima por producto es ' . CONCESSIONS_CART_MAX_QUANTITY . '.');
     } else {
-        flash_set('success', 'Producto agregado al carrito demo.');
+        flash_set('success', 'Producto agregado al carrito.');
     }
 
     $cart[(int) $productId] = $newQuantity;
@@ -261,7 +261,7 @@ function handle_concession_remove(): void
     $cart = concession_cart_get();
     unset($cart[(int) $productId]);
     concession_cart_save($cart);
-    flash_set('success', 'Producto quitado del carrito demo.');
+    flash_set('success', 'Producto quitado del carrito.');
     concession_cart_redirect();
 }
 
@@ -271,6 +271,6 @@ function handle_concession_clear(): void
     csrf_require_valid_post();
     concession_cart_save([]);
     checkout_coupon_session_remove('concessions');
-    flash_set('success', 'Carrito demo vaciado.');
+    flash_set('success', 'Carrito vaciado.');
     concession_cart_redirect();
 }

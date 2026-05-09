@@ -189,7 +189,7 @@ $isUpcomingDemo = $upcomingSource === 'demo';
                     <h2 id="upcoming-title">Pr&oacute;ximos estrenos</h2>
                 </div>
                 <?php if ($isUpcomingDemo): ?>
-                    <p class="upcoming-source-note">Muestra demo referencial.</p>
+                    <p class="upcoming-source-note">Estrenos referenciales.</p>
                 <?php endif; ?>
             </div>
 

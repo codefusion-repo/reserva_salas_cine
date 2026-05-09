@@ -20,8 +20,8 @@ function render_checkout_page(): void
 
     if ($type === null) {
         render_not_found_page(
-            'Checkout no encontrado',
-            'El tipo de checkout solicitado no existe o no esta disponible.',
+            'Pago no encontrado',
+            'La opcion solicitada no existe o no esta disponible.',
             flash_get()
         );
         return;
@@ -30,10 +30,10 @@ function render_checkout_page(): void
     $checkout = [
         'type' => $type,
         'active_nav' => 'cartelera',
-        'title' => 'Checkout simulado',
-        'eyebrow' => 'Pago simulado academico',
-        'heading' => 'Checkout simulado',
-        'lead' => 'Flujo academico sin pago real, sin pasarela y sin solicitud de datos bancarios.',
+        'title' => 'Confirmar pago',
+        'eyebrow' => 'Pago de prueba',
+        'heading' => 'Confirma tu compra',
+        'lead' => 'Revisa el resumen antes de continuar. No habra cobro real.',
         'summary_title' => 'Resumen',
         'subtotal_amount' => 0.0,
         'total_label' => checkout_demo_money_label(0),
@@ -48,7 +48,7 @@ function render_checkout_page(): void
         if ($reservationId === null) {
             render_not_found_page(
                 'Reserva no encontrada',
-                'Selecciona una reserva pendiente valida para abrir el checkout.',
+                'Selecciona una reserva pendiente valida para abrir el pago.',
                 flash_get()
             );
             return;
@@ -59,7 +59,7 @@ function render_checkout_page(): void
         } catch (Throwable $exception) {
             error_log($exception->getMessage());
             render_error_page(
-                'No se pudo cargar el checkout',
+                'No se pudo cargar el pago',
                 'Intenta nuevamente mas tarde.',
                 500,
                 flash_get()
@@ -78,8 +78,8 @@ function render_checkout_page(): void
 
         if ((string) ($reservation['status'] ?? '') !== 'pending') {
             render_error_page(
-                'Checkout no disponible',
-                'Solo las reservas pendientes pueden confirmarse con checkout simulado.',
+                'Pago no disponible',
+                'Solo las reservas pendientes pueden confirmarse.',
                 409,
                 flash_get()
             );
@@ -88,9 +88,9 @@ function render_checkout_page(): void
 
         $checkout = array_replace($checkout, [
             'active_nav' => 'my_reservations',
-            'title' => 'Checkout reserva',
+            'title' => 'Confirmar reserva',
             'heading' => 'Confirma tu reserva',
-            'lead' => 'Revisa las entradas antes de confirmar el pago simulado academico.',
+            'lead' => 'Revisa tus entradas antes de confirmar. No habra cobro real.',
             'summary_title' => 'Reserva pendiente',
             'subtotal_amount' => (float) ($reservation['total_amount'] ?? 0),
             'total_label' => checkout_demo_money_label((float) ($reservation['total_amount'] ?? 0)),
@@ -107,7 +107,7 @@ function render_checkout_page(): void
         $cartSummary = [
             'items' => [],
             'total' => 0.0,
-            'total_label' => reservation_format_money(0) . ' demo',
+            'total_label' => reservation_format_money(0),
             'is_empty' => true,
             'pruned' => false,
         ];
@@ -133,12 +133,12 @@ function render_checkout_page(): void
 
         $checkout = array_replace($checkout, [
             'active_nav' => 'confiteria',
-            'title' => 'Checkout confiteria',
-            'heading' => 'Confiteria demo',
-            'lead' => 'Confirma el carrito de sesion con pago simulado. No se crea una orden en base de datos.',
-            'summary_title' => 'Carrito demo',
+            'title' => 'Confirmar confiteria',
+            'heading' => 'Confirma tu carrito',
+            'lead' => 'Revisa tus combos antes de confirmar. No habra cobro real.',
+            'summary_title' => 'Tu carrito',
             'subtotal_amount' => (float) ($cartSummary['total'] ?? 0),
-            'total_label' => (string) ($cartSummary['total_label'] ?? reservation_format_money(0) . ' demo'),
+            'total_label' => (string) ($cartSummary['total_label'] ?? reservation_format_money(0)),
             'can_confirm' => $cartItems !== [] && !$cartLoadError && !$catalogSetupRequired,
             'return_url' => 'index.php?page=confiteria',
             'cart_summary' => $cartSummary,
@@ -152,11 +152,11 @@ function render_checkout_page(): void
 
         $checkout = array_replace($checkout, [
             'active_nav' => 'socios',
-            'title' => 'Checkout socios',
-            'heading' => 'Hazte socio demo',
+            'title' => 'Activar membresia',
+            'heading' => 'Hazte socio',
             'lead' => $memberDemoActive
-                ? 'Tu membresia demo ya esta activa y persistida en tu cuenta.'
-                : 'Activa una membresia demo persistida con pago simulado academico.',
+                ? 'Tu membresia ya esta activa.'
+                : 'Activa tu membresia. No habra cobro real.',
             'summary_title' => CHECKOUT_MEMBERSHIP_PLAN_LABEL,
             'subtotal_amount' => CHECKOUT_MEMBERSHIP_DEMO_TOTAL,
             'total_label' => checkout_demo_money_label(CHECKOUT_MEMBERSHIP_DEMO_TOTAL),
@@ -166,11 +166,11 @@ function render_checkout_page(): void
             'member_demo_status_label' => member_demo_status_label($memberDemoState),
             'membership_plan' => [
                 'name' => CHECKOUT_MEMBERSHIP_PLAN_LABEL,
-                'total_label' => reservation_format_money(CHECKOUT_MEMBERSHIP_DEMO_TOTAL) . ' demo',
+                'total_label' => reservation_format_money(CHECKOUT_MEMBERSHIP_DEMO_TOTAL),
                 'benefits' => [
-                    'Estado de socio persistido en tu cuenta.',
-                    'Beneficios academicos simulados sin descuentos reales.',
-                    'Sin pago real, pasarela ni datos sensibles.',
+                    'Estado de socio visible en tu cuenta.',
+                    'Beneficios de prueba sin descuentos reales.',
+                    'Sin cobro real ni datos bancarios.',
                 ],
             ],
         ]);
@@ -195,7 +195,7 @@ function handle_coupon_apply(): void
     $reservationId = positive_int_from_request($_POST['reservation_id'] ?? null);
 
     if ($type === null) {
-        flash_set('error', 'El tipo de checkout no es valido.');
+        flash_set('error', 'La opcion de pago no es valida.');
         redirect_to('index.php?page=dashboard');
     }
 
@@ -220,7 +220,7 @@ function handle_coupon_apply(): void
     }
 
     if (!checkout_coupon_applies_to_type($coupon, $type)) {
-        flash_set('error', 'Este cupon no aplica para este checkout.');
+        flash_set('error', 'Este cupon no aplica para este pago.');
         redirect_to($redirectUrl);
     }
 
@@ -256,7 +256,7 @@ function handle_coupon_remove(): void
     $reservationId = positive_int_from_request($_POST['reservation_id'] ?? null);
 
     if ($type === null) {
-        flash_set('error', 'El tipo de checkout no es valido.');
+        flash_set('error', 'La opcion de pago no es valida.');
         redirect_to('index.php?page=dashboard');
     }
 
@@ -275,8 +275,8 @@ function handle_checkout_confirm(): void
 
     if ($type === null) {
         render_not_found_page(
-            'Checkout no encontrado',
-            'El tipo de checkout enviado no existe o no esta disponible.'
+            'Pago no encontrado',
+            'La opcion enviada no existe o no esta disponible.'
         );
         return;
     }
@@ -295,10 +295,17 @@ function handle_checkout_confirm(): void
             checkout_coupon_session_code('reservation')
         );
         $isOk = ($result['ok'] ?? false) === true;
+        $resultMessage = (string) ($result['message'] ?? 'No se pudo confirmar la reserva.');
+
+        if ($isOk) {
+            $resultMessage = 'Reserva confirmada. No hubo cobro real.';
+        } elseif (str_contains(strtolower($resultMessage), 'pago simulado')) {
+            $resultMessage = 'La reserva ya tiene un pago registrado.';
+        }
 
         flash_set(
             $isOk ? 'success' : 'error',
-            (string) ($result['message'] ?? 'No se pudo confirmar la reserva.')
+            $resultMessage
         );
 
         if ($isOk) {
@@ -313,7 +320,7 @@ function handle_checkout_confirm(): void
         $cartSummary = [
             'items' => [],
             'total' => 0.0,
-            'total_label' => reservation_format_money(0) . ' demo',
+            'total_label' => reservation_format_money(0),
             'is_empty' => true,
             'pruned' => false,
         ];
@@ -329,7 +336,7 @@ function handle_checkout_confirm(): void
         }
 
         if (($cartSummary['items'] ?? []) === []) {
-            flash_set('error', 'Agrega productos al carrito antes de confirmar el checkout.');
+            flash_set('error', 'Agrega productos al carrito antes de confirmar.');
             redirect_to(checkout_url('concessions'));
         }
 
@@ -362,7 +369,7 @@ function handle_checkout_confirm(): void
         );
 
         if (($paymentResult['ok'] ?? false) !== true) {
-            flash_set('error', (string) ($paymentResult['message'] ?? 'No se pudo confirmar el pago simulado.'));
+            flash_set('error', (string) ($paymentResult['message'] ?? 'No se pudo confirmar el pago.'));
             redirect_to(checkout_url('concessions'));
         }
 
@@ -370,7 +377,7 @@ function handle_checkout_confirm(): void
         concession_checkout_save_receipt($cartSummary, (string) ($payment['reference_code'] ?? ''), $pricing);
         concession_cart_save([]);
         checkout_coupon_session_remove('concessions');
-        flash_set('success', 'Checkout de confiteria confirmado con pago simulado.');
+        flash_set('success', 'Tu compra de confiteria esta lista.');
         redirect_to(checkout_url('concessions', ['result' => 'success']));
     }
 
@@ -380,7 +387,7 @@ function handle_checkout_confirm(): void
         if (member_demo_active_for_user_id($userId)) {
             set_member_demo_active(true);
             checkout_coupon_session_remove('membership');
-            flash_set('info', 'La membresia demo ya esta activa.');
+            flash_set('info', 'Tu membresia ya esta activa.');
             redirect_to('index.php?page=socios');
         }
 
@@ -388,7 +395,7 @@ function handle_checkout_confirm(): void
         $paymentResult = checkout_membership_confirm_with_payment($userId, $pricing);
 
         if (($paymentResult['ok'] ?? false) !== true) {
-            flash_set('error', (string) ($paymentResult['message'] ?? 'No se pudo activar la membresia demo.'));
+            flash_set('error', (string) ($paymentResult['message'] ?? 'No se pudo activar la membresia.'));
             redirect_to(checkout_url('membership'));
         }
 
@@ -396,11 +403,11 @@ function handle_checkout_confirm(): void
         checkout_coupon_session_remove('membership');
 
         if (($paymentResult['already_active'] ?? false) === true) {
-            flash_set('info', 'La membresia demo ya esta activa.');
+            flash_set('info', 'Tu membresia ya esta activa.');
             redirect_to('index.php?page=socios');
         }
 
-        flash_set('success', 'Membresia demo activada con pago simulado.');
+        flash_set('success', 'Membresia activada.');
         redirect_to('index.php?page=socios');
     }
 }

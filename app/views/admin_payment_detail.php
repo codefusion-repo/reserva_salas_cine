@@ -61,7 +61,7 @@ if ($ownerEmail === '') {
             </a>
             <div>
                 <p class="eyebrow">Detalle admin de pago</p>
-                <h1><?= e($referenceCode !== '' ? $referenceCode : 'Pago demo') ?></h1>
+                <h1><?= e($referenceCode !== '' ? $referenceCode : 'Pago') ?></h1>
                 <p><?= e($summaryLabel) ?></p>
             </div>
         </div>
@@ -69,13 +69,13 @@ if ($ownerEmail === '') {
         <div class="payment-detail-layout">
             <section class="payment-detail-panel" aria-labelledby="admin-payment-detail-title">
                 <div class="payment-section-heading">
-                    <p class="eyebrow">Pago simulado</p>
+                    <p class="eyebrow">Pago</p>
                     <h2 id="admin-payment-detail-title">Datos del pago</h2>
                 </div>
 
                 <dl class="payment-details payment-details-wide">
                     <div>
-                        <dt>ID pago</dt>
+                        <dt>N° pago</dt>
                         <dd><?= e($paymentId) ?></dd>
                     </div>
                     <div>
@@ -103,7 +103,7 @@ if ($ownerEmail === '') {
                         <dd><?= e($ownerEmail) ?></dd>
                     </div>
                     <div>
-                        <dt>ID usuario</dt>
+                        <dt>N° usuario</dt>
                         <dd><?= e($payment['user_id'] ?? '') ?></dd>
                     </div>
                     <div>
@@ -116,7 +116,7 @@ if ($ownerEmail === '') {
                     </div>
                     <?php if ((int) ($payment['reservation_id'] ?? 0) > 0): ?>
                         <div>
-                            <dt>ID reserva</dt>
+                            <dt>N° reserva</dt>
                             <dd><?= e((int) ($payment['reservation_id'] ?? 0)) ?></dd>
                         </div>
                     <?php endif; ?>
@@ -156,7 +156,7 @@ if ($ownerEmail === '') {
             <aside class="payment-total-panel" aria-labelledby="admin-payment-total-title">
                 <div class="payment-section-heading">
                     <p class="eyebrow">Resumen</p>
-                    <h2 id="admin-payment-total-title">Monto demo</h2>
+                    <h2 id="admin-payment-total-title">Monto</h2>
                 </div>
 
                 <dl class="payment-total-list">
@@ -169,7 +169,7 @@ if ($ownerEmail === '') {
                         <dd><?= e(reservation_format_money((float) ($payment['discount_amount'] ?? 0))) ?></dd>
                     </div>
                     <div>
-                        <dt>Total demo</dt>
+                        <dt>Total</dt>
                         <dd><?= e(reservation_format_money((float) ($payment['total_amount'] ?? 0))) ?></dd>
                     </div>
                 </dl>

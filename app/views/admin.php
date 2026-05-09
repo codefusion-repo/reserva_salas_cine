@@ -698,7 +698,7 @@ if ($nextShowtime !== null) {
                 <div class="admin-section-heading">
                     <div>
                         <p class="eyebrow">Confiteria / Productos</p>
-                        <h2 id="admin-concessions-title"><?= !$concessionProductsTableReady ? 'Configuracion requerida' : ($adminMode === 'create' ? 'Nuevo producto' : ($adminMode === 'edit' ? 'Editar producto' : 'Gestion de productos demo')) ?></h2>
+                        <h2 id="admin-concessions-title"><?= !$concessionProductsTableReady ? 'Configuracion requerida' : ($adminMode === 'create' ? 'Nuevo producto' : ($adminMode === 'edit' ? 'Editar producto' : 'Gestion de productos')) ?></h2>
                     </div>
                     <?php if ($concessionProductsTableReady && $adminMode === 'list'): ?>
                         <a class="admin-section-action" href="<?= e(admin_section_url('concessions', 'create')) ?>">Nuevo producto</a>
@@ -710,7 +710,7 @@ if ($nextShowtime !== null) {
                 <?php if (!$concessionProductsTableReady): ?>
                     <div class="admin-empty">
                         <h3>Seccion no instalada</h3>
-                        <p>Para habilitar esta sección en una base existente, ejecuta database/upgrade_concession_products.sql o reimporta database/schema.sql y database/seed.sql.</p>
+                        <p>La confiteria no esta disponible en este entorno. Revisa la instalacion local.</p>
                     </div>
                 <?php elseif ($adminMode === 'create'): ?>
                     <form class="admin-form admin-concession-product-create" method="post" action="index.php?action=create_concession_product">
@@ -724,7 +724,7 @@ if ($nextShowtime !== null) {
                             <textarea name="description" rows="3" maxlength="255" required></textarea>
                         </label>
                         <label>
-                            <span>Precio demo</span>
+                            <span>Precio</span>
                             <input type="number" name="price_amount" min="1" step="0.01" required>
                         </label>
                         <label>
@@ -769,7 +769,7 @@ if ($nextShowtime !== null) {
                                 <textarea name="description" rows="3" maxlength="255" required><?= e($adminEditItem['description'] ?? '') ?></textarea>
                             </label>
                             <label>
-                                <span>Precio demo</span>
+                                <span>Precio</span>
                                 <input type="number" name="price_amount" value="<?= e($adminEditItem['price_amount'] ?? '') ?>" min="1" step="0.01" required>
                             </label>
                             <label>
@@ -796,7 +796,7 @@ if ($nextShowtime !== null) {
                     <?php endif; ?>
                 <?php elseif ($concessionProducts === []): ?>
                     <div class="admin-empty">
-                        <h3>Sin productos demo</h3>
+                        <h3>Sin productos</h3>
                     </div>
                 <?php else: ?>
                     <div class="admin-list admin-concession-product-list" role="list">
@@ -868,8 +868,8 @@ if ($nextShowtime !== null) {
             <section id="admin-coupons" class="admin-section" aria-labelledby="admin-coupons-title">
                 <div class="admin-section-heading">
                     <div>
-                        <p class="eyebrow">Cupones demo</p>
-                        <h2 id="admin-coupons-title"><?= !$couponsTableReady ? 'Configuracion requerida' : ($adminMode === 'create' ? 'Nuevo cupon' : ($adminMode === 'edit' ? 'Editar cupon' : 'Gestion de cupones demo')) ?></h2>
+                        <p class="eyebrow">Cupones</p>
+                        <h2 id="admin-coupons-title"><?= !$couponsTableReady ? 'Configuracion requerida' : ($adminMode === 'create' ? 'Nuevo cupon' : ($adminMode === 'edit' ? 'Editar cupon' : 'Gestion de cupones')) ?></h2>
                     </div>
                     <?php if ($couponsTableReady && $adminMode === 'list'): ?>
                         <a class="admin-section-action" href="<?= e(admin_section_url('coupons', 'create')) ?>">Nuevo cupon</a>
@@ -881,7 +881,7 @@ if ($nextShowtime !== null) {
                 <?php if (!$couponsTableReady): ?>
                     <div class="admin-empty">
                         <h3>Seccion no instalada</h3>
-                        <p>Para habilitar esta seccion en una base existente, reimporta database/schema.sql y database/seed.sql.</p>
+                        <p>Los cupones no estan disponibles en este entorno. Revisa la instalacion local.</p>
                     </div>
                 <?php elseif ($adminMode === 'create'): ?>
                     <form class="admin-form admin-coupon-create" method="post" action="index.php?action=create_coupon">
@@ -1001,7 +1001,7 @@ if ($nextShowtime !== null) {
                     <?php endif; ?>
                 <?php elseif ($coupons === []): ?>
                     <div class="admin-empty">
-                        <h3>Sin cupones demo</h3>
+                        <h3>Sin cupones</h3>
                     </div>
                 <?php else: ?>
                     <div class="admin-list admin-coupon-list" role="list">
@@ -1022,7 +1022,7 @@ if ($nextShowtime !== null) {
                             $targetStatus = $couponActive ? '0' : '1';
                             $targetLabel = $couponActive ? 'Desactivar' : 'Activar';
                             $confirmAction = $couponActive
-                                ? '¿Desactivar este cupon? Ya no aplicara en checkout.'
+                                ? '¿Desactivar este cupon? Ya no aplicara en pagos.'
                                 : '¿Activar este cupon? Volvera a aplicar si esta vigente.';
                             $discountValue = (float) ($coupon['discount_value'] ?? 0);
                             $discountLabel = (string) ($coupon['discount_type'] ?? '') === 'fixed'
@@ -1090,7 +1090,7 @@ if ($nextShowtime !== null) {
                             name="q"
                             value="<?= e((string) ($adminReservationFilters['q'] ?? '')) ?>"
                             maxlength="80"
-                            placeholder="Usuario, email, pelicula, sala, ID o codigo"
+                            placeholder="Usuario, email, pelicula, sala, numero o codigo"
                         >
                     </label>
                     <div class="admin-filter-actions">
@@ -1110,7 +1110,7 @@ if ($nextShowtime !== null) {
                 <?php else: ?>
                     <div class="admin-list admin-reservation-list" role="list">
                         <div class="admin-list-head admin-reservation-row" aria-hidden="true">
-                            <span>ID</span>
+                            <span>N°</span>
                             <span>Codigo</span>
                             <span>Usuario</span>
                             <span>Email</span>

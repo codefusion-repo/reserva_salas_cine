@@ -1,16 +1,16 @@
 <?php
 declare(strict_types=1);
 
-$pageTitle = (string) ($comingSoon['title'] ?? 'Proximamente');
+$pageTitle = (string) ($comingSoon['title'] ?? 'Seccion');
 $activeNav = (string) ($comingSoon['activeNav'] ?? '');
 $items = is_array($comingSoon['items'] ?? null) ? $comingSoon['items'] : [];
 $notes = is_array($comingSoon['notes'] ?? null) ? $comingSoon['notes'] : [];
 $heroActions = is_array($comingSoon['heroActions'] ?? null) ? $comingSoon['heroActions'] : [];
 $leadText = trim((string) ($comingSoon['lead'] ?? ''));
 $supportText = trim((string) ($comingSoon['support'] ?? ''));
-$panelKicker = trim((string) ($comingSoon['panelKicker'] ?? 'Próximamente...'));
-$panelHeadline = trim((string) ($comingSoon['panelHeadline'] ?? 'Solo en cines...'));
-$featureIcon = trim((string) ($comingSoon['featureIcon'] ?? '🚧'));
+$panelKicker = trim((string) ($comingSoon['panelKicker'] ?? ''));
+$panelHeadline = trim((string) ($comingSoon['panelHeadline'] ?? ''));
+$featureIcon = trim((string) ($comingSoon['featureIcon'] ?? ''));
 $useBenefitsLayout = ($comingSoon['benefitsLayout'] ?? false) === true;
 $benefitsSectionId = trim((string) ($comingSoon['benefitsSectionId'] ?? ''));
 $sectionClass = $useBenefitsLayout ? 'coming-soon-grid coming-soon-benefits-grid' : 'coming-soon-grid';
@@ -18,23 +18,23 @@ $catalogItems = is_array($comingSoon['catalog'] ?? null) ? $comingSoon['catalog'
 $showCatalog = ($comingSoon['showCatalog'] ?? false) === true || $catalogItems !== [];
 $catalogLoadError = ($comingSoon['catalogLoadError'] ?? false) === true;
 $catalogSetupRequired = ($comingSoon['catalogSetupRequired'] ?? false) === true;
-$cartSummary = is_array($cartSummary ?? null) ? $cartSummary : ['items' => [], 'total_label' => '$0 demo', 'is_empty' => true];
+$cartSummary = is_array($cartSummary ?? null) ? $cartSummary : ['items' => [], 'total_label' => '$0', 'is_empty' => true];
 $cartItems = is_array($cartSummary['items'] ?? null) ? $cartSummary['items'] : [];
 $memberDemo = is_array($comingSoon['memberDemo'] ?? null) ? $comingSoon['memberDemo'] : [];
 $memberDemoIsActive = (bool) ($memberDemo['isActive'] ?? false);
-$memberDemoStateActive = trim((string) ($memberDemo['stateActiveLabel'] ?? 'Socio Cine Demo activo'));
-$memberDemoStateInactive = trim((string) ($memberDemo['stateInactiveLabel'] ?? 'Sin membresía demo'));
+$memberDemoStateActive = trim((string) ($memberDemo['stateActiveLabel'] ?? 'Socio Cine activo'));
+$memberDemoStateInactive = trim((string) ($memberDemo['stateInactiveLabel'] ?? 'Sin membresía activa'));
 $memberDemoStateCopy = trim((string) (
     $memberDemoIsActive
-        ? ($memberDemo['stateActiveCopy'] ?? 'Tu sesión tiene membresía demo activa.')
-        : ($memberDemo['stateInactiveCopy'] ?? 'Activa la membresía demo para ver el estado de socio en esta sesión.')
+        ? ($memberDemo['stateActiveCopy'] ?? 'Tu membresía está activa.')
+        : ($memberDemo['stateInactiveCopy'] ?? 'Activa la membresía para ver tu estado de socio.')
 ));
 $memberDemoStateNotes = is_array($memberDemo['stateNotes'] ?? null) ? array_values(array_filter($memberDemo['stateNotes'], static fn (mixed $note): bool => trim((string) $note) !== '')) : [];
 $memberDemoActivateAction = trim((string) ($memberDemo['activateAction'] ?? 'index.php?action=member_demo_activate'));
 $memberDemoActivateMethod = strtolower(trim((string) ($memberDemo['activateMethod'] ?? 'post')));
 $memberDemoDeactivateAction = trim((string) ($memberDemo['deactivateAction'] ?? 'index.php?action=member_demo_deactivate'));
-$memberDemoActivateLabel = trim((string) ($memberDemo['activateLabel'] ?? 'Activar membresía demo'));
-$memberDemoDeactivateLabel = trim((string) ($memberDemo['deactivateLabel'] ?? 'Desactivar membresía demo'));
+$memberDemoActivateLabel = trim((string) ($memberDemo['activateLabel'] ?? 'Activar membresía'));
+$memberDemoDeactivateLabel = trim((string) ($memberDemo['deactivateLabel'] ?? 'Desactivar membresía'));
 $isMemberDemoPage = $memberDemo !== [];
 ?>
 <!doctype html>
@@ -62,7 +62,7 @@ $isMemberDemoPage = $memberDemo !== [];
                 <span aria-hidden="true"></span>
             </a>
             <div>
-                <p class="eyebrow"><?= e($comingSoon['eyebrow'] ?? 'Proximamente') ?></p>
+                <p class="eyebrow"><?= e($comingSoon['eyebrow'] ?? 'Seccion') ?></p>
                 <h1><?= e($comingSoon['headline'] ?? $pageTitle) ?></h1>
             </div>
         </div>
@@ -148,7 +148,7 @@ $isMemberDemoPage = $memberDemo !== [];
 
             <div class="coming-soon-feature">
                 <div class="coming-soon-badge" aria-hidden="true"><?= e($featureIcon !== '' ? $featureIcon : '🚧') ?></div>
-                <span><?= e($comingSoon['accent'] ?? 'Proximamente') ?></span>
+                <span><?= e($comingSoon['accent'] ?? 'Resumen') ?></span>
                 <p><?= e($comingSoon['accentCopy'] ?? '') ?></p>
             </div>
         </section>
@@ -157,18 +157,18 @@ $isMemberDemoPage = $memberDemo !== [];
             <section class="confiteria-catalog" aria-labelledby="confiteria-catalog-title">
                 <div class="confiteria-catalog-heading">
                     <div>
-                        <p class="eyebrow">Catálogo demo</p>
-                        <h2 id="confiteria-catalog-title">Combos de confitería</h2>
+                        <p class="eyebrow">Catalogo</p>
+                        <h2 id="confiteria-catalog-title">Combos y snacks</h2>
                     </div>
-                    <p>Compra real no disponible. El checkout es simulado y no crea pedidos.</p>
+                    <p>Agrega tus favoritos y continua al pago.</p>
                 </div>
 
                 <div class="confiteria-shop-layout">
                     <div class="confiteria-shop-products">
                         <?php if ($catalogSetupRequired): ?>
                             <div class="confiteria-catalog-state">
-                                <h3>Catálogo en preparación</h3>
-                                <p>Los productos demo aún no están instalados en esta base de datos.</p>
+                                <h3>Catalogo en preparacion</h3>
+                                <p>La confiteria no esta disponible en este momento.</p>
                             </div>
                         <?php elseif ($catalogLoadError): ?>
                             <div class="confiteria-catalog-state">
@@ -177,8 +177,8 @@ $isMemberDemoPage = $memberDemo !== [];
                             </div>
                         <?php elseif ($catalogItems === []): ?>
                             <div class="confiteria-catalog-state">
-                                <h3>Sin productos activos</h3>
-                                <p>El catálogo demo no tiene productos disponibles en este momento.</p>
+                                <h3>Sin productos disponibles</h3>
+                                <p>Vuelve mas tarde para revisar nuevos combos.</p>
                             </div>
                         <?php else: ?>
                             <div class="confiteria-catalog-grid">
@@ -212,12 +212,12 @@ $isMemberDemoPage = $memberDemo !== [];
 
                     <aside class="confiteria-cart-panel" aria-labelledby="confiteria-cart-title">
                         <div class="confiteria-cart-heading">
-                            <p class="eyebrow">Carrito en sesión</p>
-                            <h3 id="confiteria-cart-title">Resumen demo</h3>
+                            <p class="eyebrow">Carrito</p>
+                            <h3 id="confiteria-cart-title">Tu carrito</h3>
                         </div>
 
                         <?php if ($cartItems === []): ?>
-                            <p class="confiteria-cart-empty">Agrega productos activos para ver cantidades, subtotales y total demo.</p>
+                            <p class="confiteria-cart-empty">Tu carrito está vacío. Agrega productos para continuar.</p>
                         <?php else: ?>
                             <div class="confiteria-cart-items">
                                 <?php foreach ($cartItems as $cartItem): ?>
@@ -269,15 +269,15 @@ $isMemberDemoPage = $memberDemo !== [];
                         <?php endif; ?>
 
                         <div class="confiteria-cart-total">
-                            <span>Total demo</span>
-                            <strong><?= e($cartSummary['total_label'] ?? '$0 demo') ?></strong>
+                            <span>Total</span>
+                            <strong><?= e($cartSummary['total_label'] ?? '$0') ?></strong>
                         </div>
 
                         <div class="confiteria-cart-actions">
                             <?php if ($cartItems === []): ?>
                                 <button class="confiteria-checkout-disabled" type="button" disabled>Carrito vacío</button>
                             <?php else: ?>
-                                <a class="confiteria-checkout-link" href="index.php?page=checkout&amp;type=concessions">Ir a checkout simulado</a>
+                                <a class="confiteria-checkout-link" href="index.php?page=checkout&amp;type=concessions">Ir a pago</a>
                             <?php endif; ?>
                             <?php if ($cartItems !== []): ?>
                                 <form action="index.php?action=concession_clear" method="post">
@@ -287,7 +287,7 @@ $isMemberDemoPage = $memberDemo !== [];
                             <?php endif; ?>
                         </div>
 
-                        <p class="confiteria-cart-note">Compra real no disponible. No hay pago real ni pedidos persistidos.</p>
+                        <p class="confiteria-cart-note">Pago simulado, sin cobro real.</p>
                     </aside>
                 </div>
             </section>
