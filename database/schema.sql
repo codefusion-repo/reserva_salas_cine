@@ -58,6 +58,26 @@ CREATE TABLE IF NOT EXISTS concession_products (
     KEY idx_concession_products_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS coupons (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(24) NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    checkout_type ENUM('reservation', 'concessions', 'membership', 'all') NOT NULL,
+    discount_type ENUM('percent', 'fixed') NOT NULL DEFAULT 'percent',
+    discount_value DECIMAL(10, 2) NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    starts_at DATETIME DEFAULT NULL,
+    ends_at DATETIME DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_coupons_code (code),
+    KEY idx_coupons_active_type (is_active, checkout_type),
+    KEY idx_coupons_dates (starts_at, ends_at),
+    CONSTRAINT chk_coupons_discount_positive CHECK (discount_value > 0),
+    CONSTRAINT chk_coupons_percent_range CHECK (discount_type <> 'percent' OR discount_value BETWEEN 1 AND 100),
+    CONSTRAINT chk_coupons_valid_dates CHECK (starts_at IS NULL OR ends_at IS NULL OR ends_at > starts_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS showtimes (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     movie_id INT UNSIGNED NOT NULL,

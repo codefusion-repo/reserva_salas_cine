@@ -68,6 +68,21 @@ if ($action === 'coupon_remove' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+if ($action === 'create_coupon' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_admin_coupon_create();
+    exit;
+}
+
+if ($action === 'update_coupon' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_admin_coupon_update();
+    exit;
+}
+
+if ($action === 'set_coupon_active' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    handle_admin_coupon_set_active();
+    exit;
+}
+
 if ($action === 'create_room' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     handle_room_create();
     exit;

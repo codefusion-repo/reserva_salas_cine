@@ -4504,6 +4504,10 @@ p {
     grid-template-columns: minmax(180px, 0.9fr) minmax(240px, 1.25fr) minmax(120px, 0.55fr) minmax(90px, 0.42fr) minmax(120px, 0.56fr) minmax(96px, 0.42fr) minmax(108px, 0.48fr) 170px;
 }
 
+.admin-coupon-create {
+    grid-template-columns: minmax(140px, 0.62fr) minmax(220px, 1.15fr) minmax(140px, 0.7fr) minmax(132px, 0.62fr) minmax(110px, 0.5fr) minmax(170px, 0.82fr) minmax(170px, 0.82fr) minmax(108px, 0.48fr) 160px;
+}
+
 .admin-reservation-filter {
     grid-template-columns: minmax(170px, 0.85fr) minmax(280px, 1.4fr) 1fr;
     align-items: end;
@@ -4689,6 +4693,11 @@ p {
     min-width: 1360px;
 }
 
+.admin-coupon-row {
+    grid-template-columns: minmax(124px, 0.7fr) minmax(220px, 1.2fr) minmax(116px, 0.58fr) minmax(116px, 0.58fr) minmax(108px, 0.48fr) minmax(220px, 1fr) 108px 220px;
+    min-width: 1230px;
+}
+
 .admin-reservation-row {
     grid-template-columns: 82px 126px minmax(140px, 1fr) minmax(195px, 1.1fr) minmax(190px, 1fr) minmax(170px, 0.9fr) minmax(240px, 1.1fr) minmax(180px, 0.8fr) 118px 122px 128px 128px;
     min-width: 1828px;
@@ -4812,6 +4821,10 @@ p {
 }
 
 .admin-payment-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-coupon-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -5230,6 +5243,7 @@ p {
     .admin-movie-create,
     .admin-showtime-create,
     .admin-concession-product-create,
+    .admin-coupon-create,
     .admin-showtime-filter,
     .admin-reservation-filter,
     .admin-payment-filter {
@@ -5240,6 +5254,7 @@ p {
     .admin-movie-list .admin-list-head,
     .admin-showtime-list .admin-list-head,
     .admin-concession-product-list .admin-list-head,
+    .admin-coupon-list .admin-list-head,
     .admin-payment-list .admin-list-head {
         display: none;
     }
@@ -5248,6 +5263,7 @@ p {
     .admin-movie-row,
     .admin-showtime-row,
     .admin-concession-product-row,
+    .admin-coupon-row,
     .admin-payment-row {
         grid-template-columns: 1fr;
         min-width: 0;
