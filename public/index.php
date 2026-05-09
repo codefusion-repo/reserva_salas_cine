@@ -33,6 +33,11 @@ if ($action === 'logout') {
     exit;
 }
 
+if ($action === 'invoice_download') {
+    handle_invoice_download();
+    exit;
+}
+
 if ($action === 'create_reservation' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     handle_reservation_create();
     exit;
@@ -187,6 +192,18 @@ switch ($page) {
 
     case 'my_reservations':
         render_my_reservations();
+        break;
+
+    case 'my_payments':
+        render_my_payments();
+        break;
+
+    case 'payment_detail':
+        render_payment_detail();
+        break;
+
+    case 'invoice':
+        render_invoice();
         break;
 
     case 'ticket':

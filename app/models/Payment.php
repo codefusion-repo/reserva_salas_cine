@@ -194,6 +194,115 @@ function payment_insert_simulated_paid(
     ];
 }
 
+function payment_user_all(int $userId): array
+{
+    if ($userId <= 0) {
+        return [];
+    }
+
+    return db_fetch_all(
+        "SELECT
+            p.id,
+            p.checkout_type,
+            p.reservation_id,
+            p.reference_code,
+            p.status,
+            p.subtotal_amount,
+            p.discount_amount,
+            p.total_amount,
+            p.currency,
+            p.payment_method,
+            p.paid_at,
+            p.created_at,
+            r.status AS reservation_status,
+            m.title AS movie_title,
+            rm.name AS room_name,
+            rm.location AS room_location,
+            s.starts_at,
+            s.ends_at,
+            s.format_label,
+            s.language_label
+         FROM payments p
+         LEFT JOIN reservations r
+            ON r.id = p.reservation_id
+           AND r.user_id = p.user_id
+         LEFT JOIN showtimes s ON s.id = r.showtime_id
+         LEFT JOIN movies m ON m.id = s.movie_id
+         LEFT JOIN rooms rm ON rm.id = s.room_id
+         WHERE p.user_id = :user_id
+         ORDER BY COALESCE(p.paid_at, p.created_at) DESC, p.id DESC",
+        ['user_id' => $userId]
+    );
+}
+
+function payment_find_for_user(int $paymentId, int $userId): ?array
+{
+    if ($paymentId <= 0 || $userId <= 0) {
+        return null;
+    }
+
+    return db_fetch_one(
+        "SELECT
+            p.id,
+            p.checkout_type,
+            p.reservation_id,
+            p.reference_code,
+            p.status,
+            p.subtotal_amount,
+            p.discount_amount,
+            p.total_amount,
+            p.currency,
+            p.payment_method,
+            p.paid_at,
+            p.created_at,
+            r.status AS reservation_status,
+            m.title AS movie_title,
+            rm.name AS room_name,
+            rm.location AS room_location,
+            s.starts_at,
+            s.ends_at,
+            s.format_label,
+            s.language_label
+         FROM payments p
+         LEFT JOIN reservations r
+            ON r.id = p.reservation_id
+           AND r.user_id = p.user_id
+         LEFT JOIN showtimes s ON s.id = r.showtime_id
+         LEFT JOIN movies m ON m.id = s.movie_id
+         LEFT JOIN rooms rm ON rm.id = s.room_id
+         WHERE p.id = :id
+           AND p.user_id = :user_id
+         LIMIT 1",
+        [
+            'id' => $paymentId,
+            'user_id' => $userId,
+        ]
+    );
+}
+
+function payment_items_for_payment(int $paymentId): array
+{
+    if ($paymentId <= 0) {
+        return [];
+    }
+
+    return db_fetch_all(
+        'SELECT
+            id,
+            payment_id,
+            item_type,
+            item_label,
+            quantity,
+            unit_amount,
+            total_amount,
+            created_at
+         FROM payment_items
+         WHERE payment_id = :payment_id
+         ORDER BY id ASC',
+        ['payment_id' => $paymentId]
+    );
+}
+
 function payment_normalize_items(array $items): array
 {
     $normalized = [];
