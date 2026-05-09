@@ -8,7 +8,7 @@ function initCarteleraFilterForms() {
 
         form.dataset.filterBound = 'true';
 
-        const search = form.querySelector('input[type="search"][name="q"]');
+        const searches = Array.from(form.querySelectorAll('input[type="search"]'));
         let searchSubmitTimer = null;
 
         const scheduleSubmit = (delay = 0) => {
@@ -30,30 +30,34 @@ function initCarteleraFilterForms() {
             });
         });
 
-        if (search === null) {
-            return;
-        }
-
-        search.addEventListener('input', () => {
-            scheduleSubmit(350);
+        form.querySelectorAll('input[type="date"]').forEach((input) => {
+            input.addEventListener('change', () => {
+                scheduleSubmit(0);
+            });
         });
 
-        search.addEventListener('keyup', () => {
-            scheduleSubmit(350);
-        });
-
-        search.addEventListener('change', () => {
-            scheduleSubmit(0);
-        });
-
-        search.addEventListener('search', () => {
-            scheduleSubmit(0);
-        });
-
-        search.addEventListener('paste', () => {
-            window.setTimeout(() => {
+        searches.forEach((search) => {
+            search.addEventListener('input', () => {
                 scheduleSubmit(350);
-            }, 0);
+            });
+
+            search.addEventListener('keyup', () => {
+                scheduleSubmit(350);
+            });
+
+            search.addEventListener('change', () => {
+                scheduleSubmit(0);
+            });
+
+            search.addEventListener('search', () => {
+                scheduleSubmit(0);
+            });
+
+            search.addEventListener('paste', () => {
+                window.setTimeout(() => {
+                    scheduleSubmit(350);
+                }, 0);
+            });
         });
     });
 }

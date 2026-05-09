@@ -357,10 +357,52 @@ function admin_room_active_find_by_id(int $roomId): ?array
     );
 }
 
-function admin_showtimes_all(): array
+function admin_showtimes_all(array $filters = []): array
 {
-    return db_fetch_all(
-        'SELECT
+    $params = [];
+    $conditions = [];
+
+    $roomId = (int) ($filters['room_id'] ?? 0);
+
+    if ($roomId > 0) {
+        $conditions[] = 's.room_id = :room_id';
+        $params['room_id'] = $roomId;
+    }
+
+    $dateFrom = (string) ($filters['date_from'] ?? '');
+
+    if ($dateFrom !== '') {
+        $conditions[] = 's.starts_at >= :date_from_start';
+        $params['date_from_start'] = $dateFrom . ' 00:00:00';
+    }
+
+    $dateTo = (string) ($filters['date_to'] ?? '');
+
+    if ($dateTo !== '') {
+        try {
+            $dateToNext = (new DateTimeImmutable($dateTo))->modify('+1 day')->format('Y-m-d');
+            $conditions[] = 's.starts_at < :date_to_next_day';
+            $params['date_to_next_day'] = $dateToNext . ' 00:00:00';
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+        }
+    }
+
+    $status = (string) ($filters['status'] ?? '');
+
+    if (in_array($status, ['active', 'inactive'], true)) {
+        $conditions[] = 's.is_active = :is_active';
+        $params['is_active'] = $status === 'active' ? 1 : 0;
+    }
+
+    $search = trim((string) ($filters['q'] ?? ''));
+
+    if ($search !== '') {
+        $conditions[] = 'm.title LIKE :showtime_q';
+        $params['showtime_q'] = '%' . $search . '%';
+    }
+
+    $sql = 'SELECT
             s.id,
             s.movie_id,
             s.room_id,
@@ -377,8 +419,15 @@ function admin_showtimes_all(): array
          FROM showtimes s
          INNER JOIN movies m ON m.id = s.movie_id
          INNER JOIN rooms r ON r.id = s.room_id
-         ORDER BY s.starts_at DESC, s.id DESC'
-    );
+         ';
+
+    if ($conditions !== []) {
+        $sql .= ' WHERE ' . implode(' AND ', $conditions);
+    }
+
+    $sql .= ' ORDER BY s.starts_at DESC, s.id DESC';
+
+    return db_fetch_all($sql, $params);
 }
 
 function admin_showtime_find_by_id(int $showtimeId): ?array
